@@ -1,0 +1,17 @@
+Source: opsi-depotserver
+Section: opsi
+Priority: optional
+Maintainer: uib GmbH <info@uib.de>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.1
+
+Package: opsi-depotserver
+Section: opsi
+Architecture: all
+Depends: python-opsi (>=3.2) | python2.3-opsi (>=3.2) | python2.4-opsi (>=3.2), opsiconfd (>=1.0.3), opsipxeconfd (>=0.2), opsi-utils (>=3.2) | opsi-utils-python2.3 (>=3.2) | opsi-utils-python2.4 (>=3.2), opsi-linux-bootimage (>=20071102), samba, dhcp3-server, sudo, wget
+Description: server fuer das Softwareverteilungssystem OPSI
+ Der opsi-depotserver dient als Basis fuer das Softwareverteilungssystem OPSI.
+ .
+ OPSI ist ein OpenSource Softwareverteilungssystem, das sowohl automatische
+ Betriebssystem- als auch Softwareinstallationen ermoeglicht.
+ http://www.opsi.org

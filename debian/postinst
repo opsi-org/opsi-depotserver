@@ -1,0 +1,376 @@
+#! /bin/bash
+# postinst script for opsi-depotserver
+#
+# see: dh_installdeb(1)
+
+set -e
+
+# summary of how this script can be called:
+#        * <postinst> `configure' <most-recently-configured-version>
+#        * <old-postinst> `abort-upgrade' <new version>
+#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>
+#          <new-version>
+#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
+#          <failed-install-package> <version> `removing'
+#          <conflicting-package> <version>
+# for details, see http://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+#
+
+. /usr/share/debconf/confmodule
+
+VERBOSE=true
+
+case "$1" in
+    configure)
+	IPADDRESS=""
+	
+	for iface in `ifconfig -a | grep "^[[:alnum:]]" | cut -d " " -f 1`; do
+	    IPADDRESS=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $3}'`
+	    NETMASK=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $7}'`
+	    GATEWAY=`route -n | grep ^0.0.0.0 | awk '{ printf $2}'`
+	    if [ "$IPADDRESS" != "" ]; then
+		break
+	    fi
+	done
+	
+	if [ "$IPADDRESS" != "" ]; then
+	    for part in 1 2 3 4; do
+		I[$part]=$(echo $IPADDRESS | cut -d . -f $part)
+		M[$part]=$(echo $NETMASK | cut -d . -f $part)
+	    done
+		    
+	    for part in 1 2 3 4; do
+		N[$part]=$((${I[$part]} & ${M[$part]}))
+	        B[$part]=$((${N[$part]} | $((${M[$part]} ^255))))
+	    done
+	
+	    SUBNET="${N[1]}.${N[2]}.${N[3]}.${N[4]}"
+	    BROADCAST="${B[1]}.${B[2]}.${B[3]}.${B[4]}"
+	fi
+	
+	HOSTNAME=`uname -n`
+	DOMAIN=`hostname -d`
+	FQDN=`hostname --fqdn`
+	WINDOMAIN=`grep -i ^[[:space:]]*workgroup /etc/samba/smb.conf | cut -d'=' -f 2 | sed s'/ //g'`
+	
+	$VERBOSE && echo "System information"
+	$VERBOSE && echo "  -> IP-Address: $IPADDRESS"
+	$VERBOSE && echo "  -> Broadcast: $BROADCAST"
+	$VERBOSE && echo "  -> Netmask: $NETMASK"
+	$VERBOSE && echo "  -> Subnet: $SUBNET"
+	$VERBOSE && echo "  -> Gateway: $GATEWAY"
+	$VERBOSE && echo "  -> Hostname: $HOSTNAME"
+	$VERBOSE && echo "  -> Domain: $DOMAIN"
+	$VERBOSE && echo "  -> Fqdn: $FQDN"
+	$VERBOSE && echo "  -> Windomain: $WINDOMAIN"
+	
+	if [ `echo $FQDN | sed 's/\./ /g' | wc -w` -le 2 ]; then
+		echo "The hostname $FQDN returned by 'hostname --fqdn' is not a fully qualified domain name"
+		echo "Opsi needs a fully qualified domain name in the form of <hostname>.<domain>.<tld>"
+		exit 1
+	fi
+	
+	if [ -f /var/lib/opsi/config/global.ini ]; then
+		set +e
+		grep "@HOSTNAME@" /var/lib/opsi/config/global.ini >/dev/null 2>/dev/null	
+		status=$?
+		set -e
+		if [ $status = 0 ]; then
+			cp /var/lib/opsi/config/global.ini /var/lib/opsi/config/global.ini.tmp
+			cat /var/lib/opsi/config/global.ini.tmp | sed "s/@HOSTNAME@/$HOSTNAME/g" > /var/lib/opsi/config/global.ini
+			rm /var/lib/opsi/config/global.ini.tmp
+		fi
+		set +e
+		grep "@WINDOMAIN@" /var/lib/opsi/config/global.ini >/dev/null 2>/dev/null	
+		status=$?
+		set -e
+		if [ $status = 0 ]; then
+			cp /var/lib/opsi/config/global.ini /var/lib/opsi/config/global.ini.tmp
+			cat /var/lib/opsi/config/global.ini.tmp | sed "s/@WINDOMAIN@/$WINDOMAIN/g" > /var/lib/opsi/config/global.ini
+			rm /var/lib/opsi/config/global.ini.tmp
+		fi
+		set +e
+		grep "@FQDN@" /var/lib/opsi/config/global.ini >/dev/null 2>/dev/null	
+		status=$?
+		set -e
+		if [ $status = 0 ]; then
+			cp /var/lib/opsi/config/global.ini /var/lib/opsi/config/global.ini.tmp
+			cat /var/lib/opsi/config/global.ini.tmp | sed "s/@FQDN@/$FQDN/g" > /var/lib/opsi/config/global.ini
+			rm /var/lib/opsi/config/global.ini.tmp
+		fi
+	fi
+	
+	$VERBOSE && echo "Adding system users and groups..."
+	
+	# add system group pcpatch and users pcpatch
+	$VERBOSE && echo "  -> Adding group pcpatch"
+	if [ -z "`getent group pcpatch`" ]; then
+		groupadd -g 992 pcpatch
+	fi
+		
+	$VERBOSE && echo "  -> Adding user pcpatch"
+	if [ -z "`getent passwd pcpatch`" ]; then
+		useradd -u 992 -g 992 -d /opt/pcbin/pcpatch -s /bin/bash pcpatch
+	fi
+	
+	if ! [ -e /var/lib/opsi/config/depots/$FQDN ]; then
+		mkdir -p /var/lib/opsi/config/depots/$FQDN
+	fi
+	
+	if ! [ -e /var/lib/opsi/config/depots/$FQDN/depot.ini ]; then
+		echo "[depotShare]" 						>> /var/lib/opsi/config/depots/$FQDN/depot.ini
+		echo "urlForClient = smb://$HOSTNAME/opt_pcbin/install"	>> /var/lib/opsi/config/depots/$FQDN/depot.ini
+		echo "urlForConfigServer = file:///opt/pcbin/install"		>> /var/lib/opsi/config/depots/$FQDN/depot.ini
+		echo "" 							>> /var/lib/opsi/config/depots/$FQDN/depot.ini
+		echo "[depotServer]" 						>> /var/lib/opsi/config/depots/$FQDN/depot.ini
+		echo "operatingSystem = Linux" 				>> /var/lib/opsi/config/depots/$FQDN/depot.ini
+	fi
+	
+	# file permissions
+	$VERBOSE && echo "Setting permissions..."
+	chown -R pcpatch:pcpatch /etc/opsi/backendManager.d
+	chmod 660 /etc/opsi/backendManager.d/*
+	chown -R pcpatch:pcpatch /opt/pcbin/pcpatch
+	chmod 2770 /opt/pcbin/pcpatch
+	chown -R pcpatch:pcpatch /opt/pcbin/pcpatch/pclog
+	chmod 2770 /opt/pcbin/pcpatch/pclog
+	chown -R pcpatch:pcpatch /opt/pcbin/utils
+	chmod 2770 /opt/pcbin/utils
+	chown -R pcpatch:pcpatch /opt/pcbin/install
+	chmod 2770 /opt/pcbin/install
+	chown -R pcpatch:pcpatch /var/lib/opsi
+	chmod 2750 /var/lib/opsi
+	chmod 2770 /var/lib/opsi/config
+	chmod 2770 /var/lib/opsi/config/clients
+	chmod 2770 /var/lib/opsi/config/templates
+	chmod 2770 /var/lib/opsi/config/depots
+	chmod 2770 /var/lib/opsi/config/depots/$FQDN
+	chmod 0660 /var/lib/opsi/config/templates/pcproto.ini
+	chmod 0660 /var/lib/opsi/config/global.ini
+	
+	db_get opsi/configure_samba
+	if [ "$RET" = "true" ]; then
+		$VERBOSE && echo "Configuring samba..."	
+		$VERBOSE && echo "  -> Adding shares opt_pcbin, opsi_config to smb.conf"
+		# adding share to smb.conf
+		if [ -f /etc/samba/smb.conf ]; then
+			set +e
+			cat /etc/samba/smb.conf | \
+			grep ^include[[:space:]]*=[[:space:]]*/etc/samba/share.conf >/dev/null 2>/dev/null	
+			status=$?
+			set -e
+			if [ $status = 0 ]; then
+				$VERBOSE && echo "    share.conf already included in smb.conf"
+			else	
+				if [ -f /etc/samba/smb.conf.pre-opsi ]; then
+					$VERBOSE && echo "    /etc/samba/smb.conf.pre-opsi already exists"
+				else
+					$VERBOSE && echo "    Saving current smb.conf to smb.conf.pre-opsi"
+					cp -p /etc/samba/smb.conf /etc/samba/smb.conf.pre-opsi
+				fi
+				$VERBOSE && echo "    Changing smb.conf"
+				echo "" >> /etc/samba/smb.conf
+				echo "; load opsi shares" >> /etc/samba/smb.conf
+				echo "include = /etc/samba/share.conf" >> /etc/samba/smb.conf
+			fi
+    
+			if [ -f /etc/samba/share.conf ]; then
+				if [ -f /etc/samba/share.conf.pre-opsi ]; then
+					$VERBOSE && echo "    /etc/samba/share.conf.pre-opsi already exists"
+				else
+					$VERBOSE && echo "    Saving current share.conf to share.conf.pre-opsi"
+					cp -p /etc/samba/share.conf /etc/samba/share.conf.pre-opsi
+				fi
+			fi
+			$VERBOSE && echo "    Writing file /etc/samba/share.conf"
+	        	echo "[opt_pcbin]" 			> /etc/samba/share.conf
+			echo " available = yes" 		>> /etc/samba/share.conf
+			echo " comment = opsi depot share" 	>> /etc/samba/share.conf
+			echo " path = /opt/pcbin" 		>> /etc/samba/share.conf
+			echo " oplocks = no" 			>> /etc/samba/share.conf
+			echo " level2 oplocks = no"  		>> /etc/samba/share.conf
+			echo " writeable = yes" 		>> /etc/samba/share.conf
+			echo " invalid users = root" 		>> /etc/samba/share.conf
+			echo "" 				>> /etc/samba/share.conf
+			echo "[opsi_config]" 			>> /etc/samba/share.conf
+			echo " available = yes"			>> /etc/samba/share.conf
+			echo " comment = opsi config share" 	>> /etc/samba/share.conf
+			echo " path = /var/lib/opsi/config" 	>> /etc/samba/share.conf
+			echo " oplocks = no" 			>> /etc/samba/share.conf
+			echo " level2 oplocks = no"  		>> /etc/samba/share.conf
+			echo " writeable = yes" 		>> /etc/samba/share.conf
+			echo " invalid users = root" 		>> /etc/samba/share.conf
+			echo "" 				>> /etc/samba/share.conf
+			chmod 644 /etc/samba/share.conf
+		else
+			echo "    /etc/samba/smb.conf not found!"
+			echo "    you will have to configure samba manually!"
+			echo "    look in /usr/share/opsi-depotserver for examples."
+		fi
+	fi
+	
+	db_get opsi/configure_dhcpd
+	if [ "$RET" = "true" ]; then
+		# dhcp-server
+	        echo "Configuring dhcpd..."
+		if [ -f /etc/dhcp3/dhcpd.conf ]; then 
+			ldap=false;
+			if [ -f /etc/dhcp3/dhcpd.conf.pre-opsi ]; then
+				$VERBOSE && echo "    /etc/dhcp3/dhcpd.conf.pre-opsi already exists"
+			else
+				$VERBOSE && echo "    -> Saving current dhcpd.conf to dhcpd.conf.pre-opsi"
+				cp -p /etc/dhcp3/dhcpd.conf /etc/dhcp3/dhcpd.conf.pre-opsi
+			fi
+			$VERBOSE && echo "    -> Changing dhcpd.conf"
+			# not a very good test !
+			set +e
+			cat /etc/dhcp3/dhcpd.conf | grep "PXE-specific" >/dev/null 2>/dev/null	
+			status=$?
+			set -e
+			if [ $status = 0 ]; then
+				$VERBOSE && echo "    Configured PXE-group found!"
+			else
+				set +e
+				cat /etc/dhcp3/dhcpd.conf | grep "ldap-server" >/dev/null 2>/dev/null	
+				status=$?
+				set -e
+				if [ $status = 0 ]; then
+					ldap=true;
+					$VERBOSE && echo "    DHCPD configured by LDAP, leaving as is!"
+				else	
+					set +e
+					cat /etc/dhcp3/dhcpd.conf | grep ^subnet >/dev/null 2>/dev/null	
+					status=$?
+					set -e
+					if [ $status = 0 ]; then
+						$VERBOSE && echo "    Configured subnet found!"
+						$VERBOSE && echo "    adding PXE-specific configuration directives..."
+						cat /etc/dhcp3/dhcpd.conf | sed '/^[[:space:]]*subnet/a \
+						group {\
+						\t# PXE-specific configuration directives...\
+						\t#option dhcp-class-identifier "PXEClient";\
+						\t# You need an entry like this for every host\
+						\t# unless you are using dynamic addresses\
+						\t#next-server 194.31.184.175;\
+						\tfilename "linux/pxelinux.0";\
+						\t# test_client\
+						\thost test_client {\
+						\t\thardware ethernet 00:C0:11:11:11:11;\
+						\t\tfixed-address test_client;\
+						\t}\
+						}' > /tmp/dhcpd.conf.opsi
+						mv /tmp/dhcpd.conf.opsi /etc/dhcp3/dhcpd.conf
+					else
+						$VERBOSE && echo "    No configured subnet found!"
+						$VERBOSE && echo "    adding subnet directive..."
+						echo "" >> /etc/dhcp3/dhcpd.conf
+						echo "# This will tell the box its hostname while booting:" >> /etc/dhcp3/dhcpd.conf
+						echo "use-host-decl-names on;" >> /etc/dhcp3/dhcpd.conf
+						echo "" >> /etc/dhcp3/dhcpd.conf
+						echo "subnet $SUBNET netmask $NETMASK {" >> /etc/dhcp3/dhcpd.conf
+						if [ "$GATEWAY" = "" ]; then
+							echo -e "\toption routers $IPADDRESS;" >> /etc/dhcp3/dhcpd.conf
+						else
+							echo -e "\toption routers $GATEWAY;" >> /etc/dhcp3/dhcpd.conf
+						fi
+						echo -e "\t#option netbios-name-servers 194.31.184.153;" >> /etc/dhcp3/dhcpd.conf
+						echo -e "\t#Group the PXE bootable hosts together" >> /etc/dhcp3/dhcpd.conf
+						echo -e "\tgroup {" >> /etc/dhcp3/dhcpd.conf
+						echo -e "\t\t# PXE-specific configuration directives..." >> /etc/dhcp3/dhcpd.conf
+						echo -e "\t\t#option dhcp-class-identifier \"PXEClient\";" >> /etc/dhcp3/dhcpd.conf
+						echo -e "\t\t# You need an entry like this for every host" >> /etc/dhcp3/dhcpd.conf
+						echo -e "\t\t# unless you are using dynamic addresses" >> /etc/dhcp3/dhcpd.conf
+						echo -e "\t\tnext-server ${IPADDRESS};" >> /etc/dhcp3/dhcpd.conf
+						echo -e "\t\tfilename \"linux/pxelinux.0\";" >> /etc/dhcp3/dhcpd.conf
+						echo -e "\t\t# test_client" >> /etc/dhcp3/dhcpd.conf
+						echo -e "\t\thost test_client {" >> /etc/dhcp3/dhcpd.conf
+						echo -e "\t\t\t	hardware ethernet 00:00:cb:62:e9:24;" >> /etc/dhcp3/dhcpd.conf
+						echo -e "\t\t\t	fixed-address test_client;" >> /etc/dhcp3/dhcpd.conf
+						echo -e "\t\t}" >> /etc/dhcp3/dhcpd.conf
+						echo -e "\t}" >> /etc/dhcp3/dhcpd.conf
+						echo -e "}" >> /etc/dhcp3/dhcpd.conf
+					fi
+				fi
+			fi
+			if [ $ldap = false ]; then
+				set +e
+				cat /etc/dhcp3/dhcpd.conf | grep ^use-host-decl-names[[:space:]]*on >/dev/null 2>/dev/null	
+				status=$?
+				set -e
+				if [ $status != 0 ]; then
+					cat /etc/dhcp3/dhcpd.conf | \
+					sed '/^[[:space:]]*subnet/i #This will tell the box its hostname while booting:\
+						use-host-decl-names on;\n' > /tmp/dhcpd.conf.opsi
+					mv /tmp/dhcpd.conf.opsi /etc/dhcp3/dhcpd.conf
+				fi
+			fi
+		else
+			echo "    /etc/dhcp3/dhcpd.conf not found!"
+			echo "    you will have to configure dhcpd manually!"
+			echo "    look in /usr/share/opsi-depotserver for examples."
+		fi
+	fi
+	
+	set +e
+	cat /etc/sudoers | grep "/etc/init.d/dhcp3-server restart" >/dev/null 2>/dev/null	
+	status=$?
+	set -e
+	if [ $status = 0 ]; then
+		rm /tmp/sudoers 2>/dev/null || true
+		touch /tmp/sudoers
+		chmod 600 /tmp/sudoers
+		cat /etc/sudoers > /tmp/sudoers
+		cat /tmp/sudoers | grep -v "/etc/init.d/dhcp3-server restart" > /etc/sudoers
+		rm /tmp/sudoers
+	fi
+	echo "opsiconfd ALL=NOPASSWD: /etc/init.d/dhcp3-server restart" >> /etc/sudoers
+	
+	touch /etc/opsi/pckeys
+	touch /etc/opsi/passwd
+	
+	set +e
+	/usr/bin/opsi-admin -d method getPcpatchPassword $FQDN >/dev/null 2>/dev/null	
+	status=$?
+	set -e
+	if [ $status != 0 ]; then
+		# No password set
+		/usr/bin/opsi-admin -d method createServer "$HOSTNAME" "$DOMAIN" > /dev/null
+		
+		db_get opsi/pcpatch_password1
+		/usr/bin/opsi-admin -d task setPcpatchPassword $RET
+	fi
+	
+	chown pcpatch:pcpatch /etc/opsi/pckeys
+	chmod 660 /etc/opsi/pckeys
+	chown pcpatch:pcpatch /etc/opsi/passwd
+	chmod 660 /etc/opsi/passwd
+	
+	db_get opsi/configure_dhcpd
+	if [ "$RET" = "true" ]; then
+		echo "Restarting dhcp server..."
+		/etc/init.d/dhcp3-server restart >/dev/null 2>/dev/null || true
+	fi
+	
+	db_get opsi/configure_samba
+	if [ "$RET" = "true" ]; then
+		echo "Reloading samba..."
+		/etc/init.d/samba reload >/dev/null 2>/dev/null || true
+	fi
+		
+    ;;
+    
+    abort-upgrade|abort-remove|abort-deconfigure)
+
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+db_stop
+
+exit 0
+

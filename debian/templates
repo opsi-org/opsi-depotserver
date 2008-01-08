@@ -1,0 +1,29 @@
+Template: opsi/pcpatch_password1
+Type: password
+Description: pcpatch password:
+ Please enter the password for user pcpatch.
+
+Template: opsi/pcpatch_password2
+Type: password
+Description: Confirm password:
+ Please reenter the password for user pcpatch.
+
+Template: opsi/password_mismatch
+Type: note
+Description: Password mismatch.
+ The supplied passwords do not match.
+
+Template: opsi/configure_samba
+Type: boolean
+Default: false
+Description: Do you want me to edit your samba config?
+ I can try to add the needed samba shares and users 
+ but if your samba config get messed up you have been warned!!!
+
+Template: opsi/configure_dhcpd
+Type: boolean
+Default: false
+Description: Do you want me to edit your dhcpd config?
+ I can try to add the needed options to your dhcp server config 
+ but if your config get messed up you have been warned!!!
+
