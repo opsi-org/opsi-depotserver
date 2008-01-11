@@ -1,0 +1,10 @@
+etc/opsi
+opt/pcbin/install
+opt/pcbin/pcpatch/pclog
+opt/pcbin/utils
+tftpboot
+var/lib/opsi/log
+var/lib/opsi/utils
+var/lib/opsi/depot
+var/lib/opsi/config/clients
+var/lib/opsi/config/templates
