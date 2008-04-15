@@ -145,6 +145,7 @@ case "$1" in
 	chown -R pcpatch:pcpatch /var/lib/opsi
 	chmod 2750 /var/lib/opsi
 	chmod 2770 /var/lib/opsi/products
+	chmod 660 /var/lib/opsi/products/*
 	chmod 2770 /var/lib/opsi/config
 	chmod 2770 /var/lib/opsi/config/clients
 	chmod 2770 /var/lib/opsi/config/templates
