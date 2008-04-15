@@ -142,7 +142,7 @@ case "$1" in
 	chmod 2770 /opt/pcbin/utils
 	chown -R pcpatch:pcpatch /opt/pcbin/install
 	chmod 2770 /opt/pcbin/install
-	chown -R opsiconfd:pcpatch /var/lib/opsi
+	chown -R pcpatch:pcpatch /var/lib/opsi
 	chmod 2750 /var/lib/opsi
 	chmod 2770 /var/lib/opsi/products
 	chmod 2770 /var/lib/opsi/config
