@@ -142,8 +142,9 @@ case "$1" in
 	chmod 2770 /opt/pcbin/utils
 	chown -R pcpatch:pcpatch /opt/pcbin/install
 	chmod 2770 /opt/pcbin/install
-	chown -R pcpatch:pcpatch /var/lib/opsi
+	chown -R opsiconfd:pcpatch /var/lib/opsi
 	chmod 2750 /var/lib/opsi
+	chmod 2770 /var/lib/opsi/products
 	chmod 2770 /var/lib/opsi/config
 	chmod 2770 /var/lib/opsi/config/clients
 	chmod 2770 /var/lib/opsi/config/templates
@@ -163,7 +164,6 @@ case "$1" in
 				| grep -v 'include = /etc/samba/share.conf' \
 				> /etc/samba/smb.conf
 			rm /etc/samba/smb.conf.opsi-configure
-			test -f /etc/samba/share.conf && rm -f /etc/samba/share.conf >/dev/null 2>/dev/null
 			
 			$VERBOSE && echo "  -> Testing if share [opt_pcbin] already exists"
 			set +e
