@@ -23,14 +23,20 @@ VERBOSE=true
 
 case "$1" in
     configure)
-	IPADDRESS=""
+    	HOSTNAME=`uname -n`
+	DOMAIN=`hostname -d`
+	FQDN=`hostname --fqdn`
+	IPADDRESS=`getent hosts $FQDN | cut -d' ' -f1`
 	
 	for iface in `ifconfig -a | grep "^[[:alnum:]]" | cut -d " " -f 1`; do
-	    IPADDRESS=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $3}'`
+	    ip=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $3}'`
 	    NETMASK=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $7}'`
 	    GATEWAY=`route -n | grep ^0.0.0.0 | awk '{ printf $2}'`
-	    if [ "$IPADDRESS" != "" ]; then
-		break
+	    if [ "$ip" != "" ]; then
+	        if [ "$IPADDRESS" = "" ]; then
+		    IPADDRESS="$ip"
+		fi
+		[ "$IPADDRESS" = "$ip" ] && break
 	    fi
 	done
 	
@@ -49,12 +55,9 @@ case "$1" in
 	    BROADCAST="${B[1]}.${B[2]}.${B[3]}.${B[4]}"
 	fi
 	
-	HOSTNAME=`uname -n`
-	DOMAIN=`hostname -d`
-	FQDN=`hostname --fqdn`
 	WINDOMAIN=`grep -i ^[[:space:]]*workgroup /etc/samba/smb.conf | cut -d'=' -f 2 | sed s'/ //g'`
 	
-	$VERBOSE && echo "System information"
+	$VERBOSE && echo -e "\nSystem information"
 	$VERBOSE && echo "  -> IP-Address: $IPADDRESS"
 	$VERBOSE && echo "  -> Broadcast: $BROADCAST"
 	$VERBOSE && echo "  -> Netmask: $NETMASK"
@@ -66,7 +69,7 @@ case "$1" in
 	$VERBOSE && echo "  -> Windomain: $WINDOMAIN"
 	
 	if [ `echo $FQDN | sed 's/\./ /g' | wc -w` -le 2 ]; then
-		echo "The hostname $FQDN returned by 'hostname --fqdn' is not a fully qualified domain name"
+		echo -e "\nThe hostname $FQDN returned by 'hostname --fqdn' is not a fully qualified domain name"
 		echo "Opsi needs a fully qualified domain name in the form of <hostname>.<domain>.<tld>"
 		exit 1
 	fi
@@ -101,7 +104,7 @@ case "$1" in
 		fi
 	fi
 	
-	$VERBOSE && echo "Adding system users and groups..."
+	$VERBOSE && echo -e "\nAdding system users and groups..."
 	
 	# add system group pcpatch and users pcpatch
 	$VERBOSE && echo "  -> Adding group pcpatch"
@@ -128,7 +131,7 @@ case "$1" in
 	fi
 	
 	# file permissions
-	$VERBOSE && echo "Setting permissions..."
+	$VERBOSE && echo -e "\nSetting permissions..."
 	chown -R pcpatch:pcpatch /etc/opsi/backendManager.d
 	chmod 660 /etc/opsi/backendManager.d/*
 	chown -R pcpatch:pcpatch /opt/pcbin/pcpatch
@@ -151,164 +154,156 @@ case "$1" in
 	
 	db_get opsi/configure_samba
 	if [ "$RET" = "true" ]; then
-		$VERBOSE && echo "Configuring samba..."	
-		$VERBOSE && echo "  -> Adding shares opt_pcbin, opsi_config to smb.conf"
-		# adding share to smb.conf
+		$VERBOSE && echo -e "\nConfiguring samba..."	
 		if [ -f /etc/samba/smb.conf ]; then
+			# Removing include created by opsi-depotserver < 3.3
+			cp /etc/samba/smb.conf /etc/samba/smb.conf.opsi-configure
+			cat /etc/samba/smb.conf.opsi-configure \
+				| grep -v '; load opsi shares' \
+				| grep -v 'include = /etc/samba/share.conf' \
+				> /etc/samba/smb.conf
+			rm /etc/samba/smb.conf.opsi-configure
+			test -f /etc/samba/share.conf && rm -f /etc/samba/share.conf >/dev/null 2>/dev/null
+			
+			$VERBOSE && echo "  -> Testing if share [opt_pcbin] already exists"
 			set +e
-			cat /etc/samba/smb.conf | \
-			grep ^include[[:space:]]*=[[:space:]]*/etc/samba/share.conf >/dev/null 2>/dev/null	
+			grep "^\[opt_pcbin\]" /etc/samba/smb.conf >/dev/null 2>/dev/null	
 			status=$?
 			set -e
 			if [ $status = 0 ]; then
-				$VERBOSE && echo "    share.conf already included in smb.conf"
-			else	
-				if [ -f /etc/samba/smb.conf.pre-opsi ]; then
-					$VERBOSE && echo "    /etc/samba/smb.conf.pre-opsi already exists"
-				else
-					$VERBOSE && echo "    Saving current smb.conf to smb.conf.pre-opsi"
-					cp -p /etc/samba/smb.conf /etc/samba/smb.conf.pre-opsi
-				fi
-				$VERBOSE && echo "    Changing smb.conf"
-				echo "" >> /etc/samba/smb.conf
-				echo "; load opsi shares" >> /etc/samba/smb.conf
-				echo "include = /etc/samba/share.conf" >> /etc/samba/smb.conf
+				$VERBOSE && echo "      * share exists"
+			else
+				$VERBOSE && echo "      * adding share"
+				echo "" 				>> /etc/samba/smb.conf
+				echo "[opt_pcbin]" 			>> /etc/samba/smb.conf
+				echo " available = yes" 		>> /etc/samba/smb.conf
+				echo " comment = opsi depot share" 	>> /etc/samba/smb.conf
+				echo " path = /opt/pcbin" 		>> /etc/samba/smb.conf
+				echo " oplocks = no" 			>> /etc/samba/smb.conf
+				echo " level2 oplocks = no"  		>> /etc/samba/smb.conf
+				echo " writeable = yes" 		>> /etc/samba/smb.conf
+				echo " invalid users = root" 		>> /etc/samba/smb.conf
 			fi
-    
-			if [ -f /etc/samba/share.conf ]; then
-				if [ -f /etc/samba/share.conf.pre-opsi ]; then
-					$VERBOSE && echo "    /etc/samba/share.conf.pre-opsi already exists"
-				else
-					$VERBOSE && echo "    Saving current share.conf to share.conf.pre-opsi"
-					cp -p /etc/samba/share.conf /etc/samba/share.conf.pre-opsi
-				fi
+			
+			$VERBOSE && echo "  -> Testing if share [opsi_config] already exists"
+			set +e
+			grep "^\[opsi_config\]" /etc/samba/smb.conf >/dev/null 2>/dev/null
+			status=$?
+			set -e
+			if [ $status = 0 ]; then
+				$VERBOSE && echo "      * share exists"
+			else
+				$VERBOSE && echo "      * adding share"
+				echo "" 				>> /etc/samba/smb.conf
+				echo "[opsi_config]" 			>> /etc/samba/smb.conf
+				echo " available = yes"			>> /etc/samba/smb.conf
+				echo " comment = opsi config share" 	>> /etc/samba/smb.conf
+				echo " path = /var/lib/opsi/config" 	>> /etc/samba/smb.conf
+				echo " writeable = yes" 		>> /etc/samba/smb.conf
+				echo " invalid users = root" 		>> /etc/samba/smb.conf
 			fi
-			$VERBOSE && echo "    Writing file /etc/samba/share.conf"
-	        	echo "[opt_pcbin]" 			> /etc/samba/share.conf
-			echo " available = yes" 		>> /etc/samba/share.conf
-			echo " comment = opsi depot share" 	>> /etc/samba/share.conf
-			echo " path = /opt/pcbin" 		>> /etc/samba/share.conf
-			echo " oplocks = no" 			>> /etc/samba/share.conf
-			echo " level2 oplocks = no"  		>> /etc/samba/share.conf
-			echo " writeable = yes" 		>> /etc/samba/share.conf
-			echo " invalid users = root" 		>> /etc/samba/share.conf
-			echo "" 				>> /etc/samba/share.conf
-			echo "[opsi_config]" 			>> /etc/samba/share.conf
-			echo " available = yes"			>> /etc/samba/share.conf
-			echo " comment = opsi config share" 	>> /etc/samba/share.conf
-			echo " path = /var/lib/opsi/config" 	>> /etc/samba/share.conf
-			echo " oplocks = no" 			>> /etc/samba/share.conf
-			echo " level2 oplocks = no"  		>> /etc/samba/share.conf
-			echo " writeable = yes" 		>> /etc/samba/share.conf
-			echo " invalid users = root" 		>> /etc/samba/share.conf
-			echo "" 				>> /etc/samba/share.conf
-			chmod 644 /etc/samba/share.conf
 		else
-			echo "    /etc/samba/smb.conf not found!"
-			echo "    you will have to configure samba manually!"
-			echo "    look in /usr/share/opsi-depotserver for examples."
+			echo "        * /etc/samba/smb.conf not found!"
+			echo "        * you will have to configure samba manually!"
+			echo "        * look in /usr/share/opsi-depotserver for examples."
 		fi
 	fi
 	
 	db_get opsi/configure_dhcpd
 	if [ "$RET" = "true" ]; then
 		# dhcp-server
-	        echo "Configuring dhcpd..."
-		if [ -f /etc/dhcp3/dhcpd.conf ]; then 
-			ldap=false;
-			if [ -f /etc/dhcp3/dhcpd.conf.pre-opsi ]; then
-				$VERBOSE && echo "    /etc/dhcp3/dhcpd.conf.pre-opsi already exists"
-			else
-				$VERBOSE && echo "    -> Saving current dhcpd.conf to dhcpd.conf.pre-opsi"
-				cp -p /etc/dhcp3/dhcpd.conf /etc/dhcp3/dhcpd.conf.pre-opsi
-			fi
-			$VERBOSE && echo "    -> Changing dhcpd.conf"
-			# not a very good test !
+	        echo -e "\nConfiguring dhcpd..."
+		if [ -f /etc/dhcp3/dhcpd.conf ]; then
 			set +e
-			cat /etc/dhcp3/dhcpd.conf | grep "PXE-specific" >/dev/null 2>/dev/null	
+			cat /etc/dhcp3/dhcpd.conf | grep "ldap-server" >/dev/null 2>/dev/null	
 			status=$?
 			set -e
 			if [ $status = 0 ]; then
-				$VERBOSE && echo "    Configured PXE-group found!"
+				$VERBOSE && echo "        * DHCPD configured by LDAP, leaving as is!"
 			else
-				set +e
-				cat /etc/dhcp3/dhcpd.conf | grep "ldap-server" >/dev/null 2>/dev/null	
-				status=$?
-				set -e
-				if [ $status = 0 ]; then
-					ldap=true;
-					$VERBOSE && echo "    DHCPD configured by LDAP, leaving as is!"
-				else	
-					set +e
-					cat /etc/dhcp3/dhcpd.conf | grep ^subnet >/dev/null 2>/dev/null	
-					status=$?
-					set -e
-					if [ $status = 0 ]; then
-						$VERBOSE && echo "    Configured subnet found!"
-						$VERBOSE && echo "    adding PXE-specific configuration directives..."
-						cat /etc/dhcp3/dhcpd.conf | sed '/^[[:space:]]*subnet/a \
-						group {\
-						\t# PXE-specific configuration directives...\
-						\t#option dhcp-class-identifier "PXEClient";\
-						\t# You need an entry like this for every host\
-						\t# unless you are using dynamic addresses\
-						\t#next-server 194.31.184.175;\
-						\tfilename "linux/pxelinux.0";\
-						\t# test_client\
-						\thost test_client {\
-						\t\thardware ethernet 00:C0:11:11:11:11;\
-						\t\tfixed-address test_client;\
-						\t}\
-						}' > /tmp/dhcpd.conf.opsi
-						mv /tmp/dhcpd.conf.opsi /etc/dhcp3/dhcpd.conf
-					else
-						$VERBOSE && echo "    No configured subnet found!"
-						$VERBOSE && echo "    adding subnet directive..."
-						echo "" >> /etc/dhcp3/dhcpd.conf
-						echo "# This will tell the box its hostname while booting:" >> /etc/dhcp3/dhcpd.conf
-						echo "use-host-decl-names on;" >> /etc/dhcp3/dhcpd.conf
-						echo "" >> /etc/dhcp3/dhcpd.conf
-						echo "subnet $SUBNET netmask $NETMASK {" >> /etc/dhcp3/dhcpd.conf
-						if [ "$GATEWAY" = "" ]; then
-							echo -e "\toption routers $IPADDRESS;" >> /etc/dhcp3/dhcpd.conf
-						else
-							echo -e "\toption routers $GATEWAY;" >> /etc/dhcp3/dhcpd.conf
-						fi
-						echo -e "\t#option netbios-name-servers 194.31.184.153;" >> /etc/dhcp3/dhcpd.conf
-						echo -e "\t#Group the PXE bootable hosts together" >> /etc/dhcp3/dhcpd.conf
-						echo -e "\tgroup {" >> /etc/dhcp3/dhcpd.conf
-						echo -e "\t\t# PXE-specific configuration directives..." >> /etc/dhcp3/dhcpd.conf
-						echo -e "\t\t#option dhcp-class-identifier \"PXEClient\";" >> /etc/dhcp3/dhcpd.conf
-						echo -e "\t\t# You need an entry like this for every host" >> /etc/dhcp3/dhcpd.conf
-						echo -e "\t\t# unless you are using dynamic addresses" >> /etc/dhcp3/dhcpd.conf
-						echo -e "\t\tnext-server ${IPADDRESS};" >> /etc/dhcp3/dhcpd.conf
-						echo -e "\t\tfilename \"linux/pxelinux.0\";" >> /etc/dhcp3/dhcpd.conf
-						echo -e "\t\t# test_client" >> /etc/dhcp3/dhcpd.conf
-						echo -e "\t\thost test_client {" >> /etc/dhcp3/dhcpd.conf
-						echo -e "\t\t\t	hardware ethernet 00:00:cb:62:e9:24;" >> /etc/dhcp3/dhcpd.conf
-						echo -e "\t\t\t	fixed-address test_client;" >> /etc/dhcp3/dhcpd.conf
-						echo -e "\t\t}" >> /etc/dhcp3/dhcpd.conf
-						echo -e "\t}" >> /etc/dhcp3/dhcpd.conf
-						echo -e "}" >> /etc/dhcp3/dhcpd.conf
-					fi
-				fi
-			fi
-			if [ $ldap = false ]; then
-				set +e
-				cat /etc/dhcp3/dhcpd.conf | grep ^use-host-decl-names[[:space:]]*on >/dev/null 2>/dev/null	
-				status=$?
-				set -e
-				if [ $status != 0 ]; then
-					cat /etc/dhcp3/dhcpd.conf | \
-					sed '/^[[:space:]]*subnet/i #This will tell the box its hostname while booting:\
-						use-host-decl-names on;\n' > /tmp/dhcpd.conf.opsi
-					mv /tmp/dhcpd.conf.opsi /etc/dhcp3/dhcpd.conf
-				fi
+				extension=`date +%F_%R`
+				$VERBOSE && echo "        * Saving current dhcpd.conf to dhcpd.conf.$extension"
+				cp -p /etc/dhcp3/dhcpd.conf /etc/dhcp3/dhcpd.conf.$extension
+				$VERBOSE && echo "        * Patching dhcpd.conf"
+				cat << EOF | /usr/bin/python
+import sys
+from OPSI.Backend.DHCPD import *
+
+nextserver = "$IPADDRESS"
+filename = "linux/pxelinux.0"
+subnet = "$SUBNET"
+netmask = "$NETMASK"
+
+config = Config("/etc/dhcp3/dhcpd.conf")
+config._parseConfig()
+
+print ""
+
+if config._globalBlock.getParameters_hash().get('use-host-decl-names', False):
+	print "               use-host-decl-names already enabled"
+else:
+	p = Parameter(
+		startLine 	= -1,
+		parentBlock 	= config._globalBlock,
+		key 		= 'use-host-decl-names',
+		value 		= True )
+	config._globalBlock.addComponent(p)
+
+subnets = config._globalBlock.getBlocks('subnet', recursive = True)
+if not subnets:
+	print "                  no subnets found, adding subnet"
+	config._globalBlock.addComponent(
+		Block( 
+			startLine 	= -1,
+			parentBlock 	= config._globalBlock,
+			type 		= 'subnet',
+			settings 	= ['subnet', subnet, 'netmask', netmask] )
+	)
+
+for subnet in config._globalBlock.getBlocks('subnet', recursive = True):
+	print "\n               Subnet %s/%s found" % (subnet.settings[1], subnet.settings[3])
+	groups = subnet.getBlocks('group')
+	if not groups:
+		print "                  no groups found, adding group"
+		subnet.addComponent(
+			Block( 
+				startLine 	= -1,
+				parentBlock 	= subnet,
+				type 		= 'group',
+				settings 	= ['group'] )
+		)
+	for group in subnet.getBlocks('group'):
+		print "                  configuring group"
+		params = group.getParameters_hash(inherit = 'global')
+		if params.get('next-server'):
+			print "                     next-server already set"
+		else:
+			group.addComponent(
+				Parameter(
+					startLine 	= -1,
+					parentBlock 	= group,
+					key 		= 'next-server',
+					value 		= nextserver ) )
+			print "                     next-server set to %s" % nextserver
+		if params.get('filename'):
+			print "                     filename already set"
+		else:
+			group.addComponent(
+				Parameter(
+					startLine 	= -1,
+					parentBlock 	= group,
+					key 		= 'filename',
+					value 		= filename ) )
+			print "                     filename set to %s" % filename
+config.writeConfig()
+print ""
+EOF
+
 			fi
 		else
-			echo "    /etc/dhcp3/dhcpd.conf not found!"
-			echo "    you will have to configure dhcpd manually!"
-			echo "    look in /usr/share/opsi-depotserver for examples."
+			echo "        * /etc/dhcp3/dhcpd.conf not found!"
+			echo "        * you will have to configure dhcpd manually!"
+			echo "        * look in /usr/share/opsi-depotserver for examples."
 		fi
 	fi
 	

@@ -1,3 +1,9 @@
+opsi-depotserver (3.2-4) stable; urgency=low
+
+  * postinst: using python to patch dhcpd.conf
+
+ -- Jan Schneider <j.schneider@uib.de>  Fri, 11 Jan 2008 16:07:56 +0100
+
 opsi-depotserver (3.2-3) stable; urgency=low
 
   * corrected entry in /etc/sudoers
