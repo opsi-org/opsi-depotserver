@@ -121,19 +121,10 @@ case "$1" in
 		mkdir -p /var/lib/opsi/config/depots/$FQDN
 	fi
 	
-	if ! [ -e /var/lib/opsi/config/depots/$FQDN/depot.ini ]; then
-		echo "[depotShare]" 						>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "urlForClient = smb://$HOSTNAME/opt_pcbin/install"	>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "urlForConfigServer = file:///opt/pcbin/install"		>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "" 							>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "[depotServer]" 						>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "operatingSystem = Linux" 				>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-	fi
-	
 	# file permissions
 	$VERBOSE && echo -e "\nSetting permissions..."
 	chown -R pcpatch:pcpatch /etc/opsi/backendManager.d
-	chmod 660 /etc/opsi/backendManager.d/*
+	chmod 0660 /etc/opsi/backendManager.d/*
 	chown -R pcpatch:pcpatch /opt/pcbin/pcpatch
 	chmod 2770 /opt/pcbin/pcpatch
 	chown -R pcpatch:pcpatch /opt/pcbin/pcpatch/pclog
@@ -145,12 +136,13 @@ case "$1" in
 	chown -R pcpatch:pcpatch /var/lib/opsi
 	chmod 2750 /var/lib/opsi
 	chmod 2770 /var/lib/opsi/products
-	chmod 660 /var/lib/opsi/products/*
+	chmod 0660 /var/lib/opsi/products/* >/dev/null 2>/dev/null || true
 	chmod 2770 /var/lib/opsi/config
 	chmod 2770 /var/lib/opsi/config/clients
 	chmod 2770 /var/lib/opsi/config/templates
 	chmod 2770 /var/lib/opsi/config/depots
 	chmod 2770 /var/lib/opsi/config/depots/$FQDN
+	chmod 0660 /var/lib/opsi/config/depots/$FQDN/*
 	chmod 0660 /var/lib/opsi/config/templates/pcproto.ini
 	chmod 0660 /var/lib/opsi/config/global.ini
 	
