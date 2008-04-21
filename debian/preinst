@@ -34,6 +34,8 @@ case "$1" in
 	    fi
 	done
 	
+	[ "$NETMASK" = "" ] && NETMASK="255.255.225.0"
+	
 	if [ "$IPADDRESS" != "" ]; then
 	    for part in 1 2 3 4; do
 		I[$part]=$(echo $IPADDRESS | cut -d . -f $part)
