@@ -292,6 +292,8 @@ config.writeConfig()
 print ""
 EOF
 
+			chown root:pcpatch /etc/dhcp3/dhcpd.conf
+			chmod 664 /etc/dhcp3/dhcpd.conf
 			fi
 		else
 			echo "        * /etc/dhcp3/dhcpd.conf not found!"
