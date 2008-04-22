@@ -136,11 +136,11 @@ case "$1" in
 	chmod 2770 /opt/pcbin/utils
 	chown -R pcpatch:pcpatch /opt/pcbin/install
 	chmod 2770 /opt/pcbin/install
-	chown -R pcpatch:pcpatch /var/lib/opsi
 	chown -R root:pcpatch /tftpboot/linux
 	chmod 2775 /tftpboot/linux
 	chmod 2775 /tftpboot/linux/pxelinux.cfg
 	find /tftpboot/linux -type f -exec chmod 664 {} \;
+	chown -R pcpatch:pcpatch /var/lib/opsi
 	chmod 2750 /var/lib/opsi
 	chmod 2770 /var/lib/opsi/products
 	chmod 0660 /var/lib/opsi/products/* >/dev/null 2>/dev/null || true
@@ -148,8 +148,8 @@ case "$1" in
 	chmod 2770 /var/lib/opsi/config/clients
 	chmod 2770 /var/lib/opsi/config/templates
 	chmod 2770 /var/lib/opsi/config/depots
-	chmod 2770 /var/lib/opsi/config/depots/$FQDN
-	chmod 0660 /var/lib/opsi/config/depots/$FQDN/*
+	chmod 2770 -R /var/lib/opsi/config/depots
+	find /var/lib/opsi/config/depots -type f -exec chmod 660 {} \;
 	chmod 0660 /var/lib/opsi/config/templates/pcproto.ini
 	chmod 0660 /var/lib/opsi/config/global.ini
 	
