@@ -1,9 +1,10 @@
-#! /bin/bash
-# preinst script for opsi-depotserver
-#
-# see: dh_installdeb(1)
+#! /bin/bash -e
 
-set -e
+# = = = = = = = = = = = = = = = = = = = = = = =
+# =  Copyright (C) 2006, 2007, 2008 uib GmbH  =
+# =           http://www.uib.de               =
+# =          All rights reserved.             =
+# = = = = = = = = = = = = = = = = = = = = = = =
 
 # summary of how this script can be called:
 #        * <new-preinst> `install'
