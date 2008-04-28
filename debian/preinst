@@ -15,9 +15,9 @@
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
-
 case "$1" in
-    install)
+    install|upgrade)
+	
     	HOSTNAME=`uname -n`
 	DOMAIN=`hostname -d`
 	FQDN=`hostname --fqdn`
@@ -55,10 +55,10 @@ case "$1" in
 	writeDepotIni=false
 	if [ -e /var/lib/opsi/config/depots/$FQDN/depot.ini ]; then
 		set +e
-		grep -i "urlForClient" /var/lib/opsi/config/depots/$FQDN/depot.ini >/dev/null 2>/dev/null	
+		grep '\[repository\]' /var/lib/opsi/config/depots/$FQDN/depot.ini >/dev/null 2>/dev/null	
 		status=$?
 		set -e
-		if [ $status = 0 ]; then
+		if [ $status = 1 ]; then
 			# Old version (before opsi 3.3) of ini file found
 			writeDepotIni=true
 		fi
@@ -67,6 +67,8 @@ case "$1" in
 	fi
 	
 	if $writeDepotIni; then
+		echo "Writing depot.ini"
+		
 		mkdir -p /var/lib/opsi/config/depots/$FQDN >/dev/null 2>/dev/null || true
 		chmod -R 777 /var/lib/opsi
 		
@@ -81,7 +83,7 @@ case "$1" in
 		echo ""								>> /var/lib/opsi/config/depots/$FQDN/depot.ini
 		echo "[repository]"						>> /var/lib/opsi/config/depots/$FQDN/depot.ini
 		echo "remoteurl = webdavs://$FQDN:4447/products"		>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "localurl = file:///var/lib/opsi/products"		>> /var/lib/opsi/config/depots/$FQDN/depot.ini
+		echo "localurl = file:///var/lib/opsi/products"			>> /var/lib/opsi/config/depots/$FQDN/depot.ini
 		
 		chmod 664 /var/lib/opsi/config/depots/$FQDN/depot.ini
 	fi
@@ -91,9 +93,6 @@ case "$1" in
 	chmod 2750 /var/lib/opsi
 	chmod 2770 /var/lib/opsi/products
 	chmod 0660 /var/lib/opsi/products/* >/dev/null 2>/dev/null || true
-    ;;
-
-    upgrade)
     ;;
 
     abort-upgrade)

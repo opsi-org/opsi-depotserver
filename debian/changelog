@@ -1,3 +1,9 @@
+opsi-depotserver (3.3-2) stable; urgency=low
+
+  * Fixed preinst
+
+ -- Jan Schneider <j.schneider@uib.de>  Wed, 23 Apr 2008 16:23:21 +0200
+
 opsi-depotserver (3.3-1) stable; urgency=low
 
   * opsi 3.3 release
