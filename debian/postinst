@@ -151,7 +151,7 @@ case "$1" in
 	chmod 2770 -R /var/lib/opsi/config/depots
 	find /var/lib/opsi/config/depots -type f -exec chmod 660 {} \;
 	chmod 2770 /var/lib/opsi/audit
-	chmod 0660 /var/lib/opsi/audit/*
+	chmod 0660 /var/lib/opsi/audit/* >/dev/null 2>/dev/null || true
 	chmod 0660 /var/lib/opsi/config/templates/pcproto.ini
 	chmod 0660 /var/lib/opsi/config/global.ini
 	chown opsiconfd:pcpatch /var/log/opsi
