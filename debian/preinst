@@ -89,7 +89,7 @@ case "$1" in
 	fi
 	
 	mkdir -p /var/lib/opsi/products
-	chown -R pcpatch:pcpatch /var/lib/opsi
+	chown -R opsiconfd:pcpatch /var/lib/opsi
 	chmod 2750 /var/lib/opsi
 	chmod 2770 /var/lib/opsi/products
 	chmod 0660 /var/lib/opsi/products/* >/dev/null 2>/dev/null || true

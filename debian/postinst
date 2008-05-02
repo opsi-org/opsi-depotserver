@@ -126,21 +126,21 @@ case "$1" in
 	
 	# file permissions
 	$VERBOSE && echo -e "\nSetting permissions..."
-	chown -R pcpatch:pcpatch /etc/opsi/backendManager.d
+	chown -R opsiconfd:pcpatch /etc/opsi/backendManager.d
 	chmod 0660 /etc/opsi/backendManager.d/*
-	chown -R pcpatch:pcpatch /opt/pcbin/pcpatch
+	chown -R opsiconfd:pcpatch /opt/pcbin/pcpatch
 	chmod 2770 /opt/pcbin/pcpatch
-	chown -R pcpatch:pcpatch /opt/pcbin/pcpatch/pclog
+	chown -R opsiconfd:pcpatch /opt/pcbin/pcpatch/pclog
 	chmod 2770 /opt/pcbin/pcpatch/pclog
-	chown -R pcpatch:pcpatch /opt/pcbin/utils
+	chown -R opsiconfd:pcpatch /opt/pcbin/utils
 	chmod 2770 /opt/pcbin/utils
-	chown -R pcpatch:pcpatch /opt/pcbin/install
+	chown -R opsiconfd:pcpatch /opt/pcbin/install
 	chmod 2770 /opt/pcbin/install
-	chown -R root:pcpatch /tftpboot/linux
+	chown -R opsiconfd:pcpatch /tftpboot/linux
 	chmod 2775 /tftpboot/linux
 	chmod 2775 /tftpboot/linux/pxelinux.cfg
 	find /tftpboot/linux -type f -exec chmod 664 {} \;
-	chown -R pcpatch:pcpatch /var/lib/opsi
+	chown -R opsiconfd:pcpatch /var/lib/opsi
 	chmod 2750 /var/lib/opsi
 	chmod 2770 /var/lib/opsi/products
 	chmod 0660 /var/lib/opsi/products/* >/dev/null 2>/dev/null || true
@@ -150,8 +150,14 @@ case "$1" in
 	chmod 2770 /var/lib/opsi/config/depots
 	chmod 2770 -R /var/lib/opsi/config/depots
 	find /var/lib/opsi/config/depots -type f -exec chmod 660 {} \;
+	chmod 2770 /var/lib/opsi/audit
+	chmod 0660 /var/lib/opsi/audit/*
 	chmod 0660 /var/lib/opsi/config/templates/pcproto.ini
 	chmod 0660 /var/lib/opsi/config/global.ini
+	chown opsiconfd:pcpatch /var/log/opsi
+	chmod 2770 /var/log/opsi
+	chown pcpatch:pcpatch /home/opsiproducts
+	chmod 2770 /home/opsiproducts
 	
 	db_get opsi/configure_samba
 	if [ "$RET" = "true" ]; then
@@ -201,6 +207,26 @@ case "$1" in
 				echo " path = /var/lib/opsi/config" 	>> /etc/samba/smb.conf
 				echo " writeable = yes" 		>> /etc/samba/smb.conf
 				echo " invalid users = root" 		>> /etc/samba/smb.conf
+			fi
+			
+			$VERBOSE && echo "  -> Testing if share [opsi_workbench] already exists"
+			set +e
+			grep "^\[opsi_workbench\]" /etc/samba/smb.conf >/dev/null 2>/dev/null
+			status=$?
+			set -e
+			if [ $status = 0 ]; then
+				$VERBOSE && echo "      * share exists"
+			else
+				$VERBOSE && echo "      * adding share"
+				echo "" 				>> /etc/samba/smb.conf
+				echo "[opsi_workbench]" 		>> /etc/samba/smb.conf
+				echo " available = yes"			>> /etc/samba/smb.conf
+				echo " comment = opsi workbench" 	>> /etc/samba/smb.conf
+				echo " path = /home/opsiproducts" 	>> /etc/samba/smb.conf
+				echo " writeable = yes" 		>> /etc/samba/smb.conf
+				echo " invalid users = root" 		>> /etc/samba/smb.conf
+				echo " create mask = 0660"		>> /etc/samba/smb.conf
+				echo " directoy mask = 0770"		>> /etc/samba/smb.conf
 			fi
 		else
 			echo "        * /etc/samba/smb.conf not found!"
@@ -338,9 +364,9 @@ EOF
 		/usr/bin/opsi-admin -d task setPcpatchPassword $RET
 	fi
 	
-	chown pcpatch:pcpatch /etc/opsi/pckeys
+	chown opsiconfd:pcpatch /etc/opsi/pckeys
 	chmod 660 /etc/opsi/pckeys
-	chown pcpatch:pcpatch /etc/opsi/passwd
+	chown opsiconfd:pcpatch /etc/opsi/passwd
 	chmod 660 /etc/opsi/passwd
 	
 	db_get opsi/configure_dhcpd
