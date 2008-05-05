@@ -364,6 +364,8 @@ EOF
 		/usr/bin/opsi-admin -d task setPcpatchPassword $RET
 	fi
 	
+	/usr/bin/opsi-admin -d method getPcpatchRSAPrivateKey >/dev/null 2>/dev/null || true
+	
 	chown opsiconfd:pcpatch /etc/opsi/pckeys
 	chmod 660 /etc/opsi/pckeys
 	chown opsiconfd:pcpatch /etc/opsi/passwd
