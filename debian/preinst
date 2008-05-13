@@ -83,7 +83,8 @@ case "$1" in
 		echo ""								>> /var/lib/opsi/config/depots/$FQDN/depot.ini
 		echo "[repository]"						>> /var/lib/opsi/config/depots/$FQDN/depot.ini
 		echo "remoteurl = webdavs://$FQDN:4447/products"		>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "localurl = file:///var/lib/opsi/products"			>> /var/lib/opsi/config/depots/$FQDN/depot.ini
+		echo "localurl = file:///var/lib/opsi/products"		>> /var/lib/opsi/config/depots/$FQDN/depot.ini
+		echo "maxbandwidth = 0"						>> /var/lib/opsi/config/depots/$FQDN/depot.ini
 		
 		chmod 664 /var/lib/opsi/config/depots/$FQDN/depot.ini
 	fi

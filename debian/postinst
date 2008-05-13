@@ -105,6 +105,15 @@ case "$1" in
 			cat /var/lib/opsi/config/global.ini.tmp | sed "s/@FQDN@/$FQDN/g" > /var/lib/opsi/config/global.ini
 			rm /var/lib/opsi/config/global.ini.tmp
 		fi
+		set +e
+		grep "@IPADDRESS@" /var/lib/opsi/config/global.ini >/dev/null 2>/dev/null	
+		status=$?
+		set -e
+		if [ $status = 0 ]; then
+			cp /var/lib/opsi/config/global.ini /var/lib/opsi/config/global.ini.tmp
+			cat /var/lib/opsi/config/global.ini.tmp | sed "s/@IPADDRESS@/$IPADDRESS/g" > /var/lib/opsi/config/global.ini
+			rm /var/lib/opsi/config/global.ini.tmp
+		fi
 	fi
 	
 	$VERBOSE && echo -e "\nAdding system users and groups..."
@@ -365,6 +374,11 @@ EOF
 	fi
 	
 	/usr/bin/opsi-admin -d method getPcpatchRSAPrivateKey >/dev/null 2>/dev/null || true
+	
+	eval `opsi-admin -ds method getNetworkConfig_hash | grep nextBootServiceURL`
+	if [ "$nextBootServiceURL" = "" ]; then
+		/usr/bin/opsi-admin -d method setNetworkConfig `/usr/bin/opsi-admin -d method getNetworkConfig_hash | sed "s/\"nextBootServiceURL.*/\"nextBootServiceURL\" : \"https:\/\/${IPADDRESS}:4447\", /" | tr -d '\n' | sed "s/^/'/" | sed "s/$/'/"` "$DOMAIN"
+	fi
 	
 	chown opsiconfd:pcpatch /etc/opsi/pckeys
 	chmod 660 /etc/opsi/pckeys

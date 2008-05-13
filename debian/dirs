@@ -2,7 +2,6 @@ etc/opsi
 opt/pcbin/install
 opt/pcbin/pcpatch/pclog
 opt/pcbin/utils
-tftpboot
 var/lib/opsi/utils
 var/lib/opsi/products
 var/lib/opsi/depot
