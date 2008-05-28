@@ -129,6 +129,11 @@ case "$1" in
 		useradd -u 992 -g 992 -d /opt/pcbin/pcpatch -s /bin/bash pcpatch
 	fi
 	
+	$VERBOSE && echo "  -> Adding user opsiconfd"
+	if [ -z "`getent passwd opsiconfd`" ]; then
+		useradd -u 993 -g 992 -d /var/lib/opsi -s /bin/bash opsiconfd
+	fi
+	
 	if ! [ -e /var/lib/opsi/config/depots/$FQDN ]; then
 		mkdir -p /var/lib/opsi/config/depots/$FQDN
 	fi
