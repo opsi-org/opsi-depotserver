@@ -240,7 +240,7 @@ case "$1" in
 				echo " writeable = yes" 		>> /etc/samba/smb.conf
 				echo " invalid users = root" 		>> /etc/samba/smb.conf
 				echo " create mask = 0660"		>> /etc/samba/smb.conf
-				echo " directoy mask = 0770"		>> /etc/samba/smb.conf
+				echo " directory mask = 0770"		>> /etc/samba/smb.conf
 			fi
 		else
 			echo "        * /etc/samba/smb.conf not found!"
