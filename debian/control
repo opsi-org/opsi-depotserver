@@ -8,7 +8,7 @@ Standards-Version: 3.6.1
 Package: opsi-depotserver
 Section: opsi
 Architecture: all
-Depends: python-opsi (>=3.3) | python2.3-opsi (>=3.3) | python2.4-opsi (>=3.3), opsiconfd (>=2.0.0), opsipxeconfd (>=0.3.1), opsi-utils (>=3.3) | opsi-utils-python2.3 (>=3.3) | opsi-utils-python2.4 (>=3.3), opsi-linux-bootimage (>=20080401), samba, dhcp3-server, sudo, wget
+Depends: python-opsi (>=3.3) | python2.3-opsi (>=3.3) | python2.4-opsi (>=3.3), opsiconfd (>=2.0.0.4), opsipxeconfd (>=0.3.2), opsi-utils (>=3.3) | opsi-utils-python2.3 (>=3.3) | opsi-utils-python2.4 (>=3.3), opsi-linux-bootimage (>=20080514), samba, dhcp3-server, sudo, wget
 Description: server fuer das Softwareverteilungssystem OPSI
  Der opsi-depotserver dient als Basis fuer das Softwareverteilungssystem OPSI.
  .
