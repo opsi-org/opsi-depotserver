@@ -156,6 +156,8 @@ case "$1" in
 	find /tftpboot/linux -type f -exec chmod 664 {} \;
 	chown -R opsiconfd:pcpatch /var/lib/opsi
 	chmod 2750 /var/lib/opsi
+	# for ssh public key authentification to work rights on /var/lib/opsi have to be pcatch:pcpatch 750
+	chown pcpatch /var/lib/opsi
 	chmod 2770 /var/lib/opsi/products
 	chmod 0660 /var/lib/opsi/products/* >/dev/null 2>/dev/null || true
 	chmod 2770 /var/lib/opsi/config
