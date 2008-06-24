@@ -374,6 +374,8 @@ EOF
 	set -e
 	if [ $status != 0 ]; then
 		# No password set
+		/usr/bin/opsi-admin -d method createOpsiBase >/dev/null 2>/dev/null	
+		
 		/usr/bin/opsi-admin -d method createServer "$HOSTNAME" "$DOMAIN" > /dev/null
 		
 		db_get opsi/pcpatch_password1
