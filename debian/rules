@@ -42,9 +42,9 @@ install: build
 	dh_testroot
 	dh_clean -k 
 	dh_installdirs
-	cp -R tftpboot debian/opsi-depotserver/
 	cp -R opt debian/opsi-depotserver/
 	cp -R var debian/opsi-depotserver/
+	cp -R home debian/opsi-depotserver/
 	find debian/opsi-depotserver -name '.svn' -exec rm -rf '{}' \; 2>/dev/null || true
 	dh_install
 

@@ -15,6 +15,9 @@
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
+
+VERBOSE=true
+
 case "$1" in
     install|upgrade)
 	
@@ -52,6 +55,24 @@ case "$1" in
 	    BROADCAST="${B[1]}.${B[2]}.${B[3]}.${B[4]}"
 	fi
 	
+	$VERBOSE && echo -e "\nAdding system users and groups..."
+	
+	# add system group pcpatch and users pcpatch
+	$VERBOSE && echo "  -> Adding group pcpatch"
+	if [ -z "`getent group pcpatch`" ]; then
+		groupadd -g 992 pcpatch
+	fi
+		
+	$VERBOSE && echo "  -> Adding user pcpatch"
+	if [ -z "`getent passwd pcpatch`" ]; then
+		useradd -u 992 -g 992 -d /opt/pcbin/pcpatch -s /bin/bash pcpatch
+	fi
+	
+	$VERBOSE && echo "  -> Adding user opsiconfd"
+	if [ -z "`getent passwd opsiconfd`" ]; then
+		useradd -u 993 -g 992 -d /var/lib/opsi -s /bin/bash opsiconfd
+	fi
+	
 	writeDepotIni=false
 	if [ -e /var/lib/opsi/config/depots/$FQDN/depot.ini ]; then
 		set +e
@@ -83,13 +104,14 @@ case "$1" in
 		echo ""								>> /var/lib/opsi/config/depots/$FQDN/depot.ini
 		echo "[repository]"						>> /var/lib/opsi/config/depots/$FQDN/depot.ini
 		echo "remoteurl = webdavs://$FQDN:4447/products"		>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "localurl = file:///var/lib/opsi/products"			>> /var/lib/opsi/config/depots/$FQDN/depot.ini
+		echo "localurl = file:///var/lib/opsi/products"		>> /var/lib/opsi/config/depots/$FQDN/depot.ini
+		echo "maxbandwidth = 0"						>> /var/lib/opsi/config/depots/$FQDN/depot.ini
 		
 		chmod 664 /var/lib/opsi/config/depots/$FQDN/depot.ini
 	fi
 	
 	mkdir -p /var/lib/opsi/products
-	chown -R pcpatch:pcpatch /var/lib/opsi
+	chown -R opsiconfd:pcpatch /var/lib/opsi
 	chmod 2750 /var/lib/opsi
 	chmod 2770 /var/lib/opsi/products
 	chmod 0660 /var/lib/opsi/products/* >/dev/null 2>/dev/null || true
