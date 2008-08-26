@@ -15,6 +15,9 @@
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
+
+VERBOSE=true
+
 case "$1" in
     install|upgrade)
 	
@@ -50,6 +53,24 @@ case "$1" in
 	
 	    SUBNET="${N[1]}.${N[2]}.${N[3]}.${N[4]}"
 	    BROADCAST="${B[1]}.${B[2]}.${B[3]}.${B[4]}"
+	fi
+	
+	$VERBOSE && echo -e "\nAdding system users and groups..."
+	
+	# add system group pcpatch and users pcpatch
+	$VERBOSE && echo "  -> Adding group pcpatch"
+	if [ -z "`getent group pcpatch`" ]; then
+		groupadd -g 992 pcpatch
+	fi
+		
+	$VERBOSE && echo "  -> Adding user pcpatch"
+	if [ -z "`getent passwd pcpatch`" ]; then
+		useradd -u 992 -g 992 -d /opt/pcbin/pcpatch -s /bin/bash pcpatch
+	fi
+	
+	$VERBOSE && echo "  -> Adding user opsiconfd"
+	if [ -z "`getent passwd opsiconfd`" ]; then
+		useradd -u 993 -g 992 -d /var/lib/opsi -s /bin/bash opsiconfd
 	fi
 	
 	writeDepotIni=false

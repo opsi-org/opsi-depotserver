@@ -1,3 +1,15 @@
+opsi-depotserver (3.3-9) stable; urgency=low
+
+  * /var/lib/opsi/.ssh gets (re)created
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 26 Aug 2008 09:29:28 +0200
+
+opsi-depotserver (3.3-8) stable; urgency=low
+
+  * fixed creation of users and groups
+
+ -- Jan Schneider <j.schneider@uib.de>  Wed, 20 Aug 2008 16:43:08 +0200
+
 opsi-depotserver (3.3-7) stable; urgency=low
 
   * owner of /var/lib/opsi changed to pcpatch (for ssh publickey auth to work)

@@ -116,24 +116,6 @@ case "$1" in
 		fi
 	fi
 	
-	$VERBOSE && echo -e "\nAdding system users and groups..."
-	
-	# add system group pcpatch and users pcpatch
-	$VERBOSE && echo "  -> Adding group pcpatch"
-	if [ -z "`getent group pcpatch`" ]; then
-		groupadd -g 992 pcpatch
-	fi
-		
-	$VERBOSE && echo "  -> Adding user pcpatch"
-	if [ -z "`getent passwd pcpatch`" ]; then
-		useradd -u 992 -g 992 -d /opt/pcbin/pcpatch -s /bin/bash pcpatch
-	fi
-	
-	$VERBOSE && echo "  -> Adding user opsiconfd"
-	if [ -z "`getent passwd opsiconfd`" ]; then
-		useradd -u 993 -g 992 -d /var/lib/opsi -s /bin/bash opsiconfd
-	fi
-	
 	if ! [ -e /var/lib/opsi/config/depots/$FQDN ]; then
 		mkdir -p /var/lib/opsi/config/depots/$FQDN
 	fi
@@ -382,6 +364,7 @@ EOF
 		/usr/bin/opsi-admin -d task setPcpatchPassword $RET
 	fi
 	
+	test -e /var/lib/opsi/.ssh && rm -r /var/lib/opsi/.ssh
 	/usr/bin/opsi-admin -d method getPcpatchRSAPrivateKey >/dev/null 2>/dev/null || true
 	
 	eval `opsi-admin -ds method getNetworkConfig_hash | grep nextBootServiceURL`
