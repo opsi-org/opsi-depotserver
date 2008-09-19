@@ -21,44 +21,54 @@
 . /usr/share/debconf/confmodule
 
 VERBOSE=true
+SAMBA_CONF="/etc/samba/smb.conf"
+SAMBA_INIT="/etc/init.d/samba"
+DHCPD_CONF="/etc/dhcp3/dhcpd.conf"
+DHCPD_INIT="/etc/init.d/dhcp3-server"
+db_get opsi/configure_samba
+CONFIGURE_SAMBA=$RET
+db_get opsi/configure_dhcpd
+CONFIGURE_DHCPD=$RET
+db_get opsi/pcpatch_password1
+PCPATCH_PASSWORD=$RET
 
 case "$1" in
     configure)
-    	HOSTNAME=`uname -n`
+	HOSTNAME=`uname -n`
 	DOMAIN=`hostname -d`
 	FQDN=`hostname --fqdn`
 	IPADDRESS=`getent hosts $FQDN | cut -d' ' -f1`
 	
 	for iface in `ifconfig -a | grep "^[[:alnum:]]" | cut -d " " -f 1`; do
-	    ip=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $3}'`
-	    NETMASK=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $7}'`
-	    GATEWAY=`route -n | grep ^0.0.0.0 | awk '{ printf $2}'`
-	    if [ "$ip" != "" ]; then
-	        if [ "$IPADDRESS" = "" ]; then
-		    IPADDRESS="$ip"
+		ip=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $3}'`
+		NETMASK=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $7}'`
+		GATEWAY=`route -n | grep ^0.0.0.0 | awk '{ printf $2}'`
+		if [ "$ip" != "" ]; then
+		if [ "$IPADDRESS" = "" ]; then
+			IPADDRESS="$ip"
 		fi
 		[ "$IPADDRESS" = "$ip" ] && break
-	    fi
+		fi
 	done
 	
 	[ "$NETMASK" = "" ] && NETMASK="255.255.225.0"
 	
 	if [ "$IPADDRESS" != "" ]; then
-	    for part in 1 2 3 4; do
-		I[$part]=$(echo $IPADDRESS | cut -d . -f $part)
-		M[$part]=$(echo $NETMASK | cut -d . -f $part)
-	    done
-		    
-	    for part in 1 2 3 4; do
-		N[$part]=$((${I[$part]} & ${M[$part]}))
-	        B[$part]=$((${N[$part]} | $((${M[$part]} ^255))))
-	    done
-	
-	    SUBNET="${N[1]}.${N[2]}.${N[3]}.${N[4]}"
-	    BROADCAST="${B[1]}.${B[2]}.${B[3]}.${B[4]}"
+		for part in 1 2 3 4; do
+			I[$part]=$(echo $IPADDRESS | cut -d . -f $part)
+			M[$part]=$(echo $NETMASK | cut -d . -f $part)
+		done
+		
+		for part in 1 2 3 4; do
+			N[$part]=$((${I[$part]} & ${M[$part]}))
+			B[$part]=$((${N[$part]} | $((${M[$part]} ^255))))
+		done
+		
+		SUBNET="${N[1]}.${N[2]}.${N[3]}.${N[4]}"
+		BROADCAST="${B[1]}.${B[2]}.${B[3]}.${B[4]}"
 	fi
 	
-	WINDOMAIN=`grep -i ^[[:space:]]*workgroup /etc/samba/smb.conf | cut -d'=' -f 2 | sed s'/ //g'`
+	WINDOMAIN=`grep -i ^[[:space:]]*workgroup $SAMBA_CONF | cut -d'=' -f 2 | sed s'/ //g'`
 	
 	$VERBOSE && echo -e "\nSystem information"
 	$VERBOSE && echo "  -> IP-Address: $IPADDRESS"
@@ -157,89 +167,87 @@ case "$1" in
 	chown pcpatch:pcpatch /home/opsiproducts
 	chmod 2770 /home/opsiproducts
 	
-	db_get opsi/configure_samba
-	if [ "$RET" = "true" ]; then
+	if [ "$CONFIGURE_SAMBA" = "true" ]; then
 		$VERBOSE && echo -e "\nConfiguring samba..."	
-		if [ -f /etc/samba/smb.conf ]; then
+		if [ -f $SAMBA_CONF ]; then
 			# Removing include created by opsi-depotserver < 3.3
-			cp /etc/samba/smb.conf /etc/samba/smb.conf.opsi-configure
-			cat /etc/samba/smb.conf.opsi-configure \
+			cp $SAMBA_CONF $SAMBA_CONF.opsi-configure
+			cat $SAMBA_CONF.opsi-configure \
 				| grep -v '; load opsi shares' \
 				| grep -v 'include = /etc/samba/share.conf' \
-				> /etc/samba/smb.conf
-			rm /etc/samba/smb.conf.opsi-configure
+				> $SAMBA_CONF
+			rm $SAMBA_CONF.opsi-configure
 			
 			$VERBOSE && echo "  -> Testing if share [opt_pcbin] already exists"
 			set +e
-			grep "^\[opt_pcbin\]" /etc/samba/smb.conf >/dev/null 2>/dev/null	
+			grep "^\[opt_pcbin\]" $SAMBA_CONF >/dev/null 2>/dev/null	
 			status=$?
 			set -e
 			if [ $status = 0 ]; then
 				$VERBOSE && echo "      * share exists"
 			else
 				$VERBOSE && echo "      * adding share"
-				echo "" 				>> /etc/samba/smb.conf
-				echo "[opt_pcbin]" 			>> /etc/samba/smb.conf
-				echo " available = yes" 		>> /etc/samba/smb.conf
-				echo " comment = opsi depot share" 	>> /etc/samba/smb.conf
-				echo " path = /opt/pcbin" 		>> /etc/samba/smb.conf
-				echo " oplocks = no" 			>> /etc/samba/smb.conf
-				echo " level2 oplocks = no"  		>> /etc/samba/smb.conf
-				echo " writeable = yes" 		>> /etc/samba/smb.conf
-				echo " invalid users = root" 		>> /etc/samba/smb.conf
+				echo "" 				>> $SAMBA_CONF
+				echo "[opt_pcbin]" 			>> $SAMBA_CONF
+				echo " available = yes" 		>> $SAMBA_CONF
+				echo " comment = opsi depot share" 	>> $SAMBA_CONF
+				echo " path = /opt/pcbin" 		>> $SAMBA_CONF
+				echo " oplocks = no" 			>> $SAMBA_CONF
+				echo " level2 oplocks = no"  		>> $SAMBA_CONF
+				echo " writeable = yes" 		>> $SAMBA_CONF
+				echo " invalid users = root" 		>> $SAMBA_CONF
 			fi
 			
 			$VERBOSE && echo "  -> Testing if share [opsi_config] already exists"
 			set +e
-			grep "^\[opsi_config\]" /etc/samba/smb.conf >/dev/null 2>/dev/null
+			grep "^\[opsi_config\]" $SAMBA_CONF >/dev/null 2>/dev/null
 			status=$?
 			set -e
 			if [ $status = 0 ]; then
 				$VERBOSE && echo "      * share exists"
 			else
 				$VERBOSE && echo "      * adding share"
-				echo "" 				>> /etc/samba/smb.conf
-				echo "[opsi_config]" 			>> /etc/samba/smb.conf
-				echo " available = yes"			>> /etc/samba/smb.conf
-				echo " comment = opsi config share" 	>> /etc/samba/smb.conf
-				echo " path = /var/lib/opsi/config" 	>> /etc/samba/smb.conf
-				echo " writeable = yes" 		>> /etc/samba/smb.conf
-				echo " invalid users = root" 		>> /etc/samba/smb.conf
+				echo "" 				>> $SAMBA_CONF
+				echo "[opsi_config]" 			>> $SAMBA_CONF
+				echo " available = yes"			>> $SAMBA_CONF
+				echo " comment = opsi config share" 	>> $SAMBA_CONF
+				echo " path = /var/lib/opsi/config" 	>> $SAMBA_CONF
+				echo " writeable = yes" 		>> $SAMBA_CONF
+				echo " invalid users = root" 		>> $SAMBA_CONF
 			fi
 			
 			$VERBOSE && echo "  -> Testing if share [opsi_workbench] already exists"
 			set +e
-			grep "^\[opsi_workbench\]" /etc/samba/smb.conf >/dev/null 2>/dev/null
+			grep "^\[opsi_workbench\]" $SAMBA_CONF >/dev/null 2>/dev/null
 			status=$?
 			set -e
 			if [ $status = 0 ]; then
 				$VERBOSE && echo "      * share exists"
 			else
 				$VERBOSE && echo "      * adding share"
-				echo "" 				>> /etc/samba/smb.conf
-				echo "[opsi_workbench]" 		>> /etc/samba/smb.conf
-				echo " available = yes"			>> /etc/samba/smb.conf
-				echo " comment = opsi workbench" 	>> /etc/samba/smb.conf
-				echo " path = /home/opsiproducts" 	>> /etc/samba/smb.conf
-				echo " writeable = yes" 		>> /etc/samba/smb.conf
-				echo " invalid users = root" 		>> /etc/samba/smb.conf
-				echo " create mask = 0660"		>> /etc/samba/smb.conf
-				echo " directory mask = 0770"		>> /etc/samba/smb.conf
+				echo "" 				>> $SAMBA_CONF
+				echo "[opsi_workbench]" 		>> $SAMBA_CONF
+				echo " available = yes"			>> $SAMBA_CONF
+				echo " comment = opsi workbench" 	>> $SAMBA_CONF
+				echo " path = /home/opsiproducts" 	>> $SAMBA_CONF
+				echo " writeable = yes" 		>> $SAMBA_CONF
+				echo " invalid users = root" 		>> $SAMBA_CONF
+				echo " create mask = 0660"		>> $SAMBA_CONF
+				echo " directory mask = 0770"		>> $SAMBA_CONF
 			fi
 		else
-			echo "        * /etc/samba/smb.conf not found!"
+			echo "        * $SAMBA_CONF not found!"
 			echo "        * you will have to configure samba manually!"
 			echo "        * look in /usr/share/opsi-depotserver for examples."
 		fi
 	fi
 	
-	db_get opsi/configure_dhcpd
-	if [ "$RET" = "true" ]; then
+	if [ "$CONFIGURE_DHCPD" = "true" ]; then
 		# dhcp-server
-	        echo -e "\nConfiguring dhcpd..."
-		if [ -f /etc/dhcp3/dhcpd.conf ]; then
+		echo -e "\nConfiguring dhcpd..."
+		if [ -f $DHCPD_CONF ]; then
 			set +e
-			cat /etc/dhcp3/dhcpd.conf | grep "ldap-server" >/dev/null 2>/dev/null	
+			cat $DHCPD_CONF | grep "ldap-server" >/dev/null 2>/dev/null	
 			status=$?
 			set -e
 			if [ $status = 0 ]; then
@@ -247,7 +255,7 @@ case "$1" in
 			else
 				extension=`date +%F_%R`
 				$VERBOSE && echo "        * Saving current dhcpd.conf to dhcpd.conf.$extension"
-				cp -p /etc/dhcp3/dhcpd.conf /etc/dhcp3/dhcpd.conf.$extension
+				cp -p $DHCPD_CONF $DHCPD_CONF.$extension
 				$VERBOSE && echo "        * Patching dhcpd.conf"
 				cat << EOF | /usr/bin/python
 import sys
@@ -258,7 +266,7 @@ filename = "linux/pxelinux.0"
 subnet = "$SUBNET"
 netmask = "$NETMASK"
 
-config = Config("/etc/dhcp3/dhcpd.conf")
+config = Config("$DHCPD_CONF")
 config._parseConfig()
 
 print ""
@@ -323,18 +331,18 @@ config.writeConfig()
 print ""
 EOF
 
-			chown root:pcpatch /etc/dhcp3/dhcpd.conf
-			chmod 664 /etc/dhcp3/dhcpd.conf
+			chown root:pcpatch $DHCPD_CONF
+			chmod 664 $DHCPD_CONF
 			fi
 		else
-			echo "        * /etc/dhcp3/dhcpd.conf not found!"
+			echo "        * $DHCPD_CONF not found!"
 			echo "        * you will have to configure dhcpd manually!"
 			echo "        * look in /usr/share/opsi-depotserver for examples."
 		fi
 	fi
 	
 	set +e
-	cat /etc/sudoers | grep "/etc/init.d/dhcp3-server restart" >/dev/null 2>/dev/null	
+	cat /etc/sudoers | grep "$DHCPD_INIT restart" >/dev/null 2>/dev/null	
 	status=$?
 	set -e
 	if [ $status = 0 ]; then
@@ -342,10 +350,10 @@ EOF
 		touch /tmp/sudoers
 		chmod 600 /tmp/sudoers
 		cat /etc/sudoers > /tmp/sudoers
-		cat /tmp/sudoers | grep -v "/etc/init.d/dhcp3-server restart" > /etc/sudoers
+		cat /tmp/sudoers | grep -v "$DHCPD_INIT restart" > /etc/sudoers
 		rm /tmp/sudoers
 	fi
-	echo "opsiconfd ALL=NOPASSWD: /etc/init.d/dhcp3-server restart" >> /etc/sudoers
+	echo "opsiconfd ALL=NOPASSWD: $DHCPD_INIT restart" >> /etc/sudoers
 	
 	touch /etc/opsi/pckeys
 	touch /etc/opsi/passwd
@@ -360,8 +368,7 @@ EOF
 		
 		/usr/bin/opsi-admin -d method createServer "$HOSTNAME" "$DOMAIN" > /dev/null
 		
-		db_get opsi/pcpatch_password1
-		/usr/bin/opsi-admin -d task setPcpatchPassword $RET
+		/usr/bin/opsi-admin -d task setPcpatchPassword $PCPATCH_PASSWORD
 	fi
 	
 	test -e /var/lib/opsi/.ssh && rm -r /var/lib/opsi/.ssh
@@ -377,18 +384,16 @@ EOF
 	chown opsiconfd:pcpatch /etc/opsi/passwd
 	chmod 660 /etc/opsi/passwd
 	
-	db_get opsi/configure_dhcpd
-	if [ "$RET" = "true" ]; then
+	if [ "$CONFIGURE_DHCPD" = "true" ]; then
 		echo "Restarting dhcp server..."
-		/etc/init.d/dhcp3-server restart >/dev/null 2>/dev/null || true
+		$DHCPD_INIT restart >/dev/null 2>/dev/null || true
 	fi
 	
-	db_get opsi/configure_samba
-	if [ "$RET" = "true" ]; then
+	if [ "$CONFIGURE_SAMBA" = "true" ]; then
 		echo "Reloading samba..."
-		/etc/init.d/samba reload >/dev/null 2>/dev/null || true
+		$SAMBA_INIT reload >/dev/null 2>/dev/null || true
 	fi
-		
+	
     ;;
     
     abort-upgrade|abort-remove|abort-deconfigure)
