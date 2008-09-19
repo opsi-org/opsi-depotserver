@@ -46,6 +46,7 @@ mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/audit
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/config/depots
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/config/templates
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/products
+mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/config/clients
 install -m 0660 var/lib/opsi/config/templates/pcproto.ini $RPM_BUILD_ROOT/var/lib/opsi/config/templates/
 install -m 0660 var/lib/opsi/config/global.ini $RPM_BUILD_ROOT/var/lib/opsi/config/
 
@@ -550,6 +551,7 @@ smbpasswd -x pcpatch >/dev/null 2>/dev/null || true
 %dir /var/lib/opsi/config/depots
 %dir /var/lib/opsi/config/templates
 %dir /var/lib/opsi/products
+%dir /var/lib/opsi/config/clients
 
 # ===[ changelog ]==================================
 %changelog
