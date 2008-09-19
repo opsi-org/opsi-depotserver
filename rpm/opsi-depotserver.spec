@@ -266,8 +266,6 @@ chown -R opsiconfd:pcpatch /etc/opsi/backendManager.d
 chmod 0660 /etc/opsi/backendManager.d/*
 chown -R opsiconfd:pcpatch /opt/pcbin/pcpatch
 chmod 2770 /opt/pcbin/pcpatch
-chown -R opsiconfd:pcpatch /opt/pcbin/pcpatch/pclog
-chmod 2770 /opt/pcbin/pcpatch/pclog
 chown -R opsiconfd:pcpatch /opt/pcbin/utils
 chmod 2770 /opt/pcbin/utils
 chown -R opsiconfd:pcpatch /opt/pcbin/install
