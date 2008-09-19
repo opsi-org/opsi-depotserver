@@ -497,7 +497,7 @@ if [ $status != 0 ]; then
 	
 	/usr/bin/opsi-admin -d method createServer "$HOSTNAME" "$DOMAIN" > /dev/null
 	
-	/usr/bin/opsi-admin -d task setPcpatchPassword $PCPATCH_PASSWORD
+	/usr/bin/opsi-admin -d task setPcpatchPassword "$PCPATCH_PASSWORD"
 fi
 
 test -e /var/lib/opsi/.ssh && rm -r /var/lib/opsi/.ssh
