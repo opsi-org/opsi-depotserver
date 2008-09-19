@@ -18,6 +18,7 @@ Summary:        opsi depotserver
 %define tarname opsi-depotserver
 Source:         %{tarname}-%{version}.tar.bz2
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
+BuildArch:      noarch
 
 # ===[ description ]================================
 %description
