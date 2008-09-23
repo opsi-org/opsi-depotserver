@@ -547,6 +547,7 @@ smbpasswd -x pcpatch >/dev/null 2>/dev/null || true
 %dir /opt/pcbin/pcpatch
 %dir /opt/pcbin/utils
 %dir /home/opsiproducts
+%dir /var/log/opsi
 %dir /var/lib/opsi/audit
 %dir /var/lib/opsi/config/depots
 %dir /var/lib/opsi/config/templates
