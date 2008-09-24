@@ -163,8 +163,7 @@ DHCPD_CONF="/etc/dhcpd.conf"
 DHCPD_INIT="/etc/init.d/dhcpd"
 CONFIGURE_SAMBA="true"
 CONFIGURE_DHCPD="true"
-PCPATCH_PASSWORD=`</dev/urandom tr -dc A-Za-z0-9| (head -c $1 > /dev/null 2>&1 || head -c 8)`
-
+PCPATCH_PASSWORD=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c12`
 
 HOSTNAME=`uname -n`
 DOMAIN=`hostname -d`
@@ -497,7 +496,7 @@ if [ $status != 0 ]; then
 	/usr/bin/opsi-admin -d method createOpsiBase >/dev/null 2>/dev/null	
 	
 	/usr/bin/opsi-admin -d method createServer "$HOSTNAME" "$DOMAIN" > /dev/null
-	
+	echo "Setting pcpatch password to $PCPATCH_PASSWORD"
 	/usr/bin/opsi-admin -d task setPcpatchPassword "$PCPATCH_PASSWORD"
 fi
 
