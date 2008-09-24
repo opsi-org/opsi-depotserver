@@ -42,6 +42,7 @@ mkdir -p $RPM_BUILD_ROOT/opt/pcbin/install
 mkdir -p $RPM_BUILD_ROOT/opt/pcbin/pcpatch
 mkdir -p $RPM_BUILD_ROOT/opt/pcbin/utils
 mkdir -p $RPM_BUILD_ROOT/home/opsiproducts
+mkdir -p $RPM_BUILD_ROOT/var/log/opsi
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/audit
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/config/depots
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/config/templates
