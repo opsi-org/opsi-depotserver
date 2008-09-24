@@ -496,7 +496,7 @@ if [ $status != 0 ]; then
 	/usr/bin/opsi-admin -d method createOpsiBase >/dev/null 2>/dev/null	
 	
 	/usr/bin/opsi-admin -d method createServer "$HOSTNAME" "$DOMAIN" > /dev/null
-	echo "Setting pcpatch password to $PCPATCH_PASSWORD"
+	
 	/usr/bin/opsi-admin -d task setPcpatchPassword "$PCPATCH_PASSWORD"
 fi
 
