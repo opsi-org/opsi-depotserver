@@ -65,7 +65,7 @@ case "$1" in
 		
 	$VERBOSE && echo "  -> Adding user pcpatch"
 	if [ -z "`getent passwd pcpatch`" ]; then
-		useradd -u 992 -g 992 -d /opt/pcbin/pcpatch -s /bin/bash pcpatch
+		useradd -u 992 -g 992 -d /var/lib/opsi -s /bin/bash pcpatch
 	fi
 	
 	$VERBOSE && echo "  -> Adding user opsiconfd"
