@@ -58,6 +58,7 @@ rm -rf $RPM_BUILD_ROOT
 
 # ===[ pre ]========================================
 %pre
+#!/bin/bash
 VERBOSE=true
 HOSTNAME=`uname -n`
 DOMAIN=`hostname -d`
