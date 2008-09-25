@@ -63,16 +63,17 @@ HOSTNAME=`uname -n`
 DOMAIN=`hostname -d`
 FQDN=`hostname --fqdn`
 IPADDRESS=`getent hosts $FQDN | cut -d' ' -f1`
+[ "$IPADDRESS" = "127.0.0.2" ] && IPADDRESS=""
 
 for iface in `ifconfig -a | grep "^[[:alnum:]]" | cut -d " " -f 1`; do
 	ip=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $3}'`
 	NETMASK=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $7}'`
 	GATEWAY=`route -n | grep ^0.0.0.0 | awk '{ printf $2}'`
 	if [ "$ip" != "" ]; then
-	if [ "$IPADDRESS" = "" ]; then
-		IPADDRESS="$ip"
-	fi
-	[ "$IPADDRESS" = "$ip" ] && break
+		if [ "$IPADDRESS" = "" ]; then
+			IPADDRESS="$ip"
+		fi
+		[ "$IPADDRESS" = "$ip" ] && break
 	fi
 done
 
@@ -488,12 +489,12 @@ touch /etc/opsi/pckeys
 touch /etc/opsi/passwd
 
 set +e
-/usr/bin/opsi-admin -d method getPcpatchPassword $FQDN >/dev/null 2>/dev/null	
+/usr/bin/opsi-admin -d method getPcpatchPassword $FQDN >/dev/null 2>/dev/null
 status=$?
 set -e
 if [ $status != 0 ]; then
 	# No password set
-	/usr/bin/opsi-admin -d method createOpsiBase >/dev/null 2>/dev/null	
+	/usr/bin/opsi-admin -d method createOpsiBase >/dev/null 2>/dev/null
 	
 	/usr/bin/opsi-admin -d method createServer "$HOSTNAME" "$DOMAIN" > /dev/null
 	
