@@ -37,7 +37,7 @@ case "$1" in
 	HOSTNAME=`uname -n`
 	DOMAIN=`hostname -d`
 	FQDN=`hostname --fqdn`
-	IPADDRESS=`getent hosts $FQDN | cut -d' ' -f1`
+	IPADDRESS=`getent hosts $FQDN | tail -n 1 | cut -d' ' -f1`
 	[ "$IPADDRESS" = "127.0.0.2" ] && IPADDRESS=""
 	
 	for iface in `ifconfig -a | grep "^[[:alnum:]]" | cut -d " " -f 1`; do

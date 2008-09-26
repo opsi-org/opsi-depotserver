@@ -63,7 +63,7 @@ VERBOSE=true
 HOSTNAME=`uname -n`
 DOMAIN=`hostname -d`
 FQDN=`hostname --fqdn`
-IPADDRESS=`getent hosts $FQDN | cut -d' ' -f1`
+IPADDRESS=`getent hosts $FQDN | tail -n 1 | cut -d' ' -f1`
 [ "$IPADDRESS" = "127.0.0.2" ] && IPADDRESS=""
 
 for iface in `ifconfig -a | grep "^[[:alnum:]]" | cut -d " " -f 1`; do
@@ -158,6 +158,7 @@ chmod 0660 /var/lib/opsi/products/* >/dev/null 2>/dev/null || true
 
 # ===[ post ]=======================================
 %post
+#!/bin/bash
 VERBOSE=true
 SAMBA_CONF="/etc/samba/smb.conf"
 SAMBA_INIT="/etc/init.d/smb"
@@ -170,17 +171,18 @@ PCPATCH_PASSWORD=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c12`
 HOSTNAME=`uname -n`
 DOMAIN=`hostname -d`
 FQDN=`hostname --fqdn`
-IPADDRESS=`getent hosts $FQDN | cut -d' ' -f1`
+IPADDRESS=`getent hosts $FQDN | tail -n 1 | cut -d' ' -f1`
+[ "$IPADDRESS" = "127.0.0.2" ] && IPADDRESS=""
 
 for iface in `ifconfig -a | grep "^[[:alnum:]]" | cut -d " " -f 1`; do
 	ip=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $3}'`
 	NETMASK=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $7}'`
 	GATEWAY=`route -n | grep ^0.0.0.0 | awk '{ printf $2}'`
 	if [ "$ip" != "" ]; then
-	if [ "$IPADDRESS" = "" ]; then
-		IPADDRESS="$ip"
-	fi
-	[ "$IPADDRESS" = "$ip" ] && break
+		if [ "$IPADDRESS" = "" ]; then
+			IPADDRESS="$ip"
+		fi
+		[ "$IPADDRESS" = "$ip" ] && break
 	fi
 done
 
