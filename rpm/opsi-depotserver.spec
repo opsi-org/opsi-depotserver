@@ -13,7 +13,7 @@ License:        GPL v2 or later
 Group:          Productivity/Networking/Opsi
 AutoReqProv:    on
 Version:        3.3
-Release:        9
+Release:        10
 Summary:        opsi depotserver
 %define tarname opsi-depotserver
 Source:         %{tarname}-%{version}.tar.bz2
