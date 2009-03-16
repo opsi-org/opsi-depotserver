@@ -532,7 +532,9 @@ fi
 
 # ===[ postun ]=====================================
 %postun
-smbpasswd -x pcpatch >/dev/null 2>/dev/null || true
+if [ $1 -eq 0 ]; then
+	smbpasswd -x pcpatch >/dev/null 2>/dev/null || true
+fi
 
 # ===[ files ]======================================
 %files
