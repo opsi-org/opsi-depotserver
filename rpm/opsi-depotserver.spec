@@ -12,8 +12,8 @@ Url:            http://www.opsi.org
 License:        GPL v2 or later
 Group:          Productivity/Networking/Opsi
 AutoReqProv:    on
-Version:        3.3
-Release:        10
+Version:        3.4
+Release:        1
 Summary:        opsi depotserver
 %define tarname opsi-depotserver
 Source:         %{tarname}-%{version}.tar.bz2
