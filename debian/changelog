@@ -1,3 +1,9 @@
+opsi-depotserver (3.4-1) stable; urgency=low
+
+  * Adapted dependencies to opsi 3.4
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 02 Jun 2009 13:06:33 +0200
+
 opsi-depotserver (3.3-10) stable; urgency=low
 
   * package scripts changed

@@ -12,8 +12,8 @@ Url:            http://www.opsi.org
 License:        GPL v2 or later
 Group:          Productivity/Networking/Opsi
 AutoReqProv:    on
-Version:        3.3
-Release:        10
+Version:        3.4
+Release:        1
 Summary:        opsi depotserver
 %define tarname opsi-depotserver
 Source:         %{tarname}-%{version}.tar.bz2
@@ -60,9 +60,9 @@ rm -rf $RPM_BUILD_ROOT
 %pre
 #!/bin/bash
 VERBOSE=true
-HOSTNAME=`uname -n`
-DOMAIN=`hostname -d`
-FQDN=`hostname --fqdn`
+HOSTNAME=`uname -n | tr '[A-Z]' '[a-z]'`
+DOMAIN=`hostname -d | tr '[A-Z]' '[a-z]'`
+FQDN=`hostname --fqdn | tr '[A-Z]' '[a-z]'`
 IPADDRESS=`getent hosts $FQDN | tail -n 1 | cut -d' ' -f1`
 [ "$IPADDRESS" = "127.0.0.2" ] && IPADDRESS=""
 
@@ -168,9 +168,9 @@ CONFIGURE_SAMBA="true"
 CONFIGURE_DHCPD="true"
 PCPATCH_PASSWORD=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c12`
 
-HOSTNAME=`uname -n`
-DOMAIN=`hostname -d`
-FQDN=`hostname --fqdn`
+HOSTNAME=`uname -n | tr '[A-Z]' '[a-z]'`
+DOMAIN=`hostname -d | tr '[A-Z]' '[a-z]'`
+FQDN=`hostname --fqdn | tr '[A-Z]' '[a-z]'`
 IPADDRESS=`getent hosts $FQDN | tail -n 1 | cut -d' ' -f1`
 [ "$IPADDRESS" = "127.0.0.2" ] && IPADDRESS=""
 
@@ -532,7 +532,9 @@ fi
 
 # ===[ postun ]=====================================
 %postun
-smbpasswd -x pcpatch >/dev/null 2>/dev/null || true
+if [ $1 -eq 0 ]; then
+	smbpasswd -x pcpatch >/dev/null 2>/dev/null || true
+fi
 
 # ===[ files ]======================================
 %files

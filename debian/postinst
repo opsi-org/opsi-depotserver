@@ -34,9 +34,9 @@ PCPATCH_PASSWORD=$RET
 
 case "$1" in
     configure)
-	HOSTNAME=`uname -n`
-	DOMAIN=`hostname -d`
-	FQDN=`hostname --fqdn`
+	HOSTNAME=`uname -n | tr '[A-Z]' '[a-z]'`
+	DOMAIN=`hostname -d | tr '[A-Z]' '[a-z]'`
+	FQDN=`hostname --fqdn | tr '[A-Z]' '[a-z]'`
 	IPADDRESS=`getent hosts $FQDN | tail -n 1 | cut -d' ' -f1`
 	[ "$IPADDRESS" = "127.0.0.2" ] && IPADDRESS=""
 	
