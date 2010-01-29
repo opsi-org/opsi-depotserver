@@ -1,0 +1,183 @@
+opsi-depotserver (3.4-1) stable; urgency=low
+
+  * Adapted dependencies to opsi 3.4
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 02 Jun 2009 13:06:33 +0200
+
+opsi-depotserver (3.3-10) stable; urgency=low
+
+  * package scripts changed
+
+ -- Jan Schneider <j.schneider@uib.de>  Wed, 08 Oct 2008 17:27:17 +0200
+
+opsi-depotserver (3.3-9) stable; urgency=low
+
+  * /var/lib/opsi/.ssh gets (re)created
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 26 Aug 2008 09:29:28 +0200
+
+opsi-depotserver (3.3-8) stable; urgency=low
+
+  * fixed creation of users and groups
+
+ -- Jan Schneider <j.schneider@uib.de>  Wed, 20 Aug 2008 16:43:08 +0200
+
+opsi-depotserver (3.3-7) stable; urgency=low
+
+  * owner of /var/lib/opsi changed to pcpatch (for ssh publickey auth to work)
+
+ -- Jan Schneider <j.schneider@uib.de>  Wed, 11 Jun 2008 18:30:58 +0200
+
+opsi-depotserver (3.3-6) stable; urgency=low
+
+  * fixed typo in [opsi_workbench] share "directoy mask" => "directory mask"
+
+ -- Jan Schneider <j.schneider@uib.de>  Thu, 05 Jun 2008 16:06:17 +0200
+
+opsi-depotserver (3.3-5) stable; urgency=low
+
+  * user opsiconfd will be created if not existing
+
+ -- Jan Schneider <j.schneider@uib.de>  Wed, 28 May 2008 14:41:53 +0200
+
+opsi-depotserver (3.3-4) stable; urgency=low
+
+  * setting nextBootServiceURL default
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 13 May 2008 11:36:24 +0200
+
+opsi-depotserver (3.3-3) stable; urgency=low
+
+  * changed permissions
+  * added opsi_workbench share
+
+ -- Jan Schneider <j.schneider@uib.de>  Fri,  2 May 2008 17:03:23 +0200
+
+opsi-depotserver (3.3-2) stable; urgency=low
+
+  * Fixed preinst
+
+ -- Jan Schneider <j.schneider@uib.de>  Wed, 23 Apr 2008 16:23:21 +0200
+
+opsi-depotserver (3.3-1) stable; urgency=low
+
+  * opsi 3.3 release
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 15 Apr 2008 14:14:55 +0200
+
+opsi-depotserver (3.2-4) stable; urgency=low
+
+  * postinst: using python to patch dhcpd.conf
+
+ -- Jan Schneider <j.schneider@uib.de>  Fri, 11 Jan 2008 16:07:56 +0100
+
+opsi-depotserver (3.2-3) stable; urgency=low
+
+  * corrected entry in /etc/sudoers
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue,  8 Jan 2008 11:17:09 +0100
+
+opsi-depotserver (3.2-2) stable; urgency=low
+
+  * Some empty directories where missing
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 18 Dec 2007 13:29:15 +0100
+
+opsi-depotserver (3.2-1) stable; urgency=low
+
+  * opsi 3.2 release
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 13 Nov 2007 11:37:19 +0100
+
+opsi-depotserver (3.1-1) stable; urgency=low
+
+  * opsi 3.1 release
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 26 Jun 2007 15:28:38 +0200
+
+opsi-depotserver (3.0-3) stable; urgency=low
+
+  * fixed posinst bug writing dhcpd.conf
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 27 Mar 2007 12:11:21 +0200
+
+
+opsi-depotserver (3.0-2) stable; urgency=low
+
+  * removed dependency to opsi-atftpd
+
+ -- Jan Schneider <j.schneider@uib.de>  Wed, 14 Feb 2007 12:37:03 +0200
+
+
+opsi-depotserver (3.0-1) stable; urgency=low
+
+  * removed all binaries + added dependencies
+
+ -- Jan Schneider <j.schneider@uib.de>  Thu, 18 Jan 2007 13:25:01 +0200
+
+
+opsi-depotserver (2.5-1) stable; urgency=low
+
+  * removed net boot image + added dependency to opsi-linux-bootimage deb
+   
+  * new version of opsibootmanager (reinstmgr)
+	- now supports writing of pipes for clients with unkown hardware address (using hex-ip)
+	- support for reading hardware addresses from ldap by using univention-admin on UCS
+	- some adjustments to new linux-bootimage
+	- bugfixes
+
+ -- Jan Schneider <j.schneider@uib.de>  Thu, 07 Sep 2006 00:00:00 +0200
+
+
+opsi-depotserver (2.4-1) stable; urgency=low
+  * new net boot image (miniroot and kernel)
+        - kernel 2.6.15.4
+        - added partimage
+	- new parameter "askBeforeInst" added to sysconf, section [General]
+          if set to "false" the bootimage will install an operating system
+	  without any user interaction
+   
+  * fif version 0.9.5
+        - preparations for opsi 3.0
+	     createProduct()
+	     setProductProperties()
+	     createProductDependency()
+	     setupWhereInstalled()
+	     
+  * new version of makeproductfile
+        - adjustments for new fif
+	- easier realization of customer depending adjustments
+   
+  * new version of sysbackup
+   
+  * new version of opsibootmanager (reinsmgr)
+        - boot configuration now contains kernel param hn=<hostname>
+	- if mac address of host is not known, reinstmgr uses
+	  ip address of host (hex) as pipe name 
+   
+  * improved version of delalteprodukte
+   
+  * some default configuration values changed
+   
+  -- Jan Schneider <j.schneider@uib.de>  Wed, 22 Feb 2006 00:00:00 +0200
+
+
+opsi-depotserver (2.1-3) stable; urgency=low
+
+  * new version of opsiinst/hupsiinst (mailing) 
+
+ -- Jan Schneider <j.schneider@uib.de>  Thu, 26 Jan 2006 00:00:00 +0200
+
+
+opsi-depotserver (2.1-2) stable; urgency=low
+
+  * new net boot image (miniroot and kernel)
+
+ -- Jan Schneider <j.schneider@uib.de>  Mon, 28 Nov 2005 00:00:00 +0200
+
+
+opsi-depotserver (2.1-1) stable; urgency=low
+
+  * Debian package created
+
+ -- Jan Schneider <j.schneider@uib.de>  Fri, 14 Oct 2005 00:00:00 +0200
