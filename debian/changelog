@@ -1,3 +1,9 @@
+opsi-depotserver (3.4.99-1) stable; urgency=low
+
+  * First 3.5 Package
+
+ -- erol <e.ueluekmen@uib.de>  Mon, 01 Feb 2010 16:25:49 +0100
+
 opsi-depotserver (3.4-1) stable; urgency=low
 
   * Adapted dependencies to opsi 3.4

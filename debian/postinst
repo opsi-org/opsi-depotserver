@@ -167,7 +167,6 @@ case "$1" in
 	chmod 2770 /var/log/opsi
 	chown pcpatch:pcpatch /home/opsiproducts
 	chmod 2770 /home/opsiproducts
-	
 	if [ "$CONFIGURE_SAMBA" = "true" ]; then
 		$VERBOSE && echo -e "\nConfiguring samba..."	
 		if [ -f $SAMBA_CONF ]; then
