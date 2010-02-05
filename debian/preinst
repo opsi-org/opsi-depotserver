@@ -1,7 +1,7 @@
 #! /bin/bash -e
 
 # = = = = = = = = = = = = = = = = = = = = = = =
-# =  Copyright (C) 2006, 2007, 2008 uib GmbH  =
+# =       Copyright (C) 2010 uib GmbH         =
 # =           http://www.uib.de               =
 # =          All rights reserved.             =
 # = = = = = = = = = = = = = = = = = = = = = = =
@@ -19,116 +19,76 @@
 VERBOSE=true
 
 case "$1" in
-    install|upgrade)
+	install|upgrade)
 	
-	HOSTNAME=`uname -n | tr '[A-Z]' '[a-z]'`
-	DOMAIN=`hostname -d | tr '[A-Z]' '[a-z]'`
-	FQDN=`hostname --fqdn | tr '[A-Z]' '[a-z]'`
-	IPADDRESS=`getent hosts $FQDN | tail -n 1 | cut -d' ' -f1`
-	[ "$IPADDRESS" = "127.0.0.2" ] && IPADDRESS=""
-	
-	for iface in `ifconfig -a | grep "^[[:alnum:]]" | cut -d " " -f 1`; do
-		ip=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $3}'`
-		NETMASK=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $7}'`
-		GATEWAY=`route -n | grep ^0.0.0.0 | awk '{ printf $2}'`
-		if [ "$ip" != "" ]; then
-			if [ "$IPADDRESS" = "" ]; then
-				IPADDRESS="$ip"
+		HOSTNAME=`uname -n | tr '[A-Z]' '[a-z]'`
+		DOMAIN=`hostname -d | tr '[A-Z]' '[a-z]'`
+		FQDN=`hostname --fqdn | tr '[A-Z]' '[a-z]'`
+		IPADDRESS=`getent hosts $FQDN | tail -n 1 | cut -d' ' -f1`
+		[ $(echo $IPADDRESS | cut -d'.' -f1) = "127" ] && IPADDRESS=""
+		
+		for iface in `ifconfig -a | grep "^[[:alnum:]]" | cut -d " " -f 1`; do
+			ip=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $3}'`
+			NETMASK=`ifconfig $iface | grep "\:[[:digit:]]*\." | sed "s/:/ /g" | awk '{ printf $7}'`
+			GATEWAY=`route -n | grep ^0.0.0.0 | awk '{ printf $2}'`
+			if [ "$ip" != "" ]; then
+				if [ "$IPADDRESS" = "" ]; then
+					IPADDRESS="$ip"
+				fi
+				[ "$IPADDRESS" = "$ip" ] && break
 			fi
-			[ "$IPADDRESS" = "$ip" ] && break
-		fi
-	done
-	
-	[ "$NETMASK" = "" ] && NETMASK="255.255.225.0"
-	
-	if [ "$IPADDRESS" != "" ]; then
-		for part in 1 2 3 4; do
-			I[$part]=$(echo $IPADDRESS | cut -d . -f $part)
-			M[$part]=$(echo $NETMASK | cut -d . -f $part)
 		done
 		
-		for part in 1 2 3 4; do
-			N[$part]=$((${I[$part]} & ${M[$part]}))
-			B[$part]=$((${N[$part]} | $((${M[$part]} ^255))))
-		done
+		[ "$NETMASK" = "" ] && NETMASK="255.255.225.0"
 		
-		SUBNET="${N[1]}.${N[2]}.${N[3]}.${N[4]}"
-		BROADCAST="${B[1]}.${B[2]}.${B[3]}.${B[4]}"
-	fi
-	
-	$VERBOSE && echo -e "\nAdding system users and groups..."
-	
-	# add system group pcpatch and users pcpatch
-	$VERBOSE && echo "  -> Adding group pcpatch"
-	if [ -z "`getent group pcpatch`" ]; then
-		groupadd -g 992 pcpatch
-	fi
-		
-	$VERBOSE && echo "  -> Adding user pcpatch"
-	if [ -z "`getent passwd pcpatch`" ]; then
-		useradd -u 992 -g 992 -d /var/lib/opsi -s /bin/bash pcpatch
-	fi
-	
-	$VERBOSE && echo "  -> Adding user opsiconfd"
-	if [ -z "`getent passwd opsiconfd`" ]; then
-		useradd -u 993 -g 992 -d /var/lib/opsi -s /bin/bash opsiconfd
-	fi
-	
-	writeDepotIni=false
-	if [ -e /var/lib/opsi/config/depots/$FQDN/depot.ini ]; then
-		set +e
-		grep '\[repository\]' /var/lib/opsi/config/depots/$FQDN/depot.ini >/dev/null 2>/dev/null	
-		status=$?
-		set -e
-		if [ $status = 1 ]; then
-			# Old version (before opsi 3.3) of ini file found
-			writeDepotIni=true
+		if [ "$IPADDRESS" != "" ]; then
+			for part in 1 2 3 4; do
+				I[$part]=$(echo $IPADDRESS | cut -d . -f $part)
+				M[$part]=$(echo $NETMASK | cut -d . -f $part)
+			done
+			
+			for part in 1 2 3 4; do
+				N[$part]=$((${I[$part]} & ${M[$part]}))
+				B[$part]=$((${N[$part]} | $((${M[$part]} ^255))))
+			done
+			
+			SUBNET="${N[1]}.${N[2]}.${N[3]}.${N[4]}"
+			BROADCAST="${B[1]}.${B[2]}.${B[3]}.${B[4]}"
 		fi
-	else
-		writeDepotIni=true
-	fi
-	
-	if $writeDepotIni; then
-		echo "Writing depot.ini"
 		
-		mkdir -p /var/lib/opsi/config/depots/$FQDN >/dev/null 2>/dev/null || true
-		chmod -R 777 /var/lib/opsi
+		$VERBOSE && echo -e "\nAdding system users and groups..."
 		
-		echo "[depotshare]" 						>  /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "remoteurl = smb://$HOSTNAME/opt_pcbin/install"		>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "localurl = file:///opt/pcbin/install"			>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo ""								>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "[depotserver]"						>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "notes ="							>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "network = $SUBNET/$NETMASK"				>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "description ="						>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo ""								>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "[repository]"						>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "remoteurl = webdavs://$FQDN:4447/products"		>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "localurl = file:///var/lib/opsi/products"		>> /var/lib/opsi/config/depots/$FQDN/depot.ini
-		echo "maxbandwidth = 0"						>> /var/lib/opsi/config/depots/$FQDN/depot.ini
+		# add system group pcpatch and users pcpatch
+		$VERBOSE && echo "  -> Adding group pcpatch"
+		if [ -z "`getent group pcpatch`" ]; then
+			groupadd -g 992 pcpatch
+		fi
+			
+		$VERBOSE && echo "  -> Adding user pcpatch"
+		if [ -z "`getent passwd pcpatch`" ]; then
+			useradd -u 992 -g 992 -d /var/lib/opsi -s /bin/bash pcpatch
+		fi
 		
-		chmod 664 /var/lib/opsi/config/depots/$FQDN/depot.ini
-	fi
+		$VERBOSE && echo "  -> Adding user opsiconfd"
+		if [ -z "`getent passwd opsiconfd`" ]; then
+			useradd -u 993 -g 992 -d /var/lib/opsi -s /bin/bash opsiconfd
+		fi
+		
+		# opsi < 3.5: /var/lib/opsi/products, opsi >= 3.5: /var/lib/opsi/repository
+		[ -e /var/lib/opsi/products ] && mv /var/lib/opsi/products /var/lib/opsi/repository
+		
+		chmod 2750 /var/lib/opsi
+		chmod 2770 /var/lib/opsi/repository
+		chmod 0660 /var/lib/opsi/repository/* >/dev/null 2>/dev/null || true
+	;;
 	
-	if [ if -e /var/lib/opsi/products ]; then
-		mv /var/lib/opsi/products /var/lib/opsi/repository
-	fi
-	
-	mkdir -p /var/lib/opsi/products
-	chown -R opsiconfd:pcpatch /var/lib/opsi
-	chmod 2750 /var/lib/opsi
-	chmod 2770 /var/lib/opsi/products
-	chmod 0660 /var/lib/opsi/products/* >/dev/null 2>/dev/null || true
-    ;;
+	abort-upgrade)
+	;;
 
-    abort-upgrade)
-    ;;
-
-    *)
-        echo "preinst called with unknown argument \`$1'" >&2
-        exit 1
-    ;;
+	*)
+		echo "preinst called with unknown argument \`$1'" >&2
+		exit 1
+	;;
 esac
 
 # dh_installdeb will replace this with shell code automatically

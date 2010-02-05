@@ -2,6 +2,7 @@ etc/opsi
 opt/pcbin/install
 var/lib/opsi/repository
 var/lib/opsi/depot
+var/lib/opsi/config
 var/log/opsi
 home/opsiproducts
 
