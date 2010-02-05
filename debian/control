@@ -10,9 +10,5 @@ Section: opsi
 Architecture: all
 Depends: python-opsi (>=3.4.99), opsiconfd (>=3.4.99), opsipxeconfd (>=3.4.99), opsi-utils (>=3.4.99), opsi-linux-bootimage (>=20090525), samba, dhcp3-server, sudo, wget
 Suggests: slapd, mysql-server, p7zip-full, cabextract
-Description: server fuer das Softwareverteilungssystem OPSI
- Der opsi-depotserver dient als Basis fuer das Softwareverteilungssystem OPSI.
- .
- OPSI ist ein OpenSource Softwareverteilungssystem, das sowohl automatische
- Betriebssystem- als auch Softwareinstallationen ermoeglicht.
- http://www.opsi.org
+Description: opsi depotserver configuration package
+ This package is used to configure an opsi depotserver.

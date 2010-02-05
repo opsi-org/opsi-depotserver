@@ -1,13 +1,7 @@
 etc/opsi
 opt/pcbin/install
-opt/pcbin/pcpatch/pclog
-opt/pcbin/utils
-var/lib/opsi/utils
-var/lib/opsi/products
+var/lib/opsi/repository
 var/lib/opsi/depot
-var/lib/opsi/audit
-var/lib/opsi/config/clients
-var/lib/opsi/config/templates
 var/log/opsi
 home/opsiproducts
 

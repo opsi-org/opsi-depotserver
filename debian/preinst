@@ -111,6 +111,10 @@ case "$1" in
 		chmod 664 /var/lib/opsi/config/depots/$FQDN/depot.ini
 	fi
 	
+	if [ if -e /var/lib/opsi/products ]; then
+		mv /var/lib/opsi/products /var/lib/opsi/repository
+	fi
+	
 	mkdir -p /var/lib/opsi/products
 	chown -R opsiconfd:pcpatch /var/lib/opsi
 	chmod 2750 /var/lib/opsi
