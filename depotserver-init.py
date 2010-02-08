@@ -301,6 +301,7 @@ def setRights():
 	files = []
 	for dirname in (u'/etc/opsi/backends', u'/etc/opsi/backendManager', u'/etc/opsi/backendManager/extend.d'):
 		if os.path.exists(dirname):
+			logger.info(u"   Setting rights on directory '%s'" % dirname)
 			os.chown(dirname, opsiconfdUid, adminGroupGid)
 			os.chmod(dirname, 0770)
 			for f in os.listdir(dirname):
@@ -308,6 +309,7 @@ def setRights():
 					files.append(os.path.join(dirname, f))
 	for filename in files:
 		if os.path.exists(filename):
+			logger.info(u"   Setting rights on file '%s'" % filename)
 			os.chown(filename, opsiconfdUid, adminGroupGid)
 			os.chmod(filename, 0660)
 	
