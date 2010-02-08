@@ -11,6 +11,7 @@ from OPSI.Logger import *
 from OPSI.Types import *
 from OPSI.System import *
 from OPSI.Util.File import *
+from OPSI.Util import findFiles
 
 logger = Logger()
 logger.setConsoleLevel(LOG_ERROR)
@@ -263,6 +264,8 @@ def configureClientUser():
 	clientUserHome = pwd.getpwnam(CLIENT_USER)[5]
 	adminGroupGid  = grp.getgrnam(ADMIN_GROUP)[2]
 	
+	os.chown(clientUserHome, clientUserUid, adminGroupGid)
+	os.chmod(clientUserHome, 0750)
 	
 	sshDir = os.path.join(clientUserHome, '.ssh')
 	
@@ -298,9 +301,50 @@ def setRights():
 	adminGroupGid     = grp.getgrnam(ADMIN_GROUP)[2]
 	fileAdminGroupGid = grp.getgrnam(FILE_ADMIN_GROUP)[2]
 	
+	#chown -R opsiconfd:pcpatch /opt/pcbin/install
+	#chmod 2770 /opt/pcbin/install
+	
+	os.chown(u'/tftpboot/linux', 0, adminGroupGid)
+	os.chmod(u'/tftpboot/linux', 0775)
+	for f in findFiles(u'/tftpboot/linux', returnLinks = False):
+		f = os.path.join(u'/tftpboot/linux', f)
+		os.chown(f, 0, adminGroupGid)
+		if os.path.isdir(f):
+			logger.debug(u"   Setting rights on directory '%s'" % f)
+			os.chmod(f, 0775)
+		elif os.path.isfile(f):
+			logger.debug(u"   Setting rights on file '%s'" % f)
+			os.chmod(f, 0664)
+		
+	for f in findFiles(u'/home/opsiproducts', returnLinks = False):
+		f = os.path.join(u'/home/opsiproducts', f)
+		os.chown(f, 0, adminGroupGid)
+		if os.path.isdir(f):
+			logger.debug(u"   Setting rights on directory '%s'" % f)
+			os.chmod(f, 2770)
+		elif os.path.isfile(f):
+			logger.debug(u"   Setting rights on file '%s'" % f)
+			os.chmod(f, 0660)
+	
+	return
 	files = []
-	for dirname in (u'/etc/opsi/backends', u'/etc/opsi/backendManager', u'/etc/opsi/backendManager/extend.d'):
-		if os.path.exists(dirname):
+	for dirname in (u'/var/log/opsi', u'/var/log/opsi/bootimage', u'/var/log/opsi/instlog', u'/var/log/opsi/clientconnect', u'/var/log/opsi/opsiconfd'):
+		if os.path.isdir(dirname):
+			logger.info(u"   Setting rights on directory '%s'" % dirname)
+			os.chown(dirname, opsiconfdUid, adminGroupGid)
+			os.chmod(dirname, 0750)
+			for f in os.listdir(dirname):
+				if os.path.isfile(os.path.join(dirname, f)):
+					files.append(os.path.join(dirname, f))
+	for filename in files:
+		if os.path.isfile(filename):
+			logger.info(u"   Setting rights on file '%s'" % filename)
+			os.chown(filename, opsiconfdUid, adminGroupGid)
+			os.chmod(filename, 0640)
+	
+	files = []
+	for dirname in (u'/etc/opsi/backends', u'/etc/opsi/backendManager', u'/etc/opsi/backendManager/extend.d', u'/var/lib/opsi/depot', u'/var/lib/opsi/repository'):
+		if os.path.isdir(dirname):
 			logger.info(u"   Setting rights on directory '%s'" % dirname)
 			os.chown(dirname, opsiconfdUid, adminGroupGid)
 			os.chmod(dirname, 0770)
@@ -308,7 +352,7 @@ def setRights():
 				if os.path.isfile(os.path.join(dirname, f)):
 					files.append(os.path.join(dirname, f))
 	for filename in files:
-		if os.path.exists(filename):
+		if os.path.isfile(filename):
 			logger.info(u"   Setting rights on file '%s'" % filename)
 			os.chown(filename, opsiconfdUid, adminGroupGid)
 			os.chmod(filename, 0660)
