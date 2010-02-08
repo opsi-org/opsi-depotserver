@@ -301,17 +301,15 @@ def setRights():
 	files = []
 	for dirname in (u'/etc/opsi/backends', u'/etc/opsi/backendManager', u'/etc/opsi/backendManager/extend.d'):
 		if os.path.exists(dirname):
-			#os.chown(dirname, opsiconfdUid, adminGroupGid)
-			#os.chmod(dirname, 0770)
-			print "CHOWN ", dirname
+			os.chown(dirname, opsiconfdUid, adminGroupGid)
+			os.chmod(dirname, 0770)
 			for f in os.listdir(dirname):
 				if os.path.isfile(os.path.join(dirname, f)):
-					files.extend(os.path.join(dirname, f))
+					files.append(os.path.join(dirname, f))
 	for filename in files:
 		if os.path.exists(filename):
-			print "CHOWN ", filename
-			#os.chown(filename, opsiconfdUid, adminGroupGid)
-			#os.chmod(filename, 0660)
+			os.chown(filename, opsiconfdUid, adminGroupGid)
+			os.chmod(filename, 0660)
 	
 
 def usage():
