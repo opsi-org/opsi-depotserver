@@ -457,19 +457,19 @@ def main():
 		raise Exception(u"This script must be startet as root")
 	
 	try:
-		if (len(sys.argv) > 1):
-			raise Exception(u"Too many arguments")
 		(opts, args) = getopt.getopt(sys.argv[1:], "hl:",
 			['init-current-config', 'configure-samba', 'configure-dhcpd', 'update-from='])
-	
-	except Exception:
+		if (len(args) > 0):
+			raise Exception(u"Too many arguments")
+		
+	except Exception, e:
 		usage()
-		sys.exit(1)
+		raise
 	
 	task = None
 	updateFrom = None
-	configureDhcpd = False
-	configureSamba = False
+	samba = False
+	dhcpd = False
 	
 	for (opt, arg) in opts:
 		if   (opt == "-h"):
@@ -482,17 +482,17 @@ def main():
 		elif (opt == "--update-from"):
 			updateFrom = arg
 		elif (opt == "--configure-samba"):
-			configureSamba = True
+			samba = True
 		elif (opt == "--configure-dhcpd"):
-			configureDhcpd = True
+			dhcpd = True
 		 
 	
 	if (updateFrom):
 		getSysConfig()
 		update(updateFrom)
-		if configureSamba:
+		if samba:
 			configureSamba()
-		if configureDhcpd:
+		if dhcpd:
 			configureDHCPD()
 		configureClientUser()
 		setRights()
@@ -501,9 +501,9 @@ def main():
 		
 	elif (task == 'init-current-config'):
 		getSysConfig()
-		if configureSamba:
+		if samba:
 			configureSamba()
-		if configureDhcpd:
+		if dhcpd:
 			configureDHCPD()
 		configureClientUser()
 		initializeBackends()
