@@ -5,13 +5,14 @@
 # =          All rights reserved.             =
 # = = = = = = = = = = = = = = = = = = = = = = =
 
-import os, sys, socket, re, shutil, getopt, pwd, grp
+import os, sys, socket, re, shutil, getopt, pwd, grp, stat
 
 from OPSI.Logger import *
 from OPSI.Types import *
+from OPSI.Object import *
 from OPSI.System import *
 from OPSI.Util.File import *
-from OPSI.Util import findFiles
+from OPSI.Util import findFiles, randomString
 
 logger = Logger()
 logger.setConsoleLevel(LOG_ERROR)
@@ -27,9 +28,11 @@ ADMIN_GROUP      = u'opsiadmin'
 CLIENT_USER      = u'pcpatch'
 FILE_ADMIN_GROUP = u'pcpatch'
 
+sysConfig = {}
+
 def getSysConfig():
 	logger.notice(u"Getting current system config")
-	sysConfig = {}
+	global sysConfig
 	try:
 		sysConfig['fqdn'] = forceHostId(socket.getfqdn())
 	except:
@@ -37,20 +40,22 @@ def getSysConfig():
 	
 	sysConfig['hostname'] = sysConfig['fqdn'].split(u'.')[0]
 	sysConfig['domain'] = u'.'.join(sysConfig['fqdn'].split(u'.')[1:])
-	sysConfig['ip'] = socket.gethostbyname(sysConfig['fqdn'])
-	if sysConfig['ip'].split(u'.')[0] in ('127', '169'):
-		sysConfig['ip'] = None
+	sysConfig['ipAddress'] = socket.gethostbyname(sysConfig['fqdn'])
+	if sysConfig['ipAddress'].split(u'.')[0] in ('127', '169'):
+		sysConfig['ipAddress'] = None
+	sysConfig['hardwareAddress'] = None
 	
 	for device in getEthernetDevices():
 		devconf = getNetworkDeviceConfig(device)
 		if devconf['ipAddress'] and devconf['ipAddress'].split(u'.')[0] not in ('127', '169'):
-			if not sysConfig['ip']:
-				sysConfig['ip'] = devconf['ipAddress']
-			if (sysConfig['ip'] == devconf['ipAddress']):
-				sysConfig['netmask'] = devconf['netmask']
+			if not sysConfig['ipAddress']:
+				sysConfig['ipAddress'] = devconf['ipAddress']
+			if (sysConfig['ipAddress'] == devconf['ipAddress']):
+				sysConfig['netmask']         = devconf['netmask']
+				sysConfig['hardwareAddress'] = devconf['hardwareAddress']
 				break
 	
-	if not sysConfig['ip']:
+	if not sysConfig['ipAddress']:
 		raise Exception(u"Failed to get a valid ip address for fqdn '%s'" % sysConfig['fqdn'])
 	
 	if not sysConfig.get('netmask'):
@@ -61,8 +66,8 @@ def getSysConfig():
 	for i in range(4):
 		if sysConfig['broadcast']: sysConfig['broadcast'] += u'.'
 		if sysConfig['subnet']:    sysConfig['subnet']    += u'.'
-		sysConfig['subnet']    += u'%d' % ( int(sysConfig['ip'].split(u'.')[i]) & int(sysConfig['netmask'].split(u'.')[i]) )
-		sysConfig['broadcast'] += u'%d' % ( int(sysConfig['ip'].split(u'.')[i]) | int(sysConfig['netmask'].split(u'.')[i]) ^ 255 )
+		sysConfig['subnet']    += u'%d' % ( int(sysConfig['ipAddress'].split(u'.')[i]) & int(sysConfig['netmask'].split(u'.')[i]) )
+		sysConfig['broadcast'] += u'%d' % ( int(sysConfig['ipAddress'].split(u'.')[i]) | int(sysConfig['netmask'].split(u'.')[i]) ^ 255 )
 	
 	sysConfig['winDomain'] = u''
 	if os.path.exists(SMB_CONF):
@@ -75,7 +80,7 @@ def getSysConfig():
 		f.close()
 	
 	logger.notice(u"System information:")
-	logger.notice(u"   ip address : %s" % sysConfig['ip'])
+	logger.notice(u"   ip address : %s" % sysConfig['ipAddress'])
 	logger.notice(u"   netmask    : %s" % sysConfig['netmask'])
 	logger.notice(u"   subnet     : %s" % sysConfig['subnet'])
 	logger.notice(u"   broadcast  : %s" % sysConfig['broadcast'])
@@ -159,7 +164,7 @@ def configureSamba():
 		execute(u'%s reload' % SMB_INIT)
 		
 	
-def configureDHCPD(config):
+def configureDHCPD():
 	logger.notice(u"Configuring dhcpd")
 	
 	dhcpdConf = DHCPDConfFile(DHCPD_CONF)
@@ -212,8 +217,8 @@ def configureDHCPD(config):
 						startLine 	= -1,
 						parentBlock 	= group,
 						key 		= 'next-server',
-						value 		= sysConfig['ip'] ) )
-				logger.notice(u"   next-server set to %s" % sysConfig['ip'])
+						value 		= sysConfig['ipAddress'] ) )
+				logger.notice(u"   next-server set to %s" % sysConfig['ipAddress'])
 			if params.get('filename'):
 				logger.info(u"         filename already set")
 			else:
@@ -293,16 +298,17 @@ def configureClientUser():
 		f.close()
 		os.chmod(authorizedKeys, 0600)
 		os.chown(authorizedKeys, clientUserUid, adminGroupGid)
-
+	
+	password = randomString(12)
+	logger.addConfidentialString(password)
+	execute('opsi-admin task setPcpatchPassword %s' % password)
+	
 def setRights():
 	logger.notice(u"Setting rights")
 	
 	opsiconfdUid      = pwd.getpwnam(OPSICONFD_USER)[2]
 	adminGroupGid     = grp.getgrnam(ADMIN_GROUP)[2]
 	fileAdminGroupGid = grp.getgrnam(FILE_ADMIN_GROUP)[2]
-	
-	#chown -R opsiconfd:pcpatch /opt/pcbin/install
-	#chmod 2770 /opt/pcbin/install
 	
 	os.chown(u'/tftpboot/linux', 0, adminGroupGid)
 	os.chmod(u'/tftpboot/linux', 0775)
@@ -318,15 +324,14 @@ def setRights():
 		
 	for f in findFiles(u'/home/opsiproducts', returnLinks = False):
 		f = os.path.join(u'/home/opsiproducts', f)
-		os.chown(f, 0, adminGroupGid)
+		os.chown(f, 0, fileAdminGroupGid)
 		if os.path.isdir(f):
 			logger.debug(u"   Setting rights on directory '%s'" % f)
-			os.chmod(f, 2770)
+			os.chmod(f, 02770)
 		elif os.path.isfile(f):
 			logger.debug(u"   Setting rights on file '%s'" % f)
 			os.chmod(f, 0660)
 	
-	return
 	files = []
 	for dirname in (u'/var/log/opsi', u'/var/log/opsi/bootimage', u'/var/log/opsi/instlog', u'/var/log/opsi/clientconnect', u'/var/log/opsi/opsiconfd'):
 		if os.path.isdir(dirname):
@@ -357,7 +362,83 @@ def setRights():
 			os.chown(filename, opsiconfdUid, adminGroupGid)
 			os.chmod(filename, 0660)
 	
+	try:
+		from OPSI.Backend.BackendManager import BackendManager
+		backend = BackendManager(
+			dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
+			backendConfigDir   = u'/etc/opsi/backends',
+			extensionConfigDir = u'/etc/opsi/backendManager/extend.d'
+		)
+		depot = backend.host_getObjects(type = 'OpsiDepotserver', id = sysConfig['fqdn'])
+		if depot:
+			depot = depot[0]
+			depotUrl = depot.getDepotLocalUrl()
+			if not depotUrl.startswith('file:///'):
+				raise Exception(u"Bad repository local url '%s'" % depotUrl)
+			depotDir = depotUrl[7:]
+			if os.path.exists(depotDir):
+				logger.notice(u"Local depot directory '%s' found, setting rights" % depotDir)
+			
+			for f in findFiles(depotDir, returnLinks = False):
+				f = os.path.join(depotDir, f)
+				os.chown(f, opsiconfdUid, fileAdminGroupGid)
+				if os.path.isdir(f):
+					logger.debug(u"   Setting rights on directory '%s'" % f)
+					os.chmod(f, 02770)
+				elif os.path.isfile(f):
+					logger.debug(u"   Setting rights on file '%s'" % f)
+					mode = (os.stat(f)[0] | 0660) & 0770
+					os.chmod(f, mode)
+	except Exception, e:
+		logger.error(e)
+	
+def update(fromVersion = None):
+	if os.path.exists(u'/var/lib/opsi/products'):
+		logger.notice(u"Found /var/lib/opsi/products, moving to /var/lib/opsi/repository")
+		if not os.path.exists(u'/var/lib/opsi/repository'):
+			os.mkdir(u'/var/lib/opsi/repository')
+		for f in os.listdir(u'/var/lib/opsi/products'):
+			shutil.move(os.path.join(u'/var/lib/opsi/products', f), os.path.join(u'/var/lib/opsi/repository', f))
+		try:
+			os.rmdir(u'/var/lib/opsi/products')
+		except Exception, e:
+			logger.error(e)
+		
+def initializeBackends():
+	from OPSI.Backend.BackendManager import BackendManager
+	backend = BackendManager(
+		dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
+		backendConfigDir   = u'/etc/opsi/backends',
+		extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
+		depotbackend       = False
+	)
+	backend.backend_createBase()
+	configServer = backend.host_getObjects(type = 'OpsiConfigserver', id = sysConfig['fqdn'])
+	if not configServer:
+		depot = backend.host_getObjects(type = 'OpsiDepotserver', id = sysConfig['fqdn'])
+		if not depot:
+			logger.notice(u"Creating config server '%s'" % sysConfig['fqdn'])
+			backend.host_createOpsiConfigserver(
+				id                  = sysConfig['fqdn'],
+				opsiHostKey         = None,
+				depotLocalUrl       = u'file:///opt/pcbin/install',
+				depotRemoteUrl      = u'smb://%s/opt_pcbin/install' % sysConfig['hostname'],
+				repositoryLocalUrl  = u'file:///var/lib/opsi/repository',
+				repositoryRemoteUrl = u'webdavs://%s:4447/repository' % sysConfig['fqdn'],
+				description         = None,
+				notes               = None,
+				hardwareAddress     = sysConfig['hardwareAddress'],
+				ipAddress           = sysConfig['ipAddress'],
+				inventoryNumber     = None,
+				networkAddress      = u'%s/%s' % (sysConfig['subnet'], sysConfig['netmask']),
+				maxBandwidth        = None
+			)
+		else:
+			logger.notice(u"Converting depot server '%s' to config server" % sysConfig['fqdn'])
+			configServer = OpsiConfigserver.fromHash(depot[0].toHash())
+			backend.host_createObjects(configServer)
 
+	
 def usage():
 	print u"\nUsage: %s [options]" % os.path.basename(sys.argv[0])
 	print u""
@@ -365,17 +446,30 @@ def usage():
 	print u"   -h          show this help"
 	print u"   -l          log-level 0..9"
 	print u""
-
+	print u"   --init-current-config      init current backend configuration"
+	print u"   --update-from=<version>    update from opsi version <version>"
+	print u"   --configure-samba          patch smb.conf"
+	print u"   --configure-dhcpd          patch dhcpd.conf"
+	print u""
+	
 def main():
 	if (os.geteuid() != 0):
 		raise Exception(u"This script must be startet as root")
 	
 	try:
-		(opts, args) = getopt.getopt(sys.argv[1:], "hl:")
+		if (len(sys.argv) > 1):
+			raise Exception(u"Too many arguments")
+		(opts, args) = getopt.getopt(sys.argv[1:], "hl:",
+			['init-current-config', 'configure-samba', 'configure-dhcpd', 'update-from='])
 	
-	except getopt.GetoptError:
+	except Exception:
 		usage()
 		sys.exit(1)
+	
+	task = None
+	updateFrom = None
+	configureDhcpd = False
+	configureSamba = False
 	
 	for (opt, arg) in opts:
 		if   (opt == "-h"):
@@ -383,13 +477,38 @@ def main():
 			return
 		elif (opt == "-l"):
 			logger.setConsoleLevel(int(arg))
+		elif (opt == "--init-current-config"):
+			task = 'init-current-config'
+		elif (opt == "--update-from"):
+			updateFrom = arg
+		elif (opt == "--configure-samba"):
+			configureSamba = True
+		elif (opt == "--configure-dhcpd"):
+			configureDhcpd = True
+		 
 	
-	sysConfig = getSysConfig()
-	configureSamba()
-	configureDHCPD(sysConfig)
-	configureClientUser()
-	setRights()
-	
+	if (updateFrom):
+		getSysConfig()
+		update(updateFrom)
+		if configureSamba:
+			configureSamba()
+		if configureDhcpd:
+			configureDHCPD()
+		configureClientUser()
+		setRights()
+		#initializeBackends()
+		
+		
+	elif (task == 'init-current-config'):
+		getSysConfig()
+		if configureSamba:
+			configureSamba()
+		if configureDhcpd:
+			configureDHCPD()
+		configureClientUser()
+		initializeBackends()
+		setRights()
+		
 if (__name__ == "__main__"):
 	exception = None
 	try:

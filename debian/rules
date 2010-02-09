@@ -40,14 +40,11 @@ clean:
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k 
+	dh_clean -k
 	dh_installdirs
-	cp -R opt debian/opsi-depotserver/
-	cp -R var debian/opsi-depotserver/
-	cp -R home debian/opsi-depotserver/
-	find debian/opsi-depotserver -name '.svn' -exec rm -rf '{}' \; 2>/dev/null || true
+	install -m 0755 opsi-config debian/opsi-depotserver/usr/share/opsi/opsi-config
 	dh_install
-
+	
 binary-indep: build install
 	dh_testdir -i
 	dh_testroot -i
