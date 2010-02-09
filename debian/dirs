@@ -1,5 +1,4 @@
-opt/pcbin/install
-var/lib/opsi/repository
-var/lib/opsi/depot
 home/opsiproducts
+opt/pcbin/install
 usr/share/opsi
+var/lib/opsi/repository
