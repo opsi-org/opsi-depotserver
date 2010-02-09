@@ -37,8 +37,7 @@ case "$1" in
 		if [ "$CONFIGURE_SAMBA" = "true" ]; then
 			arguments="${arguments} --configure-samba"
 		fi
-		$VERBOSE && echo /usr/share/opsi/opsi-config --init-current-config $arguments
-		/usr/share/opsi/opsi-config --init-current-config $arguments
+		/usr/share/opsi/opsi-config --init-current-config $arguments || true
 		#--update-from
 		
 	;;

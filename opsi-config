@@ -301,7 +301,7 @@ def configureClientUser():
 	
 	password = randomString(12)
 	logger.addConfidentialString(password)
-	execute('opsi-admin task setPcpatchPassword %s' % password)
+	execute('opsi-admin -d task setPcpatchPassword %s' % password)
 	
 def setRights():
 	logger.notice(u"Setting rights")
@@ -347,7 +347,7 @@ def setRights():
 			os.chown(filename, opsiconfdUid, adminGroupGid)
 			os.chmod(filename, 0640)
 	
-	files = []
+	files = [ u'/etc/opsi/passwd' ]
 	for dirname in (u'/etc/opsi/backends', u'/etc/opsi/backendManager', u'/etc/opsi/backendManager/extend.d', u'/var/lib/opsi/depot', u'/var/lib/opsi/repository'):
 		if os.path.isdir(dirname):
 			logger.info(u"   Setting rights on directory '%s'" % dirname)
@@ -405,6 +405,14 @@ def update(fromVersion = None):
 			logger.error(e)
 		
 def initializeBackends():
+	if not os.path.exists(u'/etc/opsi/passwd'):
+		f = open(u'/etc/opsi/passwd', 'w')
+		f.close()
+		opsiconfdUid  = pwd.getpwnam(OPSICONFD_USER)[2]
+		adminGroupGid = grp.getgrnam(ADMIN_GROUP)[2]
+		os.chown(u'/etc/opsi/passwd', opsiconfdUid, adminGroupGid)
+		os.chmod(u'/etc/opsi/passwd', 0660)
+		
 	from OPSI.Backend.BackendManager import BackendManager
 	backend = BackendManager(
 		dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
@@ -413,12 +421,12 @@ def initializeBackends():
 		depotbackend       = False
 	)
 	backend.backend_createBase()
-	configServer = backend.host_getObjects(type = 'OpsiConfigserver', id = sysConfig['fqdn'])
-	if not configServer:
+	
+	if not backend.host_getIdents(type = 'OpsiConfigserver', id = sysConfig['fqdn']):
 		depot = backend.host_getObjects(type = 'OpsiDepotserver', id = sysConfig['fqdn'])
 		if not depot:
 			logger.notice(u"Creating config server '%s'" % sysConfig['fqdn'])
-			backend.host_createOpsiConfigserver(
+			configServer = backend.host_createOpsiConfigserver(
 				id                  = sysConfig['fqdn'],
 				opsiHostKey         = None,
 				depotLocalUrl       = u'file:///opt/pcbin/install',
@@ -435,9 +443,51 @@ def initializeBackends():
 			)
 		else:
 			logger.notice(u"Converting depot server '%s' to config server" % sysConfig['fqdn'])
-			configServer = OpsiConfigserver.fromHash(depot[0].toHash())
+			OpsiConfigserver.fromHash(depot[0].toHash())
 			backend.host_createObjects(configServer)
-
+	
+	configServer = backend.host_getObjects(type = 'OpsiConfigserver', id = sysConfig['fqdn'])
+	if not configServer:
+		raise Exception(u"Config server '%s' not found" % sysConfig['fqdn'])
+	configServer = configServer[0]
+	
+	configs = []
+	configIdents = backend.config_getIdents(returnType = 'unicode')
+	if not 'clientconfig.configserver.url' in configIdents:
+		configs.append(
+			UnicodeConfig(
+				id             = u'clientconfig.configserver.url',
+				description    = u'URL of opsi config service to use',
+				possibleValues = [ u'https://%s:4447/rpc' % configServer.getIpAddress() ],
+				defaultValues  = [ u'https://%s:4447/rpc' % configServer.getIpAddress() ],
+				editable       = True,
+				multiValue     = False
+			)
+		)
+	if not 'clientconfig.depot.id' in configIdents:
+		configs.append(
+			UnicodeConfig(
+				id             = u'clientconfig.depot.id',
+				description    = u'ID of the opsi depot to use',
+				possibleValues = [ configServer.getId() ],
+				defaultValues  = [ configServer.getId() ],
+				editable       = True,
+				multiValue     = False
+			)
+		)
+	if not 'clientconfig.depot.drive' in configIdents:
+		configs.append(
+			UnicodeConfig(
+				id             = u'clientconfig.depot.drive',
+				description    = u'Drive letter for depot share',
+				possibleValues = [ u'c:', u'd:', u'e:', u'f:', u'g:', u'h:', u'i:', u'j:', u'k:', u'l:', u'm:', u'n:', u'o:', u'p:', u'q:', u'r:', u's:', u't:', u'u:', u'v:', u'w:', u'x:', u'y:', u'z:' ],
+				defaultValues  = [ u'p:' ],
+				editable       = False,
+				multiValue     = False
+			)
+		)
+	if configs:
+		backend.config_createObjects(configs)
 	
 def usage():
 	print u"\nUsage: %s [options]" % os.path.basename(sys.argv[0])
@@ -505,8 +555,8 @@ def main():
 			configureSamba()
 		if dhcpd:
 			configureDHCPD()
-		configureClientUser()
 		initializeBackends()
+		configureClientUser()
 		setRights()
 		
 if (__name__ == "__main__"):

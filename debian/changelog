@@ -2,7 +2,7 @@ opsi-depotserver (3.4.99-1) stable; urgency=low
 
   * First 3.5 Package
 
- -- erol <e.ueluekmen@uib.de>  Mon, 01 Feb 2010 16:25:49 +0100
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 09 Feb 2010 18:12:50 +0100
 
 opsi-depotserver (3.4-1) stable; urgency=low
 
