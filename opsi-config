@@ -261,7 +261,11 @@ def configureDHCPD():
 		f = open(SUDOERS, 'w')
 		f.writelines(lines)
 		f.close()
-
+	
+	adminGroupGid = grp.getgrnam(ADMIN_GROUP)[2]
+	os.chown(DHCPD_CONF, -1, adminGroupGid)
+	os.chmod(DHCPD_CONF, 0664)
+	
 def configureClientUser():
 	logger.notice(u"Configuring client user %s" % CLIENT_USER)
 	
