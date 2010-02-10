@@ -256,7 +256,7 @@ def configureDHCPD():
 		shutil.copy(SUDOERS, SUDOERS + u'.' + time.strftime("%Y-%m-%d_%H:%M"))
 		
 		logger.notice(u"   Adding sudoers entry for dhcpd restart")
-		lines.append(u"opsiconfd ALL=NOPASSWD: %s restart\n")
+		lines.append(u"opsiconfd ALL=NOPASSWD: %s restart\n" % DHCPD_INIT)
 		logger.notice(u"   Writing new %s" % SUDOERS)
 		f = open(SUDOERS, 'w')
 		f.writelines(lines)
@@ -348,7 +348,7 @@ def setRights():
 			os.chmod(filename, 0640)
 	
 	files = [ u'/etc/opsi/passwd' ]
-	for dirname in (u'/etc/opsi/backends', u'/etc/opsi/backendManager', u'/etc/opsi/backendManager/extend.d', u'/var/lib/opsi/depot', u'/var/lib/opsi/repository'):
+	for dirname in (u'/etc/opsi/backends', u'/etc/opsi/backendManager', u'/etc/opsi/backendManager/extend.d', u'/var/lib/opsi', u'/var/lib/opsi/depot', u'/var/lib/opsi/repository'):
 		if os.path.isdir(dirname):
 			logger.info(u"   Setting rights on directory '%s'" % dirname)
 			os.chown(dirname, opsiconfdUid, adminGroupGid)
@@ -379,6 +379,8 @@ def setRights():
 			if os.path.exists(depotDir):
 				logger.notice(u"Local depot directory '%s' found, setting rights" % depotDir)
 			
+			os.chown(depotDir, opsiconfdUid, fileAdminGroupGid)
+			os.chmod(depotDir, 02770)
 			for f in findFiles(depotDir, returnLinks = False):
 				f = os.path.join(depotDir, f)
 				os.chown(f, opsiconfdUid, fileAdminGroupGid)
