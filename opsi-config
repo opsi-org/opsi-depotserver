@@ -12,7 +12,7 @@ from OPSI.Types import *
 from OPSI.Object import *
 from OPSI.System import *
 from OPSI.Util.File import *
-from OPSI.Util import findFiles, randomString
+from OPSI.Util import findFiles, randomString, blowfishDecrypt
 
 logger = Logger()
 logger.setConsoleLevel(LOG_ERROR)
@@ -128,7 +128,8 @@ def configureSamba():
 		newlines.append(u"   level2 oplocks = no\n")
 		newlines.append(u"   writeable = yes\n")
 		newlines.append(u"   invalid users = root\n")
-	
+		newlines.append(u"\n")
+		
 	if not configShareFound:
 		logger.notice(u"   Adding share [opsi_config]")
 		confChanged = True
@@ -138,7 +139,8 @@ def configureSamba():
 		newlines.append(u"   path = /var/lib/opsi/config\n")
 		newlines.append(u"   writeable = yes\n")
 		newlines.append(u"   invalid users = root\n")
-	
+		newlines.append(u"\n")
+		
 	if not workbenchShareFound:
 		logger.notice(u"   Adding share [opsi_workbench]")
 		confChanged = True
@@ -150,7 +152,8 @@ def configureSamba():
 		newlines.append(u"   invalid users = root\n")
 		newlines.append(u"   create mask = 0660\n")
 		newlines.append(u"   directory mask = 0770\n")
-	
+		newlines.append(u"\n")
+		
 	if confChanged:
 		logger.notice(u"   Creating backup of %s" % SMB_CONF)
 		shutil.copy(SMB_CONF, SMB_CONF + u'.' + time.strftime("%Y-%m-%d_%H:%M"))
@@ -303,7 +306,23 @@ def configureClientUser():
 		os.chmod(authorizedKeys, 0600)
 		os.chown(authorizedKeys, clientUserUid, adminGroupGid)
 	
+	
 	password = randomString(12)
+	backend = None
+	try:
+		from OPSI.Backend.BackendManager import BackendManager
+		backend = BackendManager(
+			dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
+			backendConfigDir   = u'/etc/opsi/backends',
+			extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
+			depotBackend       = True
+		)
+		depot = backend.host_getObjects(type = 'OpsiDepotserver', id = sysConfig['fqdn'])[0]
+		password = blowfishDecrypt(depot.opsiHostKey, backend.depot_getCredentials(username = u'pcpatch', hostId = depot.id)['password'])
+	finally:
+		if backend:
+			backend.backend_exit()
+	
 	logger.addConfidentialString(password)
 	execute('opsi-admin -d task setPcpatchPassword %s' % password)
 	
@@ -374,6 +393,7 @@ def setRights():
 			extensionConfigDir = u'/etc/opsi/backendManager/extend.d'
 		)
 		depot = backend.host_getObjects(type = 'OpsiDepotserver', id = sysConfig['fqdn'])
+		backend.backend_exit()
 		if depot:
 			depot = depot[0]
 			depotUrl = depot.getDepotLocalUrl()
