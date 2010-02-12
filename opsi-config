@@ -319,9 +319,10 @@ def configureClientUser():
 		)
 		depot = backend.host_getObjects(type = 'OpsiDepotserver', id = sysConfig['fqdn'])[0]
 		password = blowfishDecrypt(depot.opsiHostKey, backend.depot_getCredentials(username = u'pcpatch', hostId = depot.id)['password'])
-	finally:
-		if backend:
-			backend.backend_exit()
+	except Exception, e:
+		logger.error(u"Failed to get client user (pcpatch) password: %s" % e)
+	if backend:
+		backend.backend_exit()
 	
 	logger.addConfidentialString(password)
 	execute('opsi-admin -d task setPcpatchPassword %s' % password)
@@ -370,7 +371,7 @@ def setRights():
 			os.chown(filename, opsiconfdUid, adminGroupGid)
 			os.chmod(filename, 0640)
 	
-	files = [ u'/etc/opsi/passwd' ]
+	files = [ u'/etc/opsi/passwd', u'/etc/opsi/modules' ]
 	for dirname in (u'/etc/opsi/backends', u'/etc/opsi/backendManager', u'/etc/opsi/backendManager/extend.d', u'/var/lib/opsi', u'/var/lib/opsi/depot', u'/var/lib/opsi/repository'):
 		if os.path.isdir(dirname):
 			logger.info(u"   Setting rights on directory '%s'" % dirname)
@@ -384,6 +385,12 @@ def setRights():
 			logger.info(u"   Setting rights on file '%s'" % filename)
 			os.chown(filename, opsiconfdUid, adminGroupGid)
 			os.chmod(filename, 0660)
+	
+	filename = u'/etc/opsi/version'
+	if os.path.isfile(filename):
+		logger.info(u"   Setting rights on file '%s'" % filename)
+		os.chown(filename, opsiconfdUid, adminGroupGid)
+		os.chmod(filename, 0660)
 	
 	try:
 		from OPSI.Backend.BackendManager import BackendManager
@@ -484,8 +491,8 @@ def initializeBackends():
 			UnicodeConfig(
 				id             = u'clientconfig.configserver.url',
 				description    = u'URL of opsi config service to use',
-				possibleValues = [ u'https://%s:4447/rpc' % configServer.getIpAddress() ],
-				defaultValues  = [ u'https://%s:4447/rpc' % configServer.getIpAddress() ],
+				possibleValues = [ u'https://%s:4447' % configServer.getIpAddress() ],
+				defaultValues  = [ u'https://%s:4447' % configServer.getIpAddress() ],
 				editable       = True,
 				multiValue     = False
 			)
