@@ -476,7 +476,7 @@ def initializeBackends():
 			)
 		else:
 			logger.notice(u"Converting depot server '%s' to config server" % sysConfig['fqdn'])
-			OpsiConfigserver.fromHash(depot[0].toHash())
+			configServer = OpsiConfigserver.fromHash(depot[0].toHash())
 			backend.host_createObjects(configServer)
 	
 	configServer = backend.host_getObjects(type = 'OpsiConfigserver', id = sysConfig['fqdn'])
