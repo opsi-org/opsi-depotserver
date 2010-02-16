@@ -1,0 +1,18 @@
+#! /bin/sh
+# config script for opsi-depotserver
+#
+# see: dh_installdeb(1)
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+db_title "Opsi Depotserver"
+
+db_input high opsi/configure_samba || true
+db_go || true
+db_input high opsi/configure_dhcpd || true
+db_go || true
+
+db_stop || true
+
