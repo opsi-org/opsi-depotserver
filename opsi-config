@@ -17,6 +17,7 @@ from OPSI.Util import findFiles, randomString, blowfishDecrypt, objectToBeautifi
 from OPSI.UI import *
 from OPSI.Backend.MySQL import *
 from OPSI.Backend.LDAP import *
+from OPSI.Backend.JSONRPC import *
 from OPSI.Backend.Backend import ExtendedConfigDataBackend
 
 logger = Logger()
@@ -312,7 +313,7 @@ def configureClientUser():
 		os.chown(authorizedKeys, clientUserUid, adminGroupGid)
 	
 	
-	password = randomString(12)
+	password = None
 	backend = None
 	try:
 		from OPSI.Backend.BackendManager import BackendManager
@@ -325,12 +326,13 @@ def configureClientUser():
 		depot = backend.host_getObjects(type = 'OpsiDepotserver', id = sysConfig['fqdn'])[0]
 		password = blowfishDecrypt(depot.opsiHostKey, backend.depot_getCredentials(username = u'pcpatch', hostId = depot.id)['password'])
 	except Exception, e:
-		logger.error(u"Failed to get client user (pcpatch) password: %s" % e)
+		logger.warning(u"Failed to get client user (pcpatch) password: %s" % e)
+		password = randomString(12)
 	if backend:
 		backend.backend_exit()
 	
 	logger.addConfidentialString(password)
-	execute('opsi-admin -d task setPcpatchPassword %s' % password)
+	execute('opsi-admin -d task setPcpatchPassword "%s"' % password)
 	
 def setRights():
 	logger.notice(u"Setting rights")
@@ -993,7 +995,7 @@ def updateMySQLBackend():
 		
 		# SOFTWARE_CONFIG
 		logger.notice(u"Updating table SOFTWARE_CONFIG")
-		 ogger.notice(u"This may take a while, do not abort!")
+		logger.notice(u"This may take a while, do not abort!")
 		mysql.query(u"alter table SOFTWARE_CONFIG add `clientId` varchar(255) NOT NULL;")
 		mysql.query(u"alter table SOFTWARE_CONFIG add `name` varchar(100) NOT NULL;")
 		mysql.query(u"alter table SOFTWARE_CONFIG add `version` varchar(100) NOT NULL;")
@@ -1161,6 +1163,218 @@ def configureMySQLBackend():
 		ui.exit()
 		logger.setConsoleLevel(consoleLevel)
 	
+
+def registerDepot():
+	backendConfigFile = u'/etc/opsi/backends/jsonrpc.conf'
+	dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf'
+	
+	sysConfig
+	l = {'socket': socket, 'os': os, 'sys': sys, 'module': '', 'config': {}}
+	logger.info(u"Loading backend config '%s'" % backendConfigFile)
+	execfile(backendConfigFile, l)
+	config = l['config']
+	logger.info(u"Current jsonrpc backend config: %s" % config)
+	
+	
+	jsonrpcBackend = None
+	depot = None
+	
+	consoleLevel = logger.getConsoleLevel()
+	logger.setConsoleLevel(LOG_NONE)
+	ui = UIFactory()
+	try:
+		adminUser = u'root'
+		adminPass = u''
+		messageBox = None
+		while True:
+			values = [
+				{ "name": u"Config server",             "value": config['address'] },
+				{ "name": u"Opsi admin user",           "value": adminUser },
+				{ "name": u"Opsi admin password",       "value": adminPass, "password": True }
+			]
+			values = ui.getValues(title = u'Config server connection', width = 80, height = 10, entries = values)
+			if values is None:
+				raise Exception(u"Canceled")
+			
+			config['address']  = values[0]["value"]
+			adminUser          = values[1]["value"]
+			adminPass          = values[2]["value"]
+			
+			messageBox = ui.createMessageBox(width = 80, height = 20, title = u'Register depot', text = u'')
+			# Connect to config server
+			logger.notice(u"Connecting to config server '%s' as user '%s'" % (config['address'], adminUser))
+			messageBox.addText(u"Connecting to config server '%s' as user '%s'\n" % (config['address'], adminUser))
+			
+			try:
+				jsonrpcBackend = JSONRPCBackend(address = config['address'], username = adminUser, password = adminPass)
+			except Exception, e:
+				messageBox.hide()
+				logger.error(u"Failed to connect to config server '%s' as user '%s': %s" % (config['address'], adminUser, e))
+				ui.showError(text = u"Failed to connect to config server '%s' as user '%s': %s" % (config['address'], adminUser, e),
+						title = u'Failed to connect', width = 80, height = 6, seconds = 0)
+				continue
+			logger.notice(u"Successfully connected to config server '%s' as user '%s'" % (config['address'], adminUser))
+			messageBox.addText(u"Successfully connected to config server '%s' as user '%s'\n" % (config['address'], adminUser))
+			break
+		
+		depots = jsonrpcBackend.host_getObjects(id = sysConfig['fqdn'])
+		if depots:
+			# Already exists
+			depot = depots[0]
+		else:
+			depot = OpsiDepotserver(
+					id                  = sysConfig['fqdn'],
+					opsiHostKey         = None,
+					depotLocalUrl       = u'file:///opt/pcbin/install',
+					depotRemoteUrl      = u'smb://%s/opt_pcbin/install' % sysConfig['hostname'],
+					repositoryLocalUrl  = u'file:///var/lib/opsi/repository',
+					repositoryRemoteUrl = u'webdavs://%s:4447/repository' % sysConfig['fqdn'],
+					description         = u'',
+					notes               = u'',
+					hardwareAddress     = sysConfig['hardwareAddress'] or u'',
+					ipAddress           = sysConfig['ipAddress'] or u'',
+					inventoryNumber     = u'',
+					networkAddress      = u'%s/%s' % (sysConfig['subnet'], sysConfig['netmask']),
+					maxBandwidth        = 0
+			)
+		while True:
+			if (depot.maxBandwidth < 0):
+				depot.maxBandwidth = 0
+			if (depot.maxBandwidth > 0):
+				depot.maxBandwidth = int(depot.maxBandwidth/1000)
+			
+			values = [
+				{ "name": u"Description",                 "value": depot.description         },
+				{ "name": u"Inventory number",            "value": depot.inventoryNumber     },
+				{ "name": u"Notes",                       "value": depot.notes               },
+				{ "name": u"Ip address",                  "value": depot.ipAddress           },
+				{ "name": u"Hardware address",            "value": depot.hardwareAddress     },
+				{ "name": u"Network address",             "value": depot.networkAddress      },
+				{ "name": u"Maximum bandwidth (kbyte/s)", "value": depot.maxBandwidth        },
+				{ "name": u"Local depot url",             "value": depot.depotLocalUrl       },
+				{ "name": u"Remote depot url",            "value": depot.depotRemoteUrl      },
+				{ "name": u"Local repository url",        "value": depot.repositoryLocalUrl  },
+				{ "name": u"Remote repository url",       "value": depot.repositoryRemoteUrl },
+				
+			]
+			values = ui.getValues(title = u'Depot server settings', width = 80, height = 16, entries = values)
+			if values is None:
+				raise Exception(u"Canceled")
+			
+			error = None
+			try:
+				depot.setDescription( values[0].get('value') )
+			except Exception, e:
+				if not error: error = u'Invalid description'
+			
+			try:
+				depot.setInventoryNumber( values[1].get('value') )
+			except Exception, e:
+				if not error: error = u'Inventory number invalid'
+			
+			try:
+				depot.setNotes( values[2].get('value') )
+			except Exception, e:
+				if not error: error = u'Invalid notes'
+			
+			try:
+				depot.setIpAddress( values[3].get('value') )
+			except Exception, e:
+				if not error: error = u'Invalid ip address'
+			
+			try:
+				depot.setHardwareAddress( values[4].get('value') )
+			except Exception, e:
+				if not error: error = u'Invalid hardware address'
+			
+			try:
+				depot.setNetworkAddress( values[5].get('value') )
+			except Exception, e:
+				if not error: error = u'Invalid network address'
+			
+			try:
+				depot.setMaxBandwidth( forceInt(values[6].get('value'))*1000 )
+			except Exception, e:
+				if not error: error = u'Invalid maximum bandwidth'
+			
+			try:
+				depot.setDepotLocalUrl( values[7].get('value') )
+			except Exception, e:
+				if not error: error = u'Depot local url invalid'
+			
+			try:
+				depot.setDepotRemoteUrl( values[8].get('value') )
+			except Exception, e:
+				if not error: error = u'Depot remote url invalid'
+			
+			try:
+				depot.setRepositoryLocalUrl( values[9].get('value') )
+			except Exception, e:
+				if not error: error = u'Repository local url invalid'
+			
+			try:
+				depot.setRepositoryRemoteUrl( values[10].get('value') )
+			except Exception, e:
+				if not error: error = u'Repository remote url invalid'
+			
+			
+			if error:
+				ui.showError(title = u'Bad value', text = error, width = 50, height = 5)
+				continue
+			
+			break
+	finally:
+		ui.exit()
+		logger.setConsoleLevel(consoleLevel)
+	
+	logger.notice(u"Creating depot '%s'" % depot.id)
+	jsonrpcBackend.host_createObjects([ depot ])
+	
+	logger.notice(u"Getting depot '%s'" % depot.id)
+	depots = jsonrpcBackend.host_getObjects(id = depot.id)
+	if not depots:
+		raise Exception(u"Failed to create depot")
+	depot = depots[0]
+	config['username'] = depot.id
+	config['password'] = depot.opsiHostKey
+	jsonrpcBackend.backend_exit()
+	
+	logger.notice(u"Testing connection to config server as user '%s'" % config['username'])
+	try:
+		jsonrpcBackend = JSONRPCBackend(address = config['address'], username = config['username'], password = config['password'])
+	except Exception, e:
+		raise Exception(u"Failed to connect to config server as user '%s': %s" % (config['username'], e))
+	logger.notice(u"Successfully connected to config server as user '%s'" % config['username'])
+	
+	logger.notice(u"Updating backend config '%s'" % backendConfigFile)
+	lines = []
+	f = codecs.open(backendConfigFile, 'r', 'utf-8')
+	for line in f.readlines():
+		if re.search('^\s*config\s*\=', line):
+			break
+		lines.append(line)
+	f.close()
+	f = codecs.open(backendConfigFile, 'w', 'utf-8')
+	f.writelines(lines)
+	f.write("config = %s\n" % objectToBeautifiedText(config))
+	f.close()
+	logger.notice(u"Backend config '%s' updated" % backendConfigFile)
+	
+	logger.notice(u"Updating dispatch config '%s'" % dispatchConfigFile)
+	lines = []
+	f = codecs.open(dispatchConfigFile, 'r', 'utf-8')
+	for line in f.readlines():
+		if line.strip() and line.strip()[0] not in (';', '#'):
+			break
+		lines.append(line)
+	f.close()
+	f = codecs.open(dispatchConfigFile, 'w', 'utf-8')
+	f.writelines(lines)
+	f.write("backend_.* : jsonrpc, opsipxeconfd, dhcpd\n")
+	f.write(".*         : jsonrpc\n")
+	f.close()
+	logger.notice(u"Dispatch config '%s' updated" % dispatchConfigFile)
+	
 	
 def initializeBackends():
 	if not os.path.exists(u'/etc/opsi/passwd'):
@@ -1191,13 +1405,13 @@ def initializeBackends():
 				depotRemoteUrl      = u'smb://%s/opt_pcbin/install' % sysConfig['hostname'],
 				repositoryLocalUrl  = u'file:///var/lib/opsi/repository',
 				repositoryRemoteUrl = u'webdavs://%s:4447/repository' % sysConfig['fqdn'],
-				description         = None,
-				notes               = None,
+				description         = u'',
+				notes               = u'',
 				hardwareAddress     = sysConfig['hardwareAddress'],
 				ipAddress           = sysConfig['ipAddress'],
-				inventoryNumber     = None,
+				inventoryNumber     = u'',
 				networkAddress      = u'%s/%s' % (sysConfig['subnet'], sysConfig['netmask']),
-				maxBandwidth        = None
+				maxBandwidth        = 0
 			)
 		else:
 			logger.notice(u"Converting depot server '%s' to config server" % sysConfig['fqdn'])
@@ -1254,6 +1468,7 @@ def usage():
 	print u"   -h, --help  show this help"
 	print u"   -l          log-level 0..9"
 	print u""
+	print u"   --register-depot           register depot at config server"
 	print u"   --configure-mysql          configure mysql backend"
 	print u"   --update-mysql             update mysql backend"
 	print u"   --init-current-config      init current backend configuration"
@@ -1269,7 +1484,7 @@ def main():
 	try:
 		(opts, args) = getopt.getopt(sys.argv[1:], "hl:",
 			['help', 'init-current-config', 'auto-configure-samba', 'auto-configure-dhcpd',
-			 'configure-mysql', 'update-mysql'])
+			 'register-depot', 'configure-mysql', 'update-mysql'])
 			#, 'update-from='])
 		if (len(args) > 0):
 			raise Exception(u"Too many arguments")
@@ -1291,6 +1506,8 @@ def main():
 			logger.setConsoleLevel(int(arg))
 		elif (opt == "--init-current-config"):
 			task = 'init-current-config'
+		elif (opt == "--register-depot"):
+			task = 'register-depot'
 		elif (opt == "--configure-mysql"):
 			task = 'configure-mysql'
 		elif (opt == "--update-mysql"):
@@ -1329,10 +1546,18 @@ def main():
 	
 	elif (task == 'update-mysql'):
 		updateMySQLBackend()
+	
+	elif (task == 'register-depot'):
+		getSysConfig()
+		registerDepot()
+		configureClientUser()
+		
 	elif autoConfigureSamba:
 		configureSamba()
+	
 	elif autoConfigureDhcpd:
 		configureDHCPD()
+	
 	else:
 		usage()
 		sys.exit(1)
