@@ -39,6 +39,8 @@ case "$1" in
 		fi
 		if [ "$2" = "" ]; then
 			/usr/share/opsi/opsi-config --init-current-config $arguments || true
+		else
+			/usr/share/opsi/opsi-config --set-rights || true
 		fi
 		
 	;;

@@ -380,8 +380,9 @@ def setRights():
 			os.chown(filename, opsiconfdUid, adminGroupGid)
 			os.chmod(filename, 0640)
 	
-	files = [ u'/etc/opsi/passwd', u'/etc/opsi/modules' ]
-	for dirname in (u'/etc/opsi/backends', u'/etc/opsi/backendManager', u'/etc/opsi/backendManager/extend.d', u'/var/lib/opsi', u'/var/lib/opsi/depot', u'/var/lib/opsi/repository'):
+	files = [ u'/etc/opsi/passwd', u'/etc/opsi/modules', u'/etc/opsi/version', u'/etc/opsi/opsiconfd.conf', u'/etc/opsi/opsiconfd.pem' ]
+	for dirname in (u'/etc/opsi/hwaudit', u'/etc/opsi/hwaudit/locales', u'/etc/opsi/backends', u'/etc/opsi/backendManager', u'/etc/opsi/backendManager/extend.d',
+			u'/var/lib/opsi', u'/var/lib/opsi/depot', u'/var/lib/opsi/repository'):
 		if os.path.isdir(dirname):
 			logger.info(u"   Setting rights on directory '%s'" % dirname)
 			os.chown(dirname, opsiconfdUid, adminGroupGid)
@@ -395,10 +396,10 @@ def setRights():
 			os.chown(filename, opsiconfdUid, adminGroupGid)
 			os.chmod(filename, 0660)
 	
-	filename = u'/etc/opsi/version'
+	filename = u'/etc/opsi/opsipxeconfd.conf'
 	if os.path.isfile(filename):
 		logger.info(u"   Setting rights on file '%s'" % filename)
-		os.chown(filename, opsiconfdUid, adminGroupGid)
+		os.chown(filename, 0, adminGroupGid)
 		os.chmod(filename, 0660)
 	
 	try:
@@ -1123,16 +1124,6 @@ def updateFileBackend():
 				logger.debug(u"File '%s' exists, keeping '%s'" % (newFilename, filename))
 	logger.notice(u"Updating depots done!")
 	
-#	logger.notice(u"Updating ___ ...")
-#	
-#	logger.notice(u"Updating ___ done!")
-
-####################################################################################################
-####################################################################################################
-####################################################################################################
-####################################################################################################
-####################################################################################################
-
 def configureMySQLBackend():
 	backendConfigFile = u'/etc/opsi/backends/mysql.conf'
 	
@@ -1568,6 +1559,7 @@ def usage():
 	print u"   --register-depot           register depot at config server"
 	print u"   --configure-mysql          configure mysql backend"
 	print u"   --update-mysql             update mysql backend"
+	print u"   --set-rights               set default rights on opsi files"
 	print u"   --update-ldap              update ldap backend"
 	print u"   --update-file              update file backend"
 	print u"   --init-current-config      init current backend configuration"
@@ -1582,7 +1574,7 @@ def main():
 	
 	try:
 		(opts, args) = getopt.getopt(sys.argv[1:], "hl:",
-			['help', 'init-current-config', 'auto-configure-samba', 'auto-configure-dhcpd',
+			['help', 'init-current-config', 'set-rights', 'auto-configure-samba', 'auto-configure-dhcpd',
 			 'register-depot', 'configure-mysql', 'update-mysql', 'update-ldap', 'update-file'])
 			#, 'update-from='])
 		if (len(args) > 0):
@@ -1605,6 +1597,8 @@ def main():
 			logger.setConsoleLevel(int(arg))
 		elif (opt == "--init-current-config"):
 			task = 'init-current-config'
+		elif (opt == "--set-rights"):
+			task = 'set-rights'
 		elif (opt == "--register-depot"):
 			task = 'register-depot'
 		elif (opt == "--configure-mysql"):
@@ -1634,7 +1628,11 @@ def main():
 	#	setRights()
 	#	#initializeBackends()
 	
-	if (task == 'init-current-config'):
+	if (task == 'set-rights'):
+		getSysConfig()
+		setRights()
+	
+	elif (task == 'init-current-config'):
 		getSysConfig()
 		if autoConfigureSamba:
 			configureSamba()
