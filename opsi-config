@@ -22,10 +22,10 @@ from OPSI.Backend.JSONRPC import *
 from OPSI.Backend.Backend import ExtendedConfigDataBackend
 
 logger = Logger()
-#logger.setConsoleLevel(LOG_ERROR)
-logger.setConsoleLevel(LOG_CONFIDENTIAL)
+logger.setConsoleLevel(LOG_ERROR)
 logger.setConsoleColor(True)
 
+LOG_FILE         = u'/tmp/opsi-config.log'
 SMB_CONF         = u'/etc/samba/smb.conf'
 SMB_INIT         = u'/etc/init.d/samba'
 DHCPD_CONF       = u'/etc/dhcp3/dhcpd.conf'
@@ -273,8 +273,9 @@ def configureDHCPD():
 		f.writelines(lines)
 		f.close()
 	
+	opsiconfdUid  = pwd.getpwnam(OPSICONFD_USER)[2]
 	adminGroupGid = grp.getgrnam(ADMIN_GROUP)[2]
-	os.chown(DHCPD_CONF, -1, adminGroupGid)
+	os.chown(DHCPD_CONF, opsiconfdUid, adminGroupGid)
 	os.chmod(DHCPD_CONF, 0664)
 	
 def configureClientUser():
@@ -451,8 +452,21 @@ def update(fromVersion = None):
 			os.rmdir(u'/var/lib/opsi/products')
 		except Exception, e:
 			logger.error(e)
-
-
+	
+	from OPSI.Backend.BackendManager import BackendManager
+	backend = BackendManager(
+		dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
+		backendConfigDir   = u'/etc/opsi/backends',
+		extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
+		depotbackend       = False
+	)
+	backend.backend_createBase()
+	depots = backend.host_getObjects(type = 'OpsiDepotserver')
+	for depot in depots:
+		depot.setRepositoryLocalUrl(depot.getRepositoryLocalUrl().replace(u'/products', u'/repository'))
+		depot.setRepositoryRemoteUrl(depot.getRepositoryRemoteUrl().replace(u'/products', u'/repository'))
+	backend.host_createObjects(depots)
+	
 def updateLDAPBackend():
 	backendConfigFile = u'/etc/opsi/backends/ldap.conf'
 	
@@ -1047,22 +1061,20 @@ def updateFileBackend():
 	config = l['config']
 	logger.info(u"Current file backend config: %s" % config)
 	
-	__clientConfigDir   = os.path.join(config["baseDir"], u'clients')
-	__depotConfigDir    = os.path.join(config["baseDir"], u'depots')
-	__productDir        = os.path.join(config["baseDir"], u'products')
-	__auditDir          = os.path.join(config["baseDir"], u'audit')
-	__clientTemplateDir = os.path.join(config["baseDir"], u'templates')
+	clientConfigDir   = os.path.join(config["baseDir"], u'clients')
+	depotConfigDir    = os.path.join(config["baseDir"], u'depots')
+	productDir        = os.path.join(config["baseDir"], u'products')
+	auditDir          = os.path.join(config["baseDir"], u'audit')
+	clientTemplateDir = os.path.join(config["baseDir"], u'templates')
 	
-	for path in (__clientConfigDir, __depotConfigDir, __productDir, __auditDir, __clientTemplateDir):
+	for path in (clientConfigDir, depotConfigDir, productDir, auditDir, clientTemplateDir):
 		if not os.path.isdir(path):
 			logger.debug2(u"Create not existing path '%s'" % (path))
 			os.mkdir(path)
 	
-	
-	
 	logger.notice(u"Updating depots ...")
-	for depotId in os.listdir(__depotConfigDir):
-		if not (os.path.isfile(os.path.join(__depotConfigDir, depotId, u'depot.ini'))):
+	for depotId in os.listdir(depotConfigDir):
+		if not (os.path.isfile(os.path.join(depotConfigDir, depotId, u'depot.ini'))):
 			logger.debug2(u"Ignoring Folder '%s'" % (depotId))
 			continue
 		try:
@@ -1071,10 +1083,10 @@ def updateFileBackend():
 			logger.error(u"Invalid folder '%s': %s" % (depotId, e))
 			continue
 		
-		oldPath = os.path.join(__depotConfigDir, depotId)
+		oldPath = os.path.join(depotConfigDir, depotId)
 		oldDepot = os.path.join(oldPath, u'depot.ini')
 		oldProducts = os.path.join(oldPath, u'products')
-		newDepot = os.path.join(__depotConfigDir, depotId + u'.ini')
+		newDepot = os.path.join(depotConfigDir, depotId + u'.ini')
 		
 		logger.info(u"Moving depot '%s'" % (depotId))
 		os.rename(oldDepot, newDepot)
@@ -1101,17 +1113,14 @@ def updateFileBackend():
 				packageControlFile = PackageControlFile(filename = filename)
 				product = packageControlFile.getProduct()
 				
-				productId      = forceProductId(     product.getId()            )
-				productVersion = forceProductVersion(product.getProductVersion())
-				packageVersion = forcePackageVersion(product.getPackageVersion())
-				productType    = forceProductType(   product.getType()          )
-				if productType == 'LocalbootProduct':
-					productType = u'localboot'
-				else:
+				productType = product.getType()
+				if (productType == 'NetbootProduct'):
 					productType = u'netboot'
+				else:
+					productType = u'localboot'
 				
-				newFilename = productId + u'_' + productVersion + u'-' + packageVersion + u'.' + productType
-				newFilename = os.path.join(__productDir, newFilename)
+				newFilename = product.getId() + u'_' + product.getProductVersion() + u'-' + product.getPackageVersion() + u'.' + productType
+				newFilename = os.path.join(productDir, newFilename)
 			except Exception, e:
 				logger.error(u"Bad or missing content in '%s': %s" % (filename, e))
 				continue
@@ -1122,7 +1131,6 @@ def updateFileBackend():
 			else:
 				#TODO: make a backup? if empty folder delete?
 				logger.debug(u"File '%s' exists, keeping '%s'" % (newFilename, filename))
-	logger.notice(u"Updating depots done!")
 	
 def configureMySQLBackend():
 	backendConfigFile = u'/etc/opsi/backends/mysql.conf'
@@ -1557,13 +1565,13 @@ def usage():
 	print u"   -l          log-level 0..9"
 	print u""
 	print u"   --register-depot           register depot at config server"
-	print u"   --configure-mysql          configure mysql backend"
-	print u"   --update-mysql             update mysql backend"
 	print u"   --set-rights               set default rights on opsi files"
-	print u"   --update-ldap              update ldap backend"
-	print u"   --update-file              update file backend"
 	print u"   --init-current-config      init current backend configuration"
 	#print u"   --update-from=<version>    update from opsi version <version>"
+	print u"   --update-mysql             update mysql backend"
+	print u"   --update-ldap              update ldap backend"
+	print u"   --update-file              update file backend"
+	print u"   --configure-mysql          configure mysql backend"
 	print u"   --auto-configure-samba     patch smb.conf"
 	print u"   --auto-configure-dhcpd     patch dhcpd.conf"
 	print u""
@@ -1647,13 +1655,19 @@ def main():
 	
 	elif (task == 'update-mysql'):
 		updateMySQLBackend()
+		update()
+		setRights()
 	
 	elif (task == 'update-ldap'):
 		updateLDAPBackend()
-	
+		update()
+		setRights()
+		
 	elif (task == 'update-file'):
 		updateFileBackend()
-	
+		update()
+		setRights()
+		
 	elif (task == 'register-depot'):
 		getSysConfig()
 		registerDepot()
@@ -1670,6 +1684,8 @@ def main():
 		sys.exit(1)
 	
 if (__name__ == "__main__"):
+	logger.setLogFile(LOG_FILE)
+	logger.setFileLevel(LOG_DEBUG)
 	exception = None
 	try:
 		main()
