@@ -1660,16 +1660,19 @@ def main():
 		configureMySQLBackend()
 	
 	elif (task == 'update-mysql'):
+		getSysConfig()
 		updateMySQLBackend()
 		update()
 		setRights()
 	
 	elif (task == 'update-ldap'):
+		getSysConfig()
 		updateLDAPBackend()
 		update()
 		setRights()
 		
 	elif (task == 'update-file'):
+		getSysConfig()
 		updateFileBackend()
 		update()
 		setRights()
@@ -1680,9 +1683,11 @@ def main():
 		configureClientUser()
 		
 	elif autoConfigureSamba:
+		getSysConfig()
 		configureSamba()
 	
 	elif autoConfigureDhcpd:
+		getSysConfig()
 		configureDHCPD()
 	
 	else:
