@@ -1074,19 +1074,21 @@ def updateFileBackend():
 	
 	logger.notice(u"Updating depots ...")
 	for depotId in os.listdir(depotConfigDir):
-		if not (os.path.isfile(os.path.join(depotConfigDir, depotId, u'depot.ini'))):
-			logger.debug2(u"Ignoring Folder '%s'" % (depotId))
+		oldPath = os.path.join(__depotConfigDir, depotId)
+		if not os.path.isdir(oldPath):
+			continue
+		oldDepot = os.path.join(oldPath, u'depot.ini')
+		if not (os.path.isfile(oldDepot)):
+			logger.debug2(u"Ignoring Folder with no depot.ini: '%s'" % (depotId))
 			continue
 		try:
 			depotId = forceHostId(depotId)
 		except Exception, e:
-			logger.error(u"Invalid folder '%s': %s" % (depotId, e))
+			logger.error(u"Invalid folder with depot.ini: '%s': %s" % (depotId, e))
 			continue
 		
-		oldPath = os.path.join(depotConfigDir, depotId)
-		oldDepot = os.path.join(oldPath, u'depot.ini')
 		oldProducts = os.path.join(oldPath, u'products')
-		newDepot = os.path.join(depotConfigDir, depotId + u'.ini')
+		newDepot = os.path.join(__depotConfigDir, depotId + u'.ini')
 		
 		logger.info(u"Moving depot '%s'" % (depotId))
 		os.rename(oldDepot, newDepot)
