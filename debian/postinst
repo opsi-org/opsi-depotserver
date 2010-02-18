@@ -20,7 +20,6 @@
 
 . /usr/share/debconf/confmodule
 
-VERBOSE=true
 db_get opsi/configure_samba
 CONFIGURE_SAMBA=$RET
 db_get opsi/configure_dhcpd
@@ -38,8 +37,10 @@ case "$1" in
 			arguments="${arguments} --auto-configure-samba"
 		fi
 		if [ "$2" = "" ]; then
+			echo "/usr/share/opsi/opsi-config --init-current-config $arguments"
 			/usr/share/opsi/opsi-config --init-current-config $arguments || true
 		else
+			echo "/usr/share/opsi/opsi-config --set-rights $arguments"
 			/usr/share/opsi/opsi-config --set-rights $arguments || true
 		fi
 		

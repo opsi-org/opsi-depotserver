@@ -1638,6 +1638,10 @@ def main():
 	
 	if (task == 'set-rights'):
 		getSysConfig()
+		if autoConfigureSamba:
+			configureSamba()
+		if autoConfigureDhcpd:
+			configureDHCPD()
 		setRights()
 	
 	elif (task == 'init-current-config'):
