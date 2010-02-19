@@ -327,7 +327,7 @@ def configureClientUser():
 			depotBackend       = True
 		)
 		depot = backend.host_getObjects(type = 'OpsiDepotserver', id = sysConfig['fqdn'])[0]
-		password = blowfishDecrypt(depot.opsiHostKey, backend.depot_getCredentials(username = u'pcpatch', hostId = depot.id)['password'])
+		password = blowfishDecrypt(depot.opsiHostKey, backend.user_getCredentials(username = u'pcpatch', hostId = depot.id)['password'])
 	except Exception, e:
 		logger.warning(u"Failed to get client user (pcpatch) password: %s" % e)
 		password = randomString(12)
@@ -705,7 +705,7 @@ def updateLDAPBackend():
 					productId       = productOnDepot.productId,
 					productVersion  = productOnDepot.productVersion,
 					packageVersion  = productOnDepot.packageVersion,
-					propertyId      = obj.getCn(),
+					propertyId      = obj.getCn().replace(' ', '_'),
 					description     = obj.getAttribute('description',                      default = None, valuesAsList = False),
 					possibleValues  = obj.getAttribute('opsiProductPropertyPossibleValue', default = None, valuesAsList = True),
 					defaultValues   = defaultValues
@@ -715,7 +715,7 @@ def updateLDAPBackend():
 				backend.productPropertyState_createObjects(
 					ProductPropertyState(
 						productId   = productOnDepot.productId,
-						propertyId  = obj.getCn(),
+						propertyId  = obj.getCn().replace(' ', '_'),
 						objectId    = depotId,
 						values      = defaultValues
 					)
@@ -832,7 +832,7 @@ def updateLDAPBackend():
 					productPropertyStates.append(
 						ProductPropertyState(
 							productId   = productId,
-							propertyId  = propertyId,
+							propertyId  = propertyId.replace(' ', '_'),
 							objectId    = clientId,
 							values      = [ value ]
 						)
@@ -1053,6 +1053,7 @@ def updateMySQLBackend():
 	mysqlBackend.backend_exit()
 
 def updateFileBackend():
+	# TODO: productPropertyIds: replace " " with "_"
 	backendConfigFile = u'/etc/opsi/backends/file.conf'
 	
 	l = {'socket': socket, 'os': os, 'sys': sys, 'module': '', 'config': {}}
