@@ -1053,7 +1053,6 @@ def updateMySQLBackend():
 	mysqlBackend.backend_exit()
 
 def updateFileBackend():
-	# TODO: productPropertyIds: replace " " with "_"
 	backendConfigFile = u'/etc/opsi/backends/file.conf'
 	
 	l = {'socket': socket, 'os': os, 'sys': sys, 'module': '', 'config': {}}
@@ -1075,12 +1074,10 @@ def updateFileBackend():
 	
 	logger.notice(u"Updating depots ...")
 	for depotId in os.listdir(depotConfigDir):
-		oldPath = os.path.join(__depotConfigDir, depotId)
-		if not os.path.isdir(oldPath):
-			continue
+		oldPath = os.path.join(depotConfigDir, depotId)
 		oldDepot = os.path.join(oldPath, u'depot.ini')
-		if not (os.path.isfile(oldDepot)):
-			logger.debug2(u"Ignoring Folder with no depot.ini: '%s'" % (depotId))
+		if (not os.path.isdir(oldPath)) or (not os.path.isfile(oldDepot)):
+			logger.debug2(u"Ignoring '%s'" % (oldPath))
 			continue
 		try:
 			depotId = forceHostId(depotId)
@@ -1089,10 +1086,7 @@ def updateFileBackend():
 			continue
 		
 		oldProducts = os.path.join(oldPath, u'products')
-		newDepot = os.path.join(__depotConfigDir, depotId + u'.ini')
-		
-		logger.info(u"Moving depot '%s'" % (depotId))
-		os.rename(oldDepot, newDepot)
+		newDepot = os.path.join(depotConfigDir, depotId + u'.ini')
 		
 		logger.notice(u"Updating products on depot '%s'" % (depotId))
 		productFileList = []
@@ -1124,17 +1118,63 @@ def updateFileBackend():
 				
 				newFilename = product.getId() + u'_' + product.getProductVersion() + u'-' + product.getPackageVersion() + u'.' + productType
 				newFilename = os.path.join(productDir, newFilename)
+				
+				if (os.path.isfile(newFilename)):
+					logger.debug(u"Already updated, keeping %s" % (filename))
+					continue
+				
+				logger.debug(u"Updating ProductProperties")
+				updatedProductProperties = []
+				for productProperty in packageControlFile.getProductProperties():
+					productProperty.setPropertyId(productProperty.getPropertyId().replace(u' ', u'_'))
+					updatedProductProperties.append(productProperty)
+				packageControlFile.SetProductProperties(updatedProductProperties)
+				packageControlFile.generate()
+				
+				logger.info(u"Moving product '%s' to '%s'" % (filename, newFilename))
+				os.rename(filename, newFilename)
 			except Exception, e:
 				logger.error(u"Bad or missing content in '%s': %s" % (filename, e))
 				continue
-			
-			if not (os.path.isfile(newFilename)):
-				logger.info(u"Moving product '%s' to '%s'" % (filename, newFilename))
-				os.rename(filename, newFilename)
-			else:
-				#TODO: make a backup? if empty folder delete?
-				logger.debug(u"File '%s' exists, keeping '%s'" % (newFilename, filename))
 	
+	logger.notice(u"Updating ProductPropertyStates ...")
+	for client in os.listdir(clientConfigDir):
+		filename = os.path.join(clientConfigDir, client)
+		if (not os.path.isfile(filename)) or (client[-4:].lower() != '.ini'):
+			logger.debug2(u"Skipping '%s'" % (filename))
+			continue
+		
+		try:
+			clientId = forceHostId(client[:-4])
+			
+			logger.debug(u"Parsing file '%s'" % (filename))
+			iniFile = IniFile(filename = filename, ignoreCase = True)
+			cp = iniFile.parse()
+			
+			logger.debug(u"Updating ProductPropertyStates in '%s'" % (filename))
+			needsGenerate = False
+			for section in cp.sections():
+				if (section[-8:].lower() != '-install'):
+					continue
+				
+				for option in cp.options(section):
+					if (option.find(u' ') == -1):
+						continue
+					value = cp.get(section, option)
+					cp.remove_option(section, option)
+					cp.set(section, option.replace(u' ', u'_'), value)
+					
+					needsGenerate = True
+			
+			if needsGenerate:
+				print needsGenerate
+				iniFile.generate(cp)
+		except Exception, e:
+			logger.error(u"Invalid ini '%s': %s" % (filename, e))
+			continue
+
+
+
 def configureMySQLBackend():
 	backendConfigFile = u'/etc/opsi/backends/mysql.conf'
 	
@@ -1671,18 +1711,18 @@ def main():
 		updateLDAPBackend()
 		update()
 		setRights()
-		
+	
 	elif (task == 'update-file'):
 		getSysConfig()
 		updateFileBackend()
 		update()
 		setRights()
-		
+	
 	elif (task == 'register-depot'):
 		getSysConfig()
 		registerDepot()
 		configureClientUser()
-		
+	
 	elif autoConfigureSamba:
 		getSysConfig()
 		configureSamba()
