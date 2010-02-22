@@ -775,16 +775,20 @@ def updateLDAPBackend():
 			if obj.getCn() in netbootProductIds:
 				productType = 'NetbootProduct'
 			
-			installationStatus = None
+			actionRequest      = obj.getAttribute('opsiProductActionRequestForced', default = None, valuesAsList = False)
+			installationStatus = obj.getAttribute('opsiProductInstallationStatus', default = None, valuesAsList = False)
+			actionProgress     = obj.getAttribute('opsiProductActionProgress', default = None, valuesAsList = False)
+			if installationStatus in ('installing', 'failed'):
+				actionProgress = installationStatus
+				installationStatus = 'not_installed'
 			try:
-				installationStatus = forceInstallationStatus(obj.getAttribute('opsiProductInstallationStatus', default = None, valuesAsList = False))
+				installationStatus = forceInstallationStatus(installationStatus)
 			except:
-				pass
-			actionRequest = None
+				installationStatus = 'not_installed'
 			try:
-				actionRequest = forceActionRequest(obj.getAttribute('opsiProductActionRequestForced', default = None, valuesAsList = False))
+				actionRequest = forceActionRequest(actionRequest)
 			except:
-				pass
+				actionRequest = 'none'
 			
 			if (installationStatus == 'not_installed') and (actionRequest == 'none'):
 				continue
@@ -802,7 +806,7 @@ def updateLDAPBackend():
 					clientId           = clientId,
 					installationStatus = installationStatus,
 					actionRequest      = actionRequest,
-					actionProgress     = obj.getAttribute('opsiProductActionProgress', default = None, valuesAsList = False)
+					actionProgress     = actionProgress
 				)
 			)
 		except Exception, e:
@@ -1137,7 +1141,7 @@ def updateFileBackend():
 				logger.error(u"Bad or missing content in '%s': %s" % (filename, e))
 				continue
 	
-	logger.notice(u"Updating ProductPropertyStates ...")
+	logger.notice(u"Updating ProductStates, ProductPropertyStates ...")
 	for client in os.listdir(clientConfigDir):
 		filename = os.path.join(clientConfigDir, client)
 		if (not os.path.isfile(filename)) or (client[-4:].lower() != '.ini'):
@@ -1154,20 +1158,32 @@ def updateFileBackend():
 			logger.debug(u"Updating ProductPropertyStates in '%s'" % (filename))
 			needsGenerate = False
 			for section in cp.sections():
-				if (section[-8:].lower() != '-install'):
-					continue
+				if (section[-8:].lower() == '-install'):
+					for option in cp.options(section):
+						if (option.find(u' ') == -1):
+							continue
+						value = cp.get(section, option)
+						cp.set(section, option.replace(u' ', u'_'), value)
+						needsGenerate = True
 				
-				for option in cp.options(section):
-					if (option.find(u' ') == -1):
-						continue
-					value = cp.get(section, option)
-					cp.remove_option(section, option)
-					cp.set(section, option.replace(u' ', u'_'), value)
-					
-					needsGenerate = True
+				elif section.lower().endswith('_product_states'):
+					for option in cp.options(section):
+						productId = option.strip()
+						actionRequest = 'none'
+						installationStatus = cp.get(section, productId)
+						if (installationStatus.find(':') != -1):
+							(installationStatus, actionRequest) = installationStatus.split(':', 1)
+						if installationStatus not in ('installing', 'failed'):
+							continue
+						actionProgress = installationStatus
+						installationStatus = u'not_installed'
+						cp.set(section, productId, u'%s:%s' % (installationStatus, actionRequest))
+						if not cp.has_section('%s-state' % productId):
+							cp.add_section('%s-state' % productId)
+						cp.set('%s-state' % productId, 'actionprogress', actionProgress)
+						needsGenerate = True
 			
 			if needsGenerate:
-				print needsGenerate
 				iniFile.generate(cp)
 		except Exception, e:
 			logger.error(u"Invalid ini '%s': %s" % (filename, e))
