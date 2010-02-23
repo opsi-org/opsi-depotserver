@@ -1092,6 +1092,12 @@ def updateFileBackend():
 		oldProducts = os.path.join(oldPath, u'products')
 		newDepot = os.path.join(depotConfigDir, depotId + u'.ini')
 		
+		if os.path.isfile(newDepot):
+			logger.error(u"New depot '%s' already exists!" % (newDepot))
+			continue
+		
+		productsOnDepot = []
+		
 		logger.notice(u"Updating products on depot '%s'" % (depotId))
 		productFileList = []
 		for path in (os.path.join(oldProducts, u'localboot'), os.path.join(oldProducts, u'netboot')):
@@ -1123,6 +1129,14 @@ def updateFileBackend():
 				newFilename = product.getId() + u'_' + product.getProductVersion() + u'-' + product.getPackageVersion() + u'.' + productType
 				newFilename = os.path.join(productDir, newFilename)
 				
+				productsOnDepot.append(
+					[
+					u'%s' % product.getId(),
+					u'%s' % product.getProductVersion(),
+					u'%s' % product.getPackageVersion(),
+					u'%s' % product.getType()
+					])
+				
 				if (os.path.isfile(newFilename)):
 					logger.debug(u"Already updated, keeping %s" % (filename))
 					continue
@@ -1140,6 +1154,25 @@ def updateFileBackend():
 			except Exception, e:
 				logger.error(u"Bad or missing content in '%s': %s" % (filename, e))
 				continue
+		
+		os.rename(oldDepot, newDepot)
+		print "renamed"
+		
+		iniFile = IniFile(filename = newDepot, ignoreCase = True)
+		cp = iniFile.parse()
+		
+		for productOnDepot in productsOnDepot:
+			print "adding product on depot", productOnDepot
+			section = productOnDepot[0] + u'-state'
+			cp.add_section(section)
+			cp.set(section, u'packageversion', productOnDepot[1])
+			cp.set(section, u'productversion', productOnDepot[2])
+			cp.set(section, u'producttype', productOnDepot[3])
+			logger.debug2(u"Added product on depot: %s" % (productOnDepot))
+		
+		iniFile.generate(cp)
+		
+		
 	
 	logger.notice(u"Updating ProductStates, ProductPropertyStates ...")
 	for client in os.listdir(clientConfigDir):
