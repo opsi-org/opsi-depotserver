@@ -1132,7 +1132,7 @@ def updateFileBackend():
 				for productProperty in packageControlFile.getProductProperties():
 					productProperty.setPropertyId(productProperty.getPropertyId().replace(u' ', u'_'))
 					updatedProductProperties.append(productProperty)
-				packageControlFile.SetProductProperties(updatedProductProperties)
+				packageControlFile.setProductProperties(updatedProductProperties)
 				packageControlFile.generate()
 				
 				logger.info(u"Moving product '%s' to '%s'" % (filename, newFilename))
