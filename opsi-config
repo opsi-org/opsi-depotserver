@@ -18,6 +18,7 @@ from OPSI.Util import findFiles, randomString, blowfishDecrypt, objectToBeautifi
 from OPSI.UI import *
 from OPSI.Backend.MySQL import *
 from OPSI.Backend.LDAP import *
+from OPSI.Backend.File import *
 from OPSI.Backend.JSONRPC import *
 from OPSI.Backend.Backend import ExtendedConfigDataBackend
 
@@ -1171,8 +1172,12 @@ def updateFileBackend():
 			logger.debug2(u"Added product on depot: %s" % (productOnDepot))
 		
 		iniFile.generate(cp)
-		
-		
+	
+	logger.notice(u"Updating Configs ...")
+	
+	#todo:
+	
+	
 	
 	logger.notice(u"Updating ProductStates, ProductPropertyStates ...")
 	for client in os.listdir(clientConfigDir):
