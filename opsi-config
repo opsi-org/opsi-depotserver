@@ -5,7 +5,7 @@
 # =          All rights reserved.             =
 # = = = = = = = = = = = = = = = = = = = = = = =
 
-import os, sys, socket, re, shutil, getopt, pwd, grp, stat, codecs
+import os, sys, socket, re, shutil, getopt, pwd, grp, stat, codecs, time
 import MySQLdb
 
 from OPSI.Logger import *
@@ -1105,20 +1105,58 @@ def updateFileBackend():
 	config = l['config']
 	logger.info(u"Current file backend config: %s" % config)
 	
+	logger.notice(u"Creating file backend instance")
+	backend = ExtendedConfigDataBackend(FileBackend(**config))
+	
 	clientConfigDir   = os.path.join(config["baseDir"], u'clients')
 	depotConfigDir    = os.path.join(config["baseDir"], u'depots')
 	productDir        = os.path.join(config["baseDir"], u'products')
 	auditDir          = os.path.join(config["baseDir"], u'audit')
 	clientTemplateDir = os.path.join(config["baseDir"], u'templates')
 	
-	for path in (clientConfigDir, depotConfigDir, productDir, auditDir, clientTemplateDir):
-		if not os.path.isdir(path):
-			logger.debug2(u"Create not existing path '%s'" % (path))
-			os.mkdir(path)
+	backupDir         = os.path.join(config["baseDir"], u'..', u'backup_%s' % time.time())
+	
+	backupClientConfigDir   = os.path.join(backupDir, u'clients')
+	backupDepotConfigDir    = os.path.join(backupDir, u'depots')
+	backupProductDir        = os.path.join(backupDir, u'products')
+	backupAuditDir          = os.path.join(backupDir, u'audit')
+	backupClientTemplateDir = os.path.join(backupDir, u'templates')
+	
+	logger.info(u"Backing up current directory '%s' to '%s'" % (config["baseDir"], backupDir))
+	shutil.move(config["baseDir"], backupDir)
+	
+	backend.backend_createBase()
+	
+	opsiHostKeys = {}
+	if os.path.isfile(config["hostKeyFile"]):
+		opsiHostKeys = HostKeyFile(filename = config["hostKeyFile"]).parse()
+		logger.info(u"Backing up hostKeyFile '%s' to '%s'" % (config["hostKeyFile"], backupDir))
+		shutil.move(config["hostKeyFile"], backupDir)
+	else:
+		logger.warning(u"Could not backup non-existant hostKeyFile '%s'" % (config["hostKeyFile"]))
+	
+	
+	
+	#Hosts
+	#Configs
+	#ConfigStates
+	#Products
+	#ProductProperties
+	#ProductDependencies
+	#ProductOnDepots
+	#ProductOnClients
+	#ProductPropertyStates
+	#Groups
+	#ObjectToGroups
+	#AuditSoftwares
+	#AuditSoftwareOnClients
+	#AuditHardwares
+	
+	
 	
 	logger.notice(u"Updating depots ...")
-	for depotId in os.listdir(depotConfigDir):
-		oldPath = os.path.join(depotConfigDir, depotId)
+	for depotId in os.listdir(backupDepotConfigDir):
+		oldPath = os.path.join(backupDepotConfigDir, depotId)
 		oldDepot = os.path.join(oldPath, u'depot.ini')
 		if (not os.path.isdir(oldPath)) or (not os.path.isfile(oldDepot)):
 			logger.debug2(u"Ignoring '%s'" % (oldPath))
@@ -1126,146 +1164,208 @@ def updateFileBackend():
 		try:
 			depotId = forceHostId(depotId)
 		except Exception, e:
-			logger.error(u"Invalid folder with depot.ini: '%s': %s" % (depotId, e))
+			logger.error(u"Invalid depot: '%s': %s" % (oldPath, e))
 			continue
 		
-		oldProducts = os.path.join(oldPath, u'products')
-		newDepot = os.path.join(depotConfigDir, depotId + u'.ini')
+		#TODO: maybe direct?
+		oldDepotDict = {
+		'id':                  depotId,
+		'opsiHostKey':         None,
+		'depotLocalUrl':       None,
+		'depotRemoteUrl':      None,
+		'repositoryLocalUrl':  None,
+		'repositoryRemoteUrl': None,
+		'description':         None,
+		'notes':               None,
+		'hardwareAddress':     None,
+		'ipAddress':           None,
+		'inventoryNumber':     None,
+		'networkAddress':      None,
+		'maxBandwidth':        None
+		}
 		
-		if os.path.isfile(newDepot):
-			logger.error(u"New depot '%s' already exists!" % (newDepot))
-			continue
+		if depotId in opsiHostKeys.keys():
+			oldDepotDict['opsiHostKey'] = opsiHostKeys[depotId]
 		
-		productsOnDepot = []
-		
-		logger.notice(u"Updating products on depot '%s'" % (depotId))
-		productFileList = []
-		for path in (os.path.join(oldProducts, u'localboot'), os.path.join(oldProducts, u'netboot')):
-			for productId in os.listdir(path):
-				try:
-					productFile = os.path.join(path, forceProductId(productId))
-					if not (os.path.isfile(productFile)):
-						raise Exception()
-					productFileList.append(productFile)
-				except Exception, e:
-					logger.warning(u"Cannot use '%s' in '%s': %s" % (productId, path, e))
-					continue
-		
-		for filename in productFileList:
-			newFilename = None
-			product = None
-			
-			try:
-				logger.debug(u"Parsing file '%s'" % (filename))
-				packageControlFile = PackageControlFile(filename = filename)
-				product = packageControlFile.getProduct()
-				
-				productType = product.getType()
-				if (productType == 'NetbootProduct'):
-					productType = u'netboot'
-				else:
-					productType = u'localboot'
-				
-				newFilename = product.getId() + u'_' + product.getProductVersion() + u'-' + product.getPackageVersion() + u'.' + productType
-				newFilename = os.path.join(productDir, newFilename)
-				
-				productsOnDepot.append(
-					[
-					u'%s' % product.getId(),
-					u'%s' % product.getProductVersion(),
-					u'%s' % product.getPackageVersion(),
-					u'%s' % product.getType()
-					])
-				
-				if (os.path.isfile(newFilename)):
-					logger.debug(u"Already updated, keeping %s" % (filename))
-					continue
-				
-				logger.debug(u"Updating ProductProperties")
-				updatedProductProperties = []
-				for productProperty in packageControlFile.getProductProperties():
-					productProperty.setPropertyId(productProperty.getPropertyId().replace(u' ', u'_'))
-					updatedProductProperties.append(productProperty)
-				packageControlFile.setProductProperties(updatedProductProperties)
-				packageControlFile.generate()
-				
-				logger.info(u"Moving product '%s' to '%s'" % (filename, newFilename))
-				os.rename(filename, newFilename)
-			except Exception, e:
-				logger.error(u"Bad or missing content in '%s': %s" % (filename, e))
-				continue
-		
-		os.rename(oldDepot, newDepot)
-		print "renamed"
-		
-		iniFile = IniFile(filename = newDepot, ignoreCase = True)
-		cp = iniFile.parse()
-		
-		for productOnDepot in productsOnDepot:
-			print "adding product on depot", productOnDepot
-			section = productOnDepot[0] + u'-state'
-			cp.add_section(section)
-			cp.set(section, u'packageversion', productOnDepot[1])
-			cp.set(section, u'productversion', productOnDepot[2])
-			cp.set(section, u'producttype', productOnDepot[3])
-			logger.debug2(u"Added product on depot: %s" % (productOnDepot))
-		
-		iniFile.generate(cp)
-	
-	logger.notice(u"Updating Configs ...")
-	
-	#todo:
-	
-	
-	
-	logger.notice(u"Updating ProductStates, ProductPropertyStates ...")
-	for client in os.listdir(clientConfigDir):
-		filename = os.path.join(clientConfigDir, client)
-		if (not os.path.isfile(filename)) or (client[-4:].lower() != '.ini'):
-			logger.debug2(u"Skipping '%s'" % (filename))
-			continue
 		
 		try:
-			clientId = forceHostId(client[:-4])
+			iniFile = IniFile(filename = oldDepot, ignoreCase = False)
+			ini = iniFile.parse()
 			
-			logger.debug(u"Parsing file '%s'" % (filename))
-			iniFile = IniFile(filename = filename, ignoreCase = True)
-			cp = iniFile.parse()
-			
-			logger.debug(u"Updating ProductPropertyStates in '%s'" % (filename))
-			needsGenerate = False
-			for section in cp.sections():
-				if (section[-8:].lower() == '-install'):
-					for option in cp.options(section):
-						if (option.find(u' ') == -1):
-							continue
-						value = cp.get(section, option)
-						cp.set(section, option.replace(u' ', u'_'), value)
-						needsGenerate = True
-				
-				elif section.lower().endswith('_product_states'):
-					for option in cp.options(section):
-						productId = option.strip()
-						actionRequest = 'none'
-						installationStatus = cp.get(section, productId)
-						if (installationStatus.find(':') != -1):
-							(installationStatus, actionRequest) = installationStatus.split(':', 1)
-						if installationStatus not in ('installing', 'failed'):
-							continue
-						actionProgress = installationStatus
-						installationStatus = u'not_installed'
-						cp.set(section, productId, u'%s:%s' % (installationStatus, actionRequest))
-						if not cp.has_section('%s-state' % productId):
-							cp.add_section('%s-state' % productId)
-						cp.set('%s-state' % productId, 'actionprogress', actionProgress)
-						needsGenerate = True
-			
-			if needsGenerate:
-				iniFile.generate(cp)
+			if ini.has_section('depotshare'):
+				if ini.has_option('localurl'):
+					oldDepotDict['depotLocalUrl']       = ini.get('depotshare', 'localurl')
+				if ini.has_option('remoteurl'):
+					oldDepotDict['depotRemoteUrl']      = ini.get('depotshare', 'remoteurl')
+			if ini.has_section('repository'):
+				if ini.has_option('localurl'):
+					oldDepotDict['repositoryLocalUrl']  = ini.get('repository', 'localurl')
+				if ini.has_option('remoteurl'):
+					oldDepotDict['repositoryRemoteUrl'] = ini.get('repository', 'remoteurl')
+				if ini.has_option('maxbandwidth'):
+					oldDepotDict['maxBandwidth']        = ini.get('repository', 'maxbandwidth')
+			if ini.has_section('depotserver'):
+				if ini.has_option('description'):
+					oldDepotDict['description']         = ini.get('depotserver', 'description')
+				if ini.has_option('notes'):
+					oldDepotDict['notes']               = ini.get('depotserver', 'notes')
+				if ini.has_option('network'):
+					oldDepotDict['networkAddress']      = ini.get('depotserver', 'network')
 		except Exception, e:
-			logger.error(u"Invalid ini '%s': %s" % (filename, e))
-			continue
+			logger.warning(u"Could not get all information on depot: %s" % (e))
+		
+		backend.host_createObjects([OpsiDepotserver.fromHash(oldDepotDict)])
+		
+		
+		
+		logger.notice(u"Updating products on depot '%s'" % (depotId))
+		localbootPath = os.path.join(oldPath, u'products', u'localboot')
+		netbootPath = os.path.join(oldPath, u'products', u'netboot')
+		productFilenames = []
+		
+		for productPath in (localbootPath, netbootPath):
+			for productId in os.listdir(productPath):
+				try:
+					productFilename = os.path.join(productPath, forceProductId(productId))
+					if not (os.path.isfile(productFilename)):
+						logger.debug2(u"Ignoring '%s'" % (productFilename))
+						continue
+					productFilenames.append(productFilename)
+				except Exception, e:
+					logger.warning(u"Invalid product: '%s' in '%s': %s" % (productId, productPath, e))
+					continue
+		
+		for productFilename in productFilenames:
+			packageControlFile = PackageControlFile(filename = productFilename)
+			oldProductDict = {}
+			
+			try:
+				oldProductDict = packageControlFile.getProduct().toHash()
+			except Exception, e:
+				logger.warning(u"Invalid product: '%s' in '%s': %s" % (productId, path, e))
+				continue
+			
+			backend.product_createObjects([Product.fromHash(oldProductDict)])
+			
+			
+			
+			logger.notice(u"Updating ProductProperties in '%s'" % (productId))
+			
+			#TODO: everything
+			
+			
+#			try:
+#				logger.debug(u"Parsing file '%s'" % (filename))
+#				packageControlFile = PackageControlFile(filename = filename)
+#				product = packageControlFile.getProduct()
+#				
+#				productType = product.getType()
+#				if (productType == 'NetbootProduct'):
+#					productType = u'netboot'
+#				else:
+#					productType = u'localboot'
+#				
+#				newFilename = product.getId() + u'_' + product.getProductVersion() + u'-' + product.getPackageVersion() + u'.' + productType
+#				newFilename = os.path.join(productDir, newFilename)
+#				
+#				productsOnDepot.append(
+#					[
+#					u'%s' % product.getId(),
+#					u'%s' % product.getProductVersion(),
+#					u'%s' % product.getPackageVersion(),
+#					u'%s' % product.getType()
+#					])
+#				
+#				if (os.path.isfile(newFilename)):
+#					logger.debug(u"Already updated, keeping %s" % (filename))
+#					continue
+#				
+#				logger.debug(u"Updating ProductProperties")
+#				updatedProductProperties = []
+#				for productProperty in packageControlFile.getProductProperties():
+#					productProperty.setPropertyId(productProperty.getPropertyId().replace(u' ', u'_'))
+#					updatedProductProperties.append(productProperty)
+#				packageControlFile.setProductProperties(updatedProductProperties)
+#				packageControlFile.generate()
+#				
+#				logger.info(u"Moving product '%s' to '%s'" % (filename, newFilename))
+#				os.rename(filename, newFilename)
+#			except Exception, e:
+#				logger.error(u"Bad or missing content in '%s': %s" % (filename, e))
+#				continue
+#		
+#		os.rename(oldDepot, newDepot)
+#		print "renamed"
+#		
+#		iniFile = IniFile(filename = newDepot, ignoreCase = True)
+#		cp = iniFile.parse()
+#		
+#		for productOnDepot in productsOnDepot:
+#			print "adding product on depot", productOnDepot
+#			section = productOnDepot[0] + u'-state'
+#			cp.add_section(section)
+#			cp.set(section, u'packageversion', productOnDepot[1])
+#			cp.set(section, u'productversion', productOnDepot[2])
+#			cp.set(section, u'producttype', productOnDepot[3])
+#			logger.debug2(u"Added product on depot: %s" % (productOnDepot))
+#		
+#		iniFile.generate(cp)
+#	
+#	logger.notice(u"Updating Configs ...")
+#	
+#	#todo:
+#	
+#	
+#	
+#	logger.notice(u"Updating ProductStates, ProductPropertyStates ...")
+#	for client in os.listdir(clientConfigDir):
+#		filename = os.path.join(clientConfigDir, client)
+#		if (not os.path.isfile(filename)) or (client[-4:].lower() != '.ini'):
+#			logger.debug2(u"Skipping '%s'" % (filename))
+#			continue
+#		
+#		try:
+#			clientId = forceHostId(client[:-4])
+#			
+#			logger.debug(u"Parsing file '%s'" % (filename))
+#			iniFile = IniFile(filename = filename, ignoreCase = True)
+#			cp = iniFile.parse()
+#			
+#			logger.debug(u"Updating ProductPropertyStates in '%s'" % (filename))
+#			needsGenerate = False
+#			for section in cp.sections():
+#				if (section[-8:].lower() == '-install'):
+#					for option in cp.options(section):
+#						if (option.find(u' ') == -1):
+#							continue
+#						value = cp.get(section, option)
+#						cp.set(section, option.replace(u' ', u'_'), value)
+#						needsGenerate = True
+#				
+#				elif section.lower().endswith('_product_states'):
+#					for option in cp.options(section):
+#						productId = option.strip()
+#						actionRequest = 'none'
+#						installationStatus = cp.get(section, productId)
+#						if (installationStatus.find(':') != -1):
+#							(installationStatus, actionRequest) = installationStatus.split(':', 1)
+#						if installationStatus not in ('installing', 'failed'):
+#							continue
+#						actionProgress = installationStatus
+#						installationStatus = u'not_installed'
+#						cp.set(section, productId, u'%s:%s' % (installationStatus, actionRequest))
+#						if not cp.has_section('%s-state' % productId):
+#							cp.add_section('%s-state' % productId)
+#						cp.set('%s-state' % productId, 'actionprogress', actionProgress)
+#						needsGenerate = True
+#			
+#			if needsGenerate:
+#				iniFile.generate(cp)
+#		except Exception, e:
+#			logger.error(u"Invalid ini '%s': %s" % (filename, e))
+#			continue
 
+########################################################################################################
 
 
 def configureMySQLBackend():
