@@ -895,13 +895,13 @@ def updateMySQLBackend():
 	for key in tables.keys():
 		# HARDWARE_CONFIG
 		if key.startswith(u'HARDWARE_CONFIG') and 'host_id' in tables[key]:
-		logger.notice(u"Updating database table %s from opsi 3.3 to 3.4" % key)
-		mysql.query(u"alter table %s add `hostId` varchar(50) NOT NULL;" % key)
-		for res in mysql.getSet(u"SELECT hostId,host_id FROM `HOST` WHERE `hostId` != ''"):
-			mysql.query(u"update %s set `hostId` = '%s' where `host_id` = %s;" % (key, res['hostId'], res['host_id']))
-		mysql.query(u"alter table %s drop `host_id`;" % key)
-		mysql.query(u"alter table %s DEFAULT CHARACTER set utf8;" % key)
-		mysql.query(u"alter table %s ENGINE = InnoDB;" % key)
+			logger.notice(u"Updating database table %s from opsi 3.3 to 3.4" % key)
+			mysql.query(u"alter table %s add `hostId` varchar(50) NOT NULL;" % key)
+			for res in mysql.getSet(u"SELECT hostId,host_id FROM `HOST` WHERE `hostId` != ''"):
+				mysql.query(u"update %s set `hostId` = '%s' where `host_id` = %s;" % (key, res['hostId'], res['host_id']))
+			mysql.query(u"alter table %s drop `host_id`;" % key)
+			mysql.query(u"alter table %s DEFAULT CHARACTER set utf8;" % key)
+			mysql.query(u"alter table %s ENGINE = InnoDB;" % key)
 	
 	if 'HARDWARE_INFO' in tables.keys() and 'host_id' in tables['HARDWARE_INFO']:
 		logger.notice(u"Updating database table HARDWARE_INFO from opsi 3.3 to 3.4")
