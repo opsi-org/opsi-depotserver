@@ -878,8 +878,7 @@ def updateMySQLBackend():
 			tables[tableName].append(j['Field'])
 	
 	if 'HOST' in tables.keys() and 'host_id' in tables['HOST']:
-		logger.notice(u"Updating database from opsi 3.3 to 3.4")
-		
+		logger.notice(u"Updating database table HOST from opsi 3.3 to 3.4")
 		# SOFTWARE_CONFIG
 		logger.notice(u"Updating table SOFTWARE_CONFIG")
 		mysql.query(u"alter table SOFTWARE_CONFIG add `hostId` varchar(50) NOT NULL;")
@@ -892,7 +891,9 @@ def updateMySQLBackend():
 		mysql.query(u"alter table SOFTWARE_CONFIG drop `software_id`;")
 		mysql.query(u"alter table SOFTWARE_CONFIG DEFAULT CHARACTER set utf8;")
 		mysql.query(u"alter table SOFTWARE_CONFIG ENGINE = InnoDB;")
-		
+	
+	if 'HARDWARE_CONFIG' in tables.keys() and 'host_id' in tables['HARDWARE_CONFIG']:
+		logger.notice(u"Updating database table HARDWARE_CONFIG from opsi 3.3 to 3.4")
 		# HARDWARE_CONFIG
 		logger.notice(u"Updating table HARDWARE_CONFIG")
 		for key in tables.keys():
@@ -904,7 +905,9 @@ def updateMySQLBackend():
 			mysql.query(u"alter table %s drop `host_id`;" % key)
 			mysql.query(u"alter table %s DEFAULT CHARACTER set utf8;" % key)
 			mysql.query(u"alter table %s ENGINE = InnoDB;" % key)
-		
+	
+	if 'HARDWARE_INFO' in tables.keys() and 'host_id' in tables['HARDWARE_INFO']:
+		logger.notice(u"Updating database table HARDWARE_INFO from opsi 3.3 to 3.4")
 		# HARDWARE_INFO
 		logger.notice(u"Updating table HARDWARE_INFO")
 		mysql.query(u"alter table HARDWARE_INFO add `hostId` varchar(50) NOT NULL;")
@@ -913,12 +916,16 @@ def updateMySQLBackend():
 		mysql.query(u"alter table HARDWARE_INFO drop `host_id`;")
 		mysql.query(u"alter table HARDWARE_INFO DEFAULT CHARACTER set utf8;")
 		mysql.query(u"alter table HARDWARE_INFO ENGINE = InnoDB;")
-		
+	
+	if 'SOFTWARE' in tables.keys() and 'software_id' in tables['SOFTWARE']:
+		logger.notice(u"Updating database table SOFTWARE from opsi 3.3 to 3.4")
 		# SOFTWARE
 		logger.notice(u"Updating table SOFTWARE")
 		mysql.query(u"alter table SOFTWARE drop `software_id`;")
 		mysql.query(u"alter table SOFTWARE add primary key (`softwareId`);")
-		
+	
+	if 'HOST' in tables.keys() and 'host_id' in tables['HOST']:
+		logger.notice(u"Updating database table HOST from opsi 3.3 to 3.4")
 		# HOST
 		logger.notice(u"Updating table HOST")
 		mysql.query(u"alter table HOST drop `host_id`;")
@@ -933,18 +940,18 @@ def updateMySQLBackend():
 		
 		mysql.query(u"update HOST set `type` = 'OPSI_CLIENT' where `hostId` != '';")
 	
-		tables = {}
-		logger.debug(u"Current tables:")
-		for i in mysql.getSet(u'SHOW TABLES;'):
-			tableName = i.values()[0]
-			logger.debug(u" [ %s ]" % tableName)
-			tables[tableName] = []
-			for j in mysql.getSet(u'SHOW COLUMNS FROM `%s`' % tableName):
-				logger.debug(u"      %s" % j)
-				tables[tableName].append(j['Field'])
+	tables = {}
+	logger.debug(u"Current tables:")
+	for i in mysql.getSet(u'SHOW TABLES;'):
+		tableName = i.values()[0]
+		logger.debug(u" [ %s ]" % tableName)
+		tables[tableName] = []
+		for j in mysql.getSet(u'SHOW COLUMNS FROM `%s`' % tableName):
+			logger.debug(u"      %s" % j)
+			tables[tableName].append(j['Field'])
 	
-	if 'SOFTWARE' in tables.keys() and 'softwareId' in tables['SOFTWARE']:
-		logger.notice(u"Updating database from opsi 3.4 to 3.5")
+	if 'HOST' in tables.keys() and not 'depotLocalUrl' in tables['HOST']:
+		logger.notice(u"Updating database table HOST from opsi 3.4 to 3.5")
 		# HOST
 		logger.notice(u"Updating table HOST")
 		mysql.query(u"alter table HOST add `ipAddress` varchar(15);")
@@ -962,12 +969,14 @@ def updateMySQLBackend():
 		mysql.query(u"update HOST set `description`=NULL where `description`='None'")
 		mysql.query(u"update HOST set `notes`=NULL where `notes`='None'")
 		mysql.query(u"update HOST set `hardwareAddress`=NULL where `hardwareAddress`='None'")
-		
+	
+	if 'LICENSE_USED_BY_HOST' in tables.keys():
 		# LICENSE_USED_BY_HOST
-		if 'LICENSE_USED_BY_HOST' in tables.keys():
-			logger.notice(u"Renaming table LICENSE_USED_BY_HOST to LICENSE_ON_CLIENT")
-			mysql.query(u"rename table LICENSE_USED_BY_HOST to LICENSE_ON_CLIENT;")
-			
+		logger.notice(u"Renaming table LICENSE_USED_BY_HOST to LICENSE_ON_CLIENT")
+		mysql.query(u"rename table LICENSE_USED_BY_HOST to LICENSE_ON_CLIENT;")
+	
+	if 'SOFTWARE' in tables.keys() and not 'name' in tables['SOFTWARE']:
+		logger.notice(u"Updating database table SOFTWARE from opsi 3.4 to 3.5")
 		# SOFTWARE
 		logger.notice(u"Updating table SOFTWARE")
 		mysql.query(u"alter table SOFTWARE add `name` varchar(100) NOT NULL;")
@@ -1014,7 +1023,9 @@ def updateMySQLBackend():
 		mysql.query(u"alter table SOFTWARE drop `displayVersion`;")
 		mysql.query(u"alter table SOFTWARE drop `uninstallString`;")
 		mysql.query(u"alter table SOFTWARE drop `binaryName`;")
-		
+	
+	if 'SOFTWARE_CONFIG' in tables.keys() and not 'clientId' in tables['SOFTWARE_CONFIG']:
+		logger.notice(u"Updating database table SOFTWARE_CONFIG from opsi 3.4 to 3.5")
 		# SOFTWARE_CONFIG
 		logger.notice(u"Updating table SOFTWARE_CONFIG")
 		logger.notice(u"This may take a while, do not abort!")
@@ -1052,7 +1063,54 @@ def updateMySQLBackend():
 		mysql.query(u"alter table SOFTWARE_CONFIG drop `audit_firstseen`;")
 		mysql.query(u"alter table SOFTWARE_CONFIG drop `audit_lastseen`;")
 		mysql.query(u"alter table SOFTWARE_CONFIG drop `audit_state`;")
-		
+	
+	if 'LICENSE_CONTRACT' in tables.keys() and not 'type' in tables['LICENSE_CONTRACT']:
+		logger.notice(u"Updating database table LICENSE_CONTRACT from opsi 3.4 to 3.5")
+		# LICENSE_CONTRACT
+		mysql.query(u"alter table LICENSE_CONTRACT add `type` varchar(30) NOT NULL;")
+		mysql.query(u"alter table LICENSE_CONTRACT add `description` varchar(100) NOT NULL;")
+		mysql.query(u"alter table LICENSE_CONTRACT modify `conclusionDate` TIMESTAMP;")
+		mysql.query(u"alter table LICENSE_CONTRACT modify `notificationDate` TIMESTAMP;")
+		mysql.query(u"alter table LICENSE_CONTRACT modify `expirationDate` TIMESTAMP;")
+		mysql.query(u"update LICENSE_CONTRACT set `type`='LicenseContract' where 1=1")
+	
+	if 'SOFTWARE_LICENSE' in tables.keys() and not 'type' in tables['SOFTWARE_LICENSE']:
+		logger.notice(u"Updating database table SOFTWARE_LICENSE from opsi 3.4 to 3.5")
+		# SOFTWARE_LICENSE
+		mysql.query(u"alter table SOFTWARE_LICENSE add `type` varchar(30) NOT NULL;")
+		mysql.query(u"alter table LICENSE_CONTRACT modify `expirationDate` TIMESTAMP;")
+		mysql.query(u"update SOFTWARE_LICENSE set `type`='RetailSoftwareLicense' where `licenseType`='RETAIL'")
+		mysql.query(u"update SOFTWARE_LICENSE set `type`='OEMSoftwareLicense' where `licenseType`='OEM'")
+		mysql.query(u"update SOFTWARE_LICENSE set `type`='VolumeSoftwareLicense' where `licenseType`='VOLUME'")
+		mysql.query(u"update SOFTWARE_LICENSE set `type`='ConcurrentSoftwareLicense' where `licenseType`='CONCURRENT'")
+		mysql.query(u"alter table SOFTWARE_LICENSE drop `licenseType`;")
+	
+	if 'LICENSE_POOL' in tables.keys() and not 'type' in tables['LICENSE_POOL']:
+		logger.notice(u"Updating database table LICENSE_POOL from opsi 3.4 to 3.5")
+		# LICENSE_POOL
+		mysql.query(u"alter table LICENSE_POOL add `type` varchar(30) NOT NULL;")
+		mysql.query(u"alter table LICENSE_POOL modify `licensePoolId` VARCHAR(200) NOT NULL;")
+		mysql.query(u"update LICENSE_POOL set `type`='LicensePool' where 1=1")
+	
+	# WINDOWS_SOFTWARE_ID_TO_LICENSE_POOL
+	# PRODUCT_ID_TO_LICENSE_POOL
+	
+	# LICENSE_USED_BY_HOST
+	if not 'LICENSE_ON_CLIENT' in tables.keys():
+		logger.debug(u'Creating table LICENSE_ON_CLIENT')
+		table = u'''CREATE TABLE `LICENSE_ON_CLIENT` (
+				`softwareLicenseId` VARCHAR(100) NOT NULL,
+				`licensePoolId` VARCHAR(100) NOT NULL,
+				`clientId` varchar(255),
+				PRIMARY KEY( `softwareLicenseId`, `licensePoolId`, `clientId` ),
+				FOREIGN KEY( `softwareLicenseId`, `licensePoolId` ) REFERENCES SOFTWARE_LICENSE_TO_LICENSE_POOL( `softwareLicenseId`, `licensePoolId` ),
+				`licenseKey` VARCHAR(100),
+				`notes` VARCHAR(1024)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+			'''
+		logger.debug(table)
+		self._mysql.execute(table)
+	
 	mysqlBackend = MySQLBackend(**config)
 	mysqlBackend.backend_createBase()
 	mysqlBackend.backend_exit()
