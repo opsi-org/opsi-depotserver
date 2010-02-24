@@ -1095,22 +1095,6 @@ def updateMySQLBackend():
 	# WINDOWS_SOFTWARE_ID_TO_LICENSE_POOL
 	# PRODUCT_ID_TO_LICENSE_POOL
 	
-	# LICENSE_USED_BY_HOST
-	if not 'LICENSE_ON_CLIENT' in tables.keys():
-		logger.debug(u'Creating table LICENSE_ON_CLIENT')
-		table = u'''CREATE TABLE `LICENSE_ON_CLIENT` (
-				`softwareLicenseId` VARCHAR(100) NOT NULL,
-				`licensePoolId` VARCHAR(100) NOT NULL,
-				`clientId` varchar(255),
-				PRIMARY KEY( `softwareLicenseId`, `licensePoolId`, `clientId` ),
-				FOREIGN KEY( `softwareLicenseId`, `licensePoolId` ) REFERENCES SOFTWARE_LICENSE_TO_LICENSE_POOL( `softwareLicenseId`, `licensePoolId` ),
-				`licenseKey` VARCHAR(100),
-				`notes` VARCHAR(1024)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-			'''
-		logger.debug(table)
-		self._mysql.execute(table)
-	
 	mysqlBackend = MySQLBackend(**config)
 	mysqlBackend.backend_createBase()
 	mysqlBackend.backend_exit()
