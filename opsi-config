@@ -8,6 +8,8 @@
 import os, sys, socket, re, shutil, getopt, pwd, grp, stat, codecs, time
 import MySQLdb
 
+
+
 from OPSI.Logger import *
 from OPSI.Types import *
 from OPSI.Object import *
@@ -1096,6 +1098,8 @@ def updateMySQLBackend():
 	mysqlBackend.backend_createBase()
 	mysqlBackend.backend_exit()
 
+
+
 def updateFileBackend():
 	backendConfigFile = u'/etc/opsi/backends/file.conf'
 	
@@ -1127,6 +1131,8 @@ def updateFileBackend():
 	
 	backend.backend_createBase()
 	
+	
+	
 	opsiHostKeys = {}
 	if os.path.isfile(config["hostKeyFile"]):
 		opsiHostKeys = HostKeyFile(filename = config["hostKeyFile"]).parse()
@@ -1137,20 +1143,18 @@ def updateFileBackend():
 	
 	
 	
-	#Hosts
-	#Configs
-	#ConfigStates
-	#Products
-	#ProductProperties
-	#ProductDependencies
-	#ProductOnDepots
-	#ProductOnClients
-	#ProductPropertyStates
-	#Groups
-	#ObjectToGroups
-	#AuditSoftwares
-	#AuditSoftwareOnClients
-	#AuditHardwares
+	lockedList = {}
+	try:
+		iniFile = IniFile(filename = os.path.join(backupDepotConfigDir, u'product.locks'), ignoreCase = False)
+		ini = iniFile.parse()
+		
+		for proId in ini.sections():
+			for depId in ini.options(proId):
+				if (ini.get(proId, depId) == u'locked'):
+					key = u'%s' % (proId.lower() + '#' + depId.lower())
+					lockedList[key] = True
+	except Exception, e:
+		logger.warning(u"Could not get all information on product.locks: %s" % (e))
 	
 	
 	
@@ -1188,29 +1192,50 @@ def updateFileBackend():
 			oldDepotDict['opsiHostKey'] = opsiHostKeys[depotId]
 		
 		
+		updatedProductPropertyStates = []
 		try:
-			iniFile = IniFile(filename = oldDepot, ignoreCase = False)
+			iniFile = IniFile(filename = oldDepot)
 			ini = iniFile.parse()
 			
-			if ini.has_section('depotshare'):
-				if ini.has_option('localurl'):
-					oldDepotDict['depotLocalUrl']       = ini.get('depotshare', 'localurl')
-				if ini.has_option('remoteurl'):
-					oldDepotDict['depotRemoteUrl']      = ini.get('depotshare', 'remoteurl')
-			if ini.has_section('repository'):
-				if ini.has_option('localurl'):
-					oldDepotDict['repositoryLocalUrl']  = ini.get('repository', 'localurl')
-				if ini.has_option('remoteurl'):
-					oldDepotDict['repositoryRemoteUrl'] = ini.get('repository', 'remoteurl')
-				if ini.has_option('maxbandwidth'):
-					oldDepotDict['maxBandwidth']        = ini.get('repository', 'maxbandwidth')
-			if ini.has_section('depotserver'):
-				if ini.has_option('description'):
-					oldDepotDict['description']         = ini.get('depotserver', 'description')
-				if ini.has_option('notes'):
-					oldDepotDict['notes']               = ini.get('depotserver', 'notes')
-				if ini.has_option('network'):
-					oldDepotDict['networkAddress']      = ini.get('depotserver', 'network')
+			if ini.has_option('depotshare', 'localurl'):
+				oldDepotDict['depotLocalUrl']       = ini.get('depotshare', 'localurl')
+			if ini.has_option('depotshare', 'remoteurl'):
+				oldDepotDict['depotRemoteUrl']      = ini.get('depotshare', 'remoteurl')
+			if ini.has_option('repository', 'localurl'):
+				oldDepotDict['repositoryLocalUrl']  = ini.get('repository', 'localurl')
+			if ini.has_option('repository', 'remoteurl'):
+				oldDepotDict['repositoryRemoteUrl'] = ini.get('repository', 'remoteurl')
+			if ini.has_option('repository', 'maxbandwidth'):
+				oldDepotDict['maxBandwidth']        = ini.get('repository', 'maxbandwidth')
+			if ini.has_option('depotserver', 'description'):
+				oldDepotDict['description']         = ini.get('depotserver', 'description')
+			if ini.has_option('depotserver', 'notes'):
+				oldDepotDict['notes']               = ini.get('depotserver', 'notes')
+			if ini.has_option('depotserver', 'network'):
+				oldDepotDict['networkAddress']      = ini.get('depotserver', 'network')
+			if ini.has_option('depotserver', 'hardwareaddress'):
+				oldDepotDict['hardwareAddress']     = ini.get('depotserver', 'hardwareaddress')
+			if ini.has_option('depotserver', 'ipaddress'):
+				oldDepotDict['ipAddress']      = ini.get('depotserver', 'ipaddress')
+			if ini.has_option('depotserver', 'inventorynumber'):
+				oldDepotDict['inventoryNumber']      = ini.get('depotserver', 'inventorynumber')
+			
+			for section in ini.sections():
+				if (section.lower().endswith(u'-install')):
+					for option in ini.options(section):
+						try:
+							updatedProductPropertyStates.append(
+								ProductPropertyState.fromHash(
+									{
+									'productId':  section[:-8],
+									'propertyId': option,
+									'objectId':   depotId,
+									'values':     [ini.get(section, option)]
+									}
+									)
+								)
+						except Exception, e:#TODO: proper warning
+							logger.warning(u"... in %s: %s" % (section, e))
 		except Exception, e:
 			logger.warning(u"Could not get all information on depot: %s" % (e))
 		
@@ -1235,137 +1260,234 @@ def updateFileBackend():
 					logger.warning(u"Invalid product: '%s' in '%s': %s" % (productId, productPath, e))
 					continue
 		
+		
+		
+		updatedProductDependencies = []
 		for productFilename in productFilenames:
 			packageControlFile = PackageControlFile(filename = productFilename)
-			oldProductDict = {}
+			oldProduct = None
 			
 			try:
-				oldProductDict = packageControlFile.getProduct().toHash()
+				oldProduct = packageControlFile.getProduct()
 			except Exception, e:
-				logger.warning(u"Invalid product: '%s' in '%s': %s" % (productId, path, e))
+				logger.warning(u"Invalid product '%s': %s" % (path, e))
 				continue
 			
-			backend.product_createObjects([Product.fromHash(oldProductDict)])
+			backend.product_createObjects([oldProduct])
 			
 			
 			
-			logger.notice(u"Updating ProductProperties in '%s'" % (productId))
+			logger.notice(u"Updating ProductProperties in '%s'" % (productFilename))
+			updatedProductProperties = []
+			for pp in packageControlFile.getProductProperties():
+				pp.setPropertyId(pp.getPropertyId().replace(u' ', u'_'))
+				updatedProductProperties.append(pp)
 			
-			#TODO: everything
+			backend.productProperty_createObjects(updatedProductProperties)
 			
 			
-#			try:
-#				logger.debug(u"Parsing file '%s'" % (filename))
-#				packageControlFile = PackageControlFile(filename = filename)
-#				product = packageControlFile.getProduct()
-#				
-#				productType = product.getType()
-#				if (productType == 'NetbootProduct'):
-#					productType = u'netboot'
-#				else:
-#					productType = u'localboot'
-#				
-#				newFilename = product.getId() + u'_' + product.getProductVersion() + u'-' + product.getPackageVersion() + u'.' + productType
-#				newFilename = os.path.join(productDir, newFilename)
-#				
-#				productsOnDepot.append(
-#					[
-#					u'%s' % product.getId(),
-#					u'%s' % product.getProductVersion(),
-#					u'%s' % product.getPackageVersion(),
-#					u'%s' % product.getType()
-#					])
-#				
-#				if (os.path.isfile(newFilename)):
-#					logger.debug(u"Already updated, keeping %s" % (filename))
-#					continue
-#				
-#				logger.debug(u"Updating ProductProperties")
-#				updatedProductProperties = []
-#				for productProperty in packageControlFile.getProductProperties():
-#					productProperty.setPropertyId(productProperty.getPropertyId().replace(u' ', u'_'))
-#					updatedProductProperties.append(productProperty)
-#				packageControlFile.setProductProperties(updatedProductProperties)
-#				packageControlFile.generate()
-#				
-#				logger.info(u"Moving product '%s' to '%s'" % (filename, newFilename))
-#				os.rename(filename, newFilename)
-#			except Exception, e:
-#				logger.error(u"Bad or missing content in '%s': %s" % (filename, e))
-#				continue
-#		
-#		os.rename(oldDepot, newDepot)
-#		print "renamed"
-#		
-#		iniFile = IniFile(filename = newDepot, ignoreCase = True)
-#		cp = iniFile.parse()
-#		
-#		for productOnDepot in productsOnDepot:
-#			print "adding product on depot", productOnDepot
-#			section = productOnDepot[0] + u'-state'
-#			cp.add_section(section)
-#			cp.set(section, u'packageversion', productOnDepot[1])
-#			cp.set(section, u'productversion', productOnDepot[2])
-#			cp.set(section, u'producttype', productOnDepot[3])
-#			logger.debug2(u"Added product on depot: %s" % (productOnDepot))
-#		
-#		iniFile.generate(cp)
-#	
-#	logger.notice(u"Updating Configs ...")
-#	
-#	#todo:
-#	
-#	
-#	
-#	logger.notice(u"Updating ProductStates, ProductPropertyStates ...")
-#	for client in os.listdir(clientConfigDir):
-#		filename = os.path.join(clientConfigDir, client)
-#		if (not os.path.isfile(filename)) or (client[-4:].lower() != '.ini'):
-#			logger.debug2(u"Skipping '%s'" % (filename))
-#			continue
-#		
-#		try:
-#			clientId = forceHostId(client[:-4])
-#			
-#			logger.debug(u"Parsing file '%s'" % (filename))
-#			iniFile = IniFile(filename = filename, ignoreCase = True)
-#			cp = iniFile.parse()
-#			
-#			logger.debug(u"Updating ProductPropertyStates in '%s'" % (filename))
-#			needsGenerate = False
-#			for section in cp.sections():
-#				if (section[-8:].lower() == '-install'):
-#					for option in cp.options(section):
-#						if (option.find(u' ') == -1):
-#							continue
-#						value = cp.get(section, option)
-#						cp.set(section, option.replace(u' ', u'_'), value)
-#						needsGenerate = True
-#				
-#				elif section.lower().endswith('_product_states'):
-#					for option in cp.options(section):
-#						productId = option.strip()
-#						actionRequest = 'none'
-#						installationStatus = cp.get(section, productId)
-#						if (installationStatus.find(':') != -1):
-#							(installationStatus, actionRequest) = installationStatus.split(':', 1)
-#						if installationStatus not in ('installing', 'failed'):
-#							continue
-#						actionProgress = installationStatus
-#						installationStatus = u'not_installed'
-#						cp.set(section, productId, u'%s:%s' % (installationStatus, actionRequest))
-#						if not cp.has_section('%s-state' % productId):
-#							cp.add_section('%s-state' % productId)
-#						cp.set('%s-state' % productId, 'actionprogress', actionProgress)
-#						needsGenerate = True
-#			
-#			if needsGenerate:
-#				iniFile.generate(cp)
-#		except Exception, e:
-#			logger.error(u"Invalid ini '%s': %s" % (filename, e))
-#			continue
+			
+			#logger.notice(u"Updating ProductDependencies in '%s'" % (depotId))
+			#will be updated after all products
+			#updatedProductDependencies = []
+			for pd in packageControlFile.getProductDependencies():
+				updatedProductDependencies.append(pd)
+			
+			
+			
+			logger.notice(u"Updating ProductOnDepot in '%s'" % (depotId))
+			
+			locked = None
+			if (len(lockedList) > 0):
+				try:
+					key = u'%s' % (oldProduct['id'].lower() + '#' + depotId.lower())
+					locked = lockedList[key]
+				except:
+					pass
+			
+			backend.productOnDepot_createObjects(
+				[
+				ProductOnDepot.fromHash(
+					{
+					'productId':      oldProduct.getId(),
+					'productType':    oldProduct.getType(),
+					'productVersion': oldProduct.getProductVersion(),
+					'packageVersion': oldProduct.getPackageVersion(),
+					'depotId':        depotId,
+					'locked':         locked
+					}
+					)
+				]
+				)
+		
+		
+		
+		logger.notice(u"Updating ProductDependencies in '%s'" % (depotId))
+		backend.productDependency_createObjects(updatedProductDependencies)
+		
+		
+		
+		logger.notice(u"Updating ProductPropertyStates in '%s'" % (depotId))
+		backend.productPropertyState_createObjects(updatedProductPropertyStates)
+	
+	
+	
+	logger.notice(u"Updating clients ...")
+	for clientId in os.listdir(backupClientConfigDir):
+		oldClient = os.path.join(backupClientConfigDir, clientId)
+		if (not os.path.isfile(oldClient)):
+			logger.debug2(u"Ignoring '%s'" % (oldClient))
+			continue
+		try:
+			clientId = forceHostId(clientId[:-4])
+		except Exception, e:
+			logger.error(u"Invalid client: '%s': %s" % (oldClient, e))
+			continue
+		
+		#TODO: maybe direct?
+		oldClientDict = {
+		'id':              clientId,
+		'opsiHostKey':     None,
+		'description':     None,
+		'notes':           None,
+		'hardwareAddress': None,
+		'ipAddress':       None,
+		'inventoryNumber': None,
+		'created':         None,
+		'lastSeen':        None
+		}
+		
+		if clientId in opsiHostKeys.keys():
+			oldClientDict['opsiHostKey'] = opsiHostKeys[clientId]
+		
+		
+		updatedProductPropertyStates = []
+		updatedProductOnClients = []
+		try:
+			iniFile = IniFile(filename = oldClient)
+			ini = iniFile.parse()
+			
+			if ini.has_option('info', 'description'):
+				oldClientDict['description']     = ini.get('info', 'description')
+			if ini.has_option('info', 'notes'):
+				oldClientDict['notes']           = ini.get('info', 'notes')
+			if ini.has_option('info', 'hardwareaddress'):
+				oldClientDict['hardwareAddress'] = ini.get('info', 'hardwareaddress')
+			if ini.has_option('info', 'ipaddress'):
+				oldClientDict['ipAddress']       = ini.get('info', 'ipaddress')
+			if ini.has_option('info', 'inventorynumber'):
+				oldClientDict['inventoryNumber'] = ini.get('info', 'inventorynumber')
+			if ini.has_option('info', 'created'):
+				oldClientDict['created']         = ini.get('info', 'created')
+			if ini.has_option('info', 'lastSeen'):
+				oldClientDict['lastSeen']        = ini.get('info', 'lastSeen')
+			
+			for section in ini.sections():
+				if (section.lower().endswith(u'-install')):
+					for option in ini.options(section):
+						try:
+							updatedProductPropertyStates.append(
+								ProductPropertyState.fromHash(
+									{
+									'productId':  section[:-8],
+									'propertyId': option,
+									'objectId':   clientId,
+									'values':     [ini.get(section, option)]
+									}
+									)
+								)
+						except Exception, e:
+							logger.warning(u"... in %s: %s"% (productId, e))
+				
+				elif (section.lower().endswith(u'_product_states')):
+					for productId in ini.options(section):
+						try:
+							poc = {
+							'productId':          productId,
+							'productType':        section[:-15],
+							'clientId':           clientId,
+							'installationStatus': None,
+							'actionRequest':      None,
+							'actionProgress':     None,
+							'productVersion':     None,
+							'packageVersion':     None,
+							'lastStateChange':    None
+							}
+							
+							poc['installationStatus'] = ini.get(section, productId).split(u':')[0]
+							poc['actionRequest']      = ini.get(section, productId).split(u':')[1]
+							poc['productVersion']     = ini.get(productId + u'-state', 'productversion')
+							poc['packageVersion']     = ini.get(productId + u'-state', 'packageversion')
+							if ini.has_option(productId + u'-state', 'actionprogress'):
+								poc['actionProgress']     = ini.get(productId + u'-state', 'actionprogress')
+							if ini.has_option(productId + u'-state', 'laststatechange'):
+								poc['lastStateChange']    = ini.get(productId + u'-state', 'laststatechange')
+							
+							updatedProductOnClients.append(ProductOnClient.fromHash(poc))
+						except Exception, e:#TODO: proper warning
+							logger.warning(u"... in %s: %s"% (productId, e))
+				
+				elif (section.lower().endswith(u'-state')):#TODO: better switched to work with *-states?
+					continue #will be handled in *_product_states ...
+		except Exception, e:
+			logger.warning(u"Could not get all information on client: %s" % (e))
+		
+		backend.host_createObjects([OpsiClient.fromHash(oldClientDict)])
+		
+		
+		
+		logger.notice(u"Updating ProductOnClients in '%s'" % (clientId))
+		backend.productOnClient_createObjects(updatedProductOnClients)
+		
+		
+		
+		logger.notice(u"Updating ProductPropertyStates in '%s'" % (clientId))
+		backend.productPropertyState_createObjects(updatedProductPropertyStates)
+		
+		
+		
+		
+		
+		
+		
+		
+#ProductOnClients:
+#'productType',        'section': '<productId>-state', 'option': 'producttype'
+#'actionProgress',     'section': '<productId>-state', 'option': 'actionprogress'
+#'productVersion',     'section': '<productId>-state', 'option': 'productversion'
+#'packageVersion',     'section': '<productId>-state', 'option': 'packageversion'
+#'lastStateChange',    'section': '<productId>-state', 'option': 'laststatechange'
+#'installationStatus', 'section': '<productType>_product_states', 'option': '<productId>'
+#'actionRequest',      'section': '<productType>_product_states', 'option': '<productId>'
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	#TODO:
+	#Configs
+	#ConfigStates
+	#ProductOnClients
+	#Groups
+	#ObjectToGroups
+	
+	#TODO: ingnore?
+	#AuditSoftwares
+	#AuditSoftwareOnClients
+	#AuditHardwares
+	#AuditHardwareOnHosts
+	
+	
+	
+	
+	
+	##################################################################################
 
-########################################################################################################
 
 
 def configureMySQLBackend():
