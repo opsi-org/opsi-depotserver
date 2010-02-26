@@ -1277,7 +1277,7 @@ def updateFileBackend():
 			
 			
 			
-			logger.notice(u"Updating ProductProperties in '%s'" % (productFilename))
+			logger.notice(u"Updating ProductProperties in '%s'" % (oldProduct.getId()))
 			updatedProductProperties = []
 			for pp in packageControlFile.getProductProperties():
 				pp.setPropertyId(pp.getPropertyId().replace(u' ', u'_'))
@@ -1300,7 +1300,7 @@ def updateFileBackend():
 			locked = None
 			if (len(lockedList) > 0):
 				try:
-					key = u'%s' % (oldProduct['id'].lower() + '#' + depotId.lower())
+					key = u'%s' % (oldProduct.getId().lower() + '#' + depotId.lower())
 					locked = lockedList[key]
 				except:
 					pass
@@ -1335,7 +1335,7 @@ def updateFileBackend():
 	logger.notice(u"Updating clients ...")
 	for clientId in os.listdir(backupClientConfigDir):
 		oldClient = os.path.join(backupClientConfigDir, clientId)
-		if (not os.path.isfile(oldClient)):
+		if (clientId.endswith('.ini')) or (not os.path.isfile(oldClient)):
 			logger.debug2(u"Ignoring '%s'" % (oldClient))
 			continue
 		try:
@@ -1401,6 +1401,9 @@ def updateFileBackend():
 				
 				elif (section.lower().endswith(u'_product_states')):
 					for productId in ini.options(section):
+						if (not ini.has_section(productId + u'-state')):
+							continue
+						
 						try:
 							poc = {
 							'productId':          productId,
@@ -1414,12 +1417,25 @@ def updateFileBackend():
 							'lastStateChange':    None
 							}
 							
-							poc['installationStatus'] = ini.get(section, productId).split(u':')[0]
-							poc['actionRequest']      = ini.get(section, productId).split(u':')[1]
-							poc['productVersion']     = ini.get(productId + u'-state', 'productversion')
-							poc['packageVersion']     = ini.get(productId + u'-state', 'packageversion')
-							if ini.has_option(productId + u'-state', 'actionprogress'):
-								poc['actionProgress']     = ini.get(productId + u'-state', 'actionprogress')
+							actionProgress = None
+							installationStatus = ini.get(section, productId).split(u':')[0]
+							if (not installationStatus in (u'undefined', u'installed', u'not_installed')):
+								actionProgress = installationStatus
+								installationStatus = u'undefined'
+							
+							actionRequest      = ini.get(section, productId).split(u':')[1]
+							if (not actionRequest in (u'undefined', u'setup', u'uninstall', u'update', u'always', u'once', u'custom', u'none')):
+								actionProgress = actionRequest
+								actionRequest = u'undefined'
+							
+							poc['installationStatus'] = installationStatus
+							poc['actionRequest']      = actionRequest
+							poc['actionProgress']     = actionProgress
+							
+							if (ini.get(productId + u'-state', 'productversion') != u''):
+								poc['productVersion']     = ini.get(productId + u'-state', 'productversion')
+							if (ini.get(productId + u'-state', 'packageversion') != u''):
+								poc['packageVersion']     = ini.get(productId + u'-state', 'packageversion')
 							if ini.has_option(productId + u'-state', 'laststatechange'):
 								poc['lastStateChange']    = ini.get(productId + u'-state', 'laststatechange')
 							
@@ -1427,7 +1443,7 @@ def updateFileBackend():
 						except Exception, e:#TODO: proper warning
 							logger.warning(u"... in %s: %s"% (productId, e))
 				
-				elif (section.lower().endswith(u'-state')):#TODO: better switched to work with *-states?
+				elif (section.lower().endswith(u'-state')):
 					continue #will be handled in *_product_states ...
 		except Exception, e:
 			logger.warning(u"Could not get all information on client: %s" % (e))
