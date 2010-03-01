@@ -1158,6 +1158,10 @@ def updateFileBackend():
 	
 	
 	
+	#needed for configStates
+	updatedConfigs = []
+	updatedConfigStates = []
+	
 	logger.notice(u"Updating depots ...")
 	for depotId in os.listdir(backupDepotConfigDir):
 		oldPath = os.path.join(backupDepotConfigDir, depotId)
@@ -1235,6 +1239,28 @@ def updateFileBackend():
 								)
 						except Exception, e:
 							logger.warning(u"Exception while creating ProductPropertyState from '%s': %s" % (section, e))
+				
+				if (section.lower() in (u'networkconfig', u'generalconfig')):
+					configId = configId = option.lower()
+					value = ini.get(section, option)
+					
+					try:
+						if (section.lower() == u'networkconfig'):
+							if (option.lower() == u'opsidepotserverreference'):
+								configId = u'clientconfig.depot.id'
+								#TODO: example? just copied from ldap
+								value = forceHostId(value.split(',')[0].split('=')[1])
+							elif (option.lower() == u'opsidepotdrive'):
+								configId = u'clientconfig.depot.drive'
+							elif (option.lower() == u'opsinextbootserviceurl'):
+								configId = u'clientconfig.configserver.url'
+							elif (option.lower() == u'opsiwindomain'):
+								raise Exception(u"TODO: winDomain")
+					except Exception, e:
+						logger.error(u"%s" % (e))
+						continue
+					
+					updatedConfigStates.append(ConfigState(configId = configId, objectId = clientId, values = [value]))
 		except Exception, e:
 			logger.warning(u"Could not get all information on depot: %s" % (e))
 		
@@ -1452,6 +1478,30 @@ def updateFileBackend():
 				
 #				elif (section.lower().endswith(u'-state')):
 #					continue #will be handled above
+				
+				elif (section.lower() in (u'networkconfig', u'generalconfig')):
+					for option in ini.options(section):
+						configId = configId = option.lower()
+						value = ini.get(section, option)
+						
+						try:
+							if (section.lower() == u'networkconfig'):
+								if (option.lower() == u'opsidepotserverreference'):
+									configId = u'clientconfig.depot.id'
+									#TODO: example? just copied from ldap
+									value = forceHostId(value.split(',')[0].split('=')[1])
+								elif (option.lower() == u'opsidepotdrive'):
+									configId = u'clientconfig.depot.drive'
+								elif (option.lower() == u'opsinextbootserviceurl'):
+									configId = u'clientconfig.configserver.url'
+								elif (option.lower() == u'opsiwindomain'):
+									raise Exception(u"TODO: winDomain")
+						except Exception, e:
+							logger.error(u"%s" % (e))
+							continue
+						
+						updatedConfigStates.append(ConfigState(configId = configId, objectId = clientId, values = [value]))
+			
 		except Exception, e:
 			logger.warning(u"Could not get all information on client: %s" % (e))
 		
@@ -1478,11 +1528,54 @@ def updateFileBackend():
 	
 	
 	logger.notice(u"Updating Configs ..." % ())
-	#TODO
+	try:
+		iniFile = IniFile(filename = os.path.join(backupDir, u'global.ini'), ignoreCase = False)
+		ini = iniFile.parse()
+		
+		for section in ini.sections():
+			if section.lower() not in (u'networkconfig', u'generalconfig'):
+				logger.warning(u"Unknown section in global.ini: %s" % (section))
+				continue
+			
+			configId = None
+			value = None
+			
+			for option in ini.options(section):
+				configId = configId = option.lower()
+				value = ini.get(section, option)
+				
+				try:
+					if (section.lower() == u'networkconfig'):
+						if (option.lower() == u'opsidepotserverreference'):
+							configId = u'clientconfig.depot.id'
+							#TODO: example? just copied from ldap
+							value = forceHostId(value.split(',')[0].split('=')[1])
+						elif (option.lower() == u'opsidepotdrive'):
+							configId = u'clientconfig.depot.drive'
+						elif (option.lower() == u'opsinextbootserviceurl'):
+							configId = u'clientconfig.configserver.url'
+						elif (option.lower() == u'opsiwindomain'):
+							raise Exception(u"TODO: winDomain")
+				except Exception, e:
+					logger.error(u"%s" % (e))
+					continue
+				
+				updatedConfigs.append(UnicodeConfig(id = configId, defaultValues = [value]))
+	except Exception, e:
+		logger.error(u"%s" % (e))
 	
+	for c in updatedConfigs:
+		try:
+			backend.config_createObjects([c])
+		except Exception, e:
+			logger.error(u"Could not create config '%s': %s" % (c.getIdent(), e))
 	
-	logger.notice(u"Updating ConfigStates ..." % ())
-	#TODO
+	for cs in updatedConfigStates:
+		#TODO: check, if configState.configId exists
+		try:
+			backend.configState_createObjects([cs])
+		except Exception, e:
+			logger.error(u"Could not create configState '%s': %s" % (cs.getIdent(), e))
 	
 	
 	
@@ -1570,7 +1663,7 @@ def updateFileBackend():
 	
 	
 	
-	#TODO: ingnore?
+	#TODO: ignore?
 	#AuditSoftwares/AuditSoftwareOnClients/AuditHardwares/AuditHardwareOnHosts
 
 
