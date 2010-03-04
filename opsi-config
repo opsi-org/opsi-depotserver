@@ -645,7 +645,7 @@ def updateLDAPBackend():
 					Class = NetbootProduct
 				
 				product = Class(
-					id                 = obj.getCn(),
+					id                 = obj.getCn().replace('_', '-'),
 					productVersion     = obj.getAttribute('opsiProductVersion',         default = None, valuesAsList = False),
 					packageVersion     = obj.getAttribute('opsiPackageVersion',         default = None, valuesAsList = False),
 					name               = obj.getAttribute('opsiProductName',            default = None, valuesAsList = False),
@@ -694,7 +694,7 @@ def updateLDAPBackend():
 			#obj.deleteFromDirectory(ldap, recursive = True)
 			
 			
-			productId = forceProductId( obj.getDn().split(',')[2].split('=')[1] )
+			productId = forceProductId( obj.getDn().split(',')[2].split('=')[1].replace('_', '-') )
 			depotId   = forceHostId( obj.getDn().split(',')[3].split('=')[1] )
 			
 			productOnDepot = backend.productOnDepot_getObjects(productId = productId, depotId = depotId)
@@ -734,7 +734,7 @@ def updateLDAPBackend():
 			logger.info(u"Found product dependency: %s" % obj.getDn())
 			
 			action    = forceActionRequest( obj.getDn().split(',')[1].split('=')[1] )
-			productId = forceProductId( obj.getDn().split(',')[3].split('=')[1] )
+			productId = forceProductId( obj.getDn().split(',')[3].split('=')[1].replace('_', '-') )
 			depotId   = forceHostId( obj.getDn().split(',')[4].split('=')[1] )
 			
 			productOnDepot = backend.productOnDepot_getObjects(productId = productId, depotId = depotId)
@@ -748,7 +748,7 @@ def updateLDAPBackend():
 					productVersion             = productOnDepot.productVersion,
 					packageVersion             = productOnDepot.packageVersion,
 					productAction              = action,
-					requiredProductId          = obj.getAttribute('opsiRequiredProductId',          default = None, valuesAsList = False),
+					requiredProductId          = obj.getAttribute('opsiRequiredProductId',          default = None, valuesAsList = False).replace('_', '-'),
 					requiredAction             = obj.getAttribute('opsiActionRequired',             default = None, valuesAsList = False),
 					requiredInstallationStatus = obj.getAttribute('opsiInstallationStatusRequired', default = None, valuesAsList = False),
 					requirementType            = obj.getAttribute('opsiRequirementType',            default = None, valuesAsList = False)
@@ -802,7 +802,7 @@ def updateLDAPBackend():
 			
 			backend.productOnClient_insertObject(
 				ProductOnClient(
-					productId          = obj.getCn(),
+					productId          = obj.getCn().replace('_', '-'),
 					productType        = productType,
 					productVersion     = obj.getAttribute('opsiProductVersion', default = None, valuesAsList = False),
 					packageVersion     = obj.getAttribute('opsiPackageVersion', default = None, valuesAsList = False),
@@ -827,7 +827,7 @@ def updateLDAPBackend():
 			if not clientId in clientIds:
 				continue
 			
-			productId = obj.getAttribute('opsiProductReference', valuesAsList = False).split(',')[0].split('=')[1]
+			productId = obj.getAttribute('opsiProductReference', valuesAsList = False).split(',')[0].split('=')[1].replace('_', '-')
 			
 			productPropertyStates = []
 			for opsiKeyValuePair in obj.getAttribute('opsiKeyValuePair', default = [], valuesAsList = True):
@@ -973,7 +973,8 @@ def updateMySQLBackend():
 		# LICENSE_USED_BY_HOST
 		logger.notice(u"Renaming table LICENSE_USED_BY_HOST to LICENSE_ON_CLIENT")
 		mysql.query(u"rename table LICENSE_USED_BY_HOST to LICENSE_ON_CLIENT;")
-	
+		mysql.query(u"alter table LICENSE_ON_CLIENT change `hostId` `clientId` varchar(255);")
+		
 	if 'SOFTWARE' in tables.keys() and not 'name' in tables['SOFTWARE']:
 		logger.notice(u"Updating database table SOFTWARE from opsi 3.4 to 3.5")
 		# SOFTWARE
@@ -1176,19 +1177,19 @@ def updateFileBackend():
 			continue
 		
 		oldDepotDict = {
-		'id':                  depotId,
-		'opsiHostKey':         None,
-		'depotLocalUrl':       None,
-		'depotRemoteUrl':      None,
-		'repositoryLocalUrl':  None,
-		'repositoryRemoteUrl': None,
-		'description':         None,
-		'notes':               None,
-		'hardwareAddress':     None,
-		'ipAddress':           None,
-		'inventoryNumber':     None,
-		'networkAddress':      None,
-		'maxBandwidth':        None
+			'id':                  depotId,
+			'opsiHostKey':         None,
+			'depotLocalUrl':       None,
+			'depotRemoteUrl':      None,
+			'repositoryLocalUrl':  None,
+			'repositoryRemoteUrl': None,
+			'description':         None,
+			'notes':               None,
+			'hardwareAddress':     None,
+			'ipAddress':           None,
+			'inventoryNumber':     None,
+			'networkAddress':      None,
+			'maxBandwidth':        None
 		}
 		
 		if depotId in opsiHostKeys.keys():
