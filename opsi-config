@@ -781,8 +781,12 @@ def updateLDAPBackend():
 			actionRequest      = obj.getAttribute('opsiProductActionRequestForced', default = None, valuesAsList = False)
 			installationStatus = obj.getAttribute('opsiProductInstallationStatus', default = None, valuesAsList = False)
 			actionProgress     = obj.getAttribute('opsiProductActionProgress', default = None, valuesAsList = False)
-			if installationStatus in ('installing', 'failed'):
-				actionProgress = installationStatus
+			actionResult       = None
+			if installationStatus in ('failed',):
+				actionResult = 'failed'
+				installationStatus = 'not_installed'
+			if installationStatus in ('installing',):
+				actionProgress = 'installing'
 				installationStatus = 'not_installed'
 			try:
 				installationStatus = forceInstallationStatus(installationStatus)
@@ -793,7 +797,7 @@ def updateLDAPBackend():
 			except:
 				actionRequest = 'none'
 			
-			if (installationStatus == 'not_installed') and (actionRequest == 'none'):
+			if (installationStatus == 'not_installed') and (actionRequest == 'none') and actionResult is None:
 				continue
 			
 			clientId = forceHostId( obj.getDn().split(',')[1].split('=')[1] )
@@ -911,7 +915,7 @@ def updateMySQLBackend():
 		logger.notice(u"Updating table HARDWARE_INFO")
 		mysql.query(u"alter table HARDWARE_INFO add `hostId` varchar(50) NOT NULL;")
 		for res in mysql.getSet(u"SELECT hostId,host_id FROM `HOST` WHERE `hostId` != ''"):
-			mysql.query(u"update HARDWARE_INFO set `hostId` = '%s' where `host_id` = %s;" % (key, res['hostId'], res['host_id']))
+			mysql.query(u"update HARDWARE_INFO set `hostId` = '%s' where `host_id` = %s;" % (res['hostId'], res['host_id']))
 		mysql.query(u"alter table HARDWARE_INFO drop `host_id`;")
 		mysql.query(u"alter table HARDWARE_INFO DEFAULT CHARACTER set utf8;")
 		mysql.query(u"alter table HARDWARE_INFO ENGINE = InnoDB;")
@@ -920,6 +924,8 @@ def updateMySQLBackend():
 		logger.notice(u"Updating database table SOFTWARE from opsi 3.3 to 3.4")
 		# SOFTWARE
 		logger.notice(u"Updating table SOFTWARE")
+		# remove duplicates
+		mysql.query("delete S1 from SOFTWARE S1, SOFTWARE S2 where S1.softwareId=S2.softwareId and S1.software_id > S2.software_id")
 		mysql.query(u"alter table SOFTWARE drop `software_id`;")
 		mysql.query(u"alter table SOFTWARE add primary key (`softwareId`);")
 	
@@ -927,6 +933,8 @@ def updateMySQLBackend():
 		logger.notice(u"Updating database table HOST from opsi 3.3 to 3.4")
 		# HOST
 		logger.notice(u"Updating table HOST")
+		# remove duplicates
+		mysql.query("delete H1 from HOST H1, HOST H2 where H1.hostId=H2.hostId and H1.host_id > H2.host_id")
 		mysql.query(u"alter table HOST drop `host_id`;")
 		mysql.query(u"alter table HOST add primary key (`hostId`);")
 		mysql.query(u"alter table HOST add `type` varchar(20);")
@@ -1448,19 +1456,19 @@ def updateFileBackend():
 							'actionProgress':     None,
 							'productVersion':     None,
 							'packageVersion':     None,
-							'lastStateChange':    None
+							'modificationTime':   None
 							}
 							
 							actionProgress = None
 							installationStatus = ini.get(section, productId).split(u':')[0]
-							if (not installationStatus in (u'undefined', u'installed', u'not_installed')):
+							if installationStatus not in (u'unknown', u'installed', u'not_installed'):
 								actionProgress = installationStatus
-								installationStatus = u'undefined'
+								installationStatus = u'not_installed'
 							
-							actionRequest      = ini.get(section, productId).split(u':')[1]
-							if (not actionRequest in (u'undefined', u'setup', u'uninstall', u'update', u'always', u'once', u'custom', u'none')):
+							actionRequest = ini.get(section, productId).split(u':')[1]
+							if (not actionRequest in (u'setup', u'uninstall', u'update', u'always', u'once', u'custom', u'none')):
 								actionProgress = actionRequest
-								actionRequest = u'undefined'
+								actionRequest = u'none'
 							
 							poc['installationStatus'] = installationStatus
 							poc['actionRequest']      = actionRequest
@@ -1471,7 +1479,7 @@ def updateFileBackend():
 							if (ini.get(productId + u'-state', 'packageversion') != u''):
 								poc['packageVersion']     = ini.get(productId + u'-state', 'packageversion')
 							if ini.has_option(productId + u'-state', 'laststatechange'):
-								poc['lastStateChange']    = ini.get(productId + u'-state', 'laststatechange')
+								poc['modificationTime']   = ini.get(productId + u'-state', 'modificationtime')
 							
 							updatedProductOnClients.append(ProductOnClient.fromHash(poc))
 						except Exception, e:
