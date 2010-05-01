@@ -586,7 +586,7 @@ def updateLDAPBackend():
 					elif (key == 'opsiNextBootServiceURL'):
 						configId = u'clientconfig.configserver.url'
 					elif (key == 'opsiWinDomain'):
-						logger.error(u"TODO: winDomain")
+						configId = u'clientconfig.windows.domain'
 					
 					if not configId:
 						continue
@@ -1264,7 +1264,8 @@ def updateFileBackend():
 							elif (option.lower() == u'opsinextbootserviceurl'):
 								configId = u'clientconfig.configserver.url'
 							elif (option.lower() == u'opsiwindomain'):
-								raise Exception(u"TODO: winDomain")
+								configId = u'clientconfig.windows.domain'
+							
 					except Exception, e:
 						logger.error(u"%s" % (e))
 						continue
@@ -1504,7 +1505,7 @@ def updateFileBackend():
 								elif (option.lower() == u'opsinextbootserviceurl'):
 									configId = u'clientconfig.configserver.url'
 								elif (option.lower() == u'opsiwindomain'):
-									raise Exception(u"TODO: winDomain")
+									configId = u'clientconfig.windows.domain'
 						except Exception, e:
 							logger.error(u"%s" % (e))
 							continue
@@ -1564,7 +1565,7 @@ def updateFileBackend():
 						elif (option.lower() == u'opsinextbootserviceurl'):
 							configId = u'clientconfig.configserver.url'
 						elif (option.lower() == u'opsiwindomain'):
-							raise Exception(u"TODO: winDomain")
+							configId = u'clientconfig.windows.domain'
 				except Exception, e:
 					logger.error(u"%s" % (e))
 					continue
@@ -2097,6 +2098,28 @@ def initializeBackends():
 				defaultValues  = [ u'p:' ],
 				editable       = False,
 				multiValue     = False
+			)
+		)
+	if not 'clientconfig.windows.domain' in configIdents:
+		configs.append(
+			UnicodeConfig(
+				id             = u'clientconfig.windows.domain',
+				description    = u'Windows domain',
+				possibleValues = [],
+				defaultValues  = [ sysConfig['winDomain'] ],
+				editable       = True,
+				multiValue     = False
+			)
+		)
+	if not 'opsi-linux-bootimage.append' in configIdents:
+		configs.append(
+			UnicodeConfig(
+				id             = u'opsi-linux-bootimage.append',
+				description    = u'Extra options to append to kernel command line',
+				possibleValues = [ u'acpi=off', u'irqpoll' u'noapic' ],
+				defaultValues  = [ u'' ],
+				editable       = True,
+				multiValue     = True
 			)
 		)
 	if configs:
