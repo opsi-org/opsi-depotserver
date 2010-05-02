@@ -1496,15 +1496,13 @@ def updateFileBackend():
 						
 						try:
 							if (section.lower() == u'networkconfig'):
-								if (option.lower() == u'opsidepotserverreference'):
+								if (option.lower() == u'depotid'):
 									configId = u'clientconfig.depot.id'
-									#TODO: example? just copied from ldap
-									value = forceHostId(value.split(',')[0].split('=')[1])
-								elif (option.lower() == u'opsidepotdrive'):
+								elif (option.lower() == u'depotdrive'):
 									configId = u'clientconfig.depot.drive'
-								elif (option.lower() == u'opsinextbootserviceurl'):
+								elif (option.lower() == u'nextbootserviceurl'):
 									configId = u'clientconfig.configserver.url'
-								elif (option.lower() == u'opsiwindomain'):
+								elif (option.lower() == u'windomain'):
 									configId = u'clientconfig.windows.domain'
 						except Exception, e:
 							logger.error(u"%s" % (e))
@@ -1513,7 +1511,7 @@ def updateFileBackend():
 						updatedConfigStates.append(ConfigState(configId = configId, objectId = clientId, values = [value]))
 			
 		except Exception, e:
-			logger.warning(u"Could not get all information on client: %s" % (e))
+			logger.warning(u"Could not get all information on client: %s" % e)
 		
 		backend.host_createObjects([OpsiClient.fromHash(oldClientDict)])
 		
@@ -1525,7 +1523,6 @@ def updateFileBackend():
 				backend.productOnClient_createObjects([poc])
 			except Exception, e:
 				logger.error(u"Could not create ProductOnClient '%s': %s" % (poc.getIdent(), e))
-		
 		
 		
 		logger.notice(u"Updating ProductPropertyStates in '%s'" % (clientId))
@@ -1556,10 +1553,8 @@ def updateFileBackend():
 				
 				try:
 					if (section.lower() == u'networkconfig'):
-						if (option.lower() == u'opsidepotserverreference'):
+						if (option.lower() == u'depotid'):
 							configId = u'clientconfig.depot.id'
-							#TODO: example? just copied from ldap
-							value = forceHostId(value.split(',')[0].split('=')[1])
 						elif (option.lower() == u'opsidepotdrive'):
 							configId = u'clientconfig.depot.drive'
 						elif (option.lower() == u'opsinextbootserviceurl'):
