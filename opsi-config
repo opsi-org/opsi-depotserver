@@ -1279,11 +1279,13 @@ def updateFileBackend():
 		
 		
 		logger.notice(u"Updating products on depot '%s'" % (depotId))
-		localbootPath = os.path.join(oldPath, u'products', u'localboot')
-		netbootPath = os.path.join(oldPath, u'products', u'netboot')
 		productFilenames = []
 		
-		for productPath in (localbootPath, netbootPath):
+		for productPath in (os.path.join(oldPath, u'products', u'localboot'), os.path.join(oldPath, u'products', u'netboot')):
+			if not os.path.isdir(productPath):
+				logger.warning(u"Path does not exist, skipping: '%s'" % (productPath))
+				continue
+			
 			for productId in os.listdir(productPath):
 				try:
 					productFilename = os.path.join(productPath, forceProductId(productId))
@@ -1379,7 +1381,7 @@ def updateFileBackend():
 	logger.notice(u"Updating clients ...")
 	for clientId in os.listdir(backupClientConfigDir):
 		oldClient = os.path.join(backupClientConfigDir, clientId)
-		if (not clientId.endswith('.ini')) or (not os.path.isfile(oldClient)):
+		if not (clientId.endswith('.ini')) and (os.path.isfile(oldClient)):
 			logger.debug2(u"Ignoring '%s'" % (oldClient))
 			continue
 		try:
