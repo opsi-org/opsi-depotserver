@@ -1123,19 +1123,34 @@ def updateFileBackend():
 	
 	clientConfigDir   = os.path.join(config["baseDir"], u'clients')
 	depotConfigDir    = os.path.join(config["baseDir"], u'depots')
-	productDir        = os.path.join(config["baseDir"], u'products')
-	auditDir          = os.path.join(config["baseDir"], u'audit')
-	clientTemplateDir = os.path.join(config["baseDir"], u'templates')
+#	productDir        = os.path.join(config["baseDir"], u'products')
+#	auditDir          = os.path.join(config["baseDir"], u'audit')
+#	clientTemplateDir = os.path.join(config["baseDir"], u'templates')
 	
 	backupDir         = os.path.join(config["baseDir"], u'..', u'backup_%s' % time.time())
 	
 	backupClientConfigDir   = os.path.join(backupDir, u'clients')
 	backupDepotConfigDir    = os.path.join(backupDir, u'depots')
-	backupProductDir        = os.path.join(backupDir, u'products')
-	backupAuditDir          = os.path.join(backupDir, u'audit')
-	backupClientTemplateDir = os.path.join(backupDir, u'templates')
+#	backupProductDir        = os.path.join(backupDir, u'products')
+#	backupAuditDir          = os.path.join(backupDir, u'audit')
+#	backupClientTemplateDir = os.path.join(backupDir, u'templates')
 	
 	logger.info(u"Backing up current directory '%s' to '%s'" % (config["baseDir"], backupDir))
+	if not os.path.isdir(config["baseDir"]):
+		raise Exception("Base directory does not exist: '%s'" % (config["baseDir"]))
+	
+	noClientDir = False
+	if not os.path.isdir(clientConfigDir):
+		noClientDir = True
+		logger.warning("Client directory does not exist: '%s'" % (clientConfigDir))
+
+	noDepotDir = False
+	if not os.path.isdir(depotConfigDir):
+		noDepotDir = True
+		logger.warning("Depot directory does not exist: '%s'" % (depotConfigDir))
+	
+	
+	
 	shutil.move(config["baseDir"], backupDir)
 	
 	backend.backend_createBase()
@@ -1153,17 +1168,20 @@ def updateFileBackend():
 	
 	
 	lockedList = {}
-	try:
-		iniFile = IniFile(filename = os.path.join(backupDepotConfigDir, u'product.locks'), ignoreCase = False)
-		ini = iniFile.parse()
-		
-		for proId in ini.sections():
-			for depId in ini.options(proId):
-				if (ini.get(proId, depId) == u'locked'):
-					key = u'%s' % (proId.lower() + '#' + depId.lower())
-					lockedList[key] = True
-	except Exception, e:
-		logger.warning(u"Could not get all information on product.locks: %s" % (e))
+	if os.path.isfile(os.path.join(backupDepotConfigDir, u'product.locks')):
+		try:
+			iniFile = IniFile(filename = os.path.join(backupDepotConfigDir, u'product.locks'), ignoreCase = False)
+			ini = iniFile.parse()
+			
+			for proId in ini.sections():
+				for depId in ini.options(proId):
+					if (ini.get(proId, depId) == u'locked'):
+						key = u'%s' % (proId.lower() + '#' + depId.lower())
+						lockedList[key] = True
+		except Exception, e:
+			logger.error(u"Could not get all information on product.locks: %s" % (e))
+	else:
+		logger.warning(u"Could not backup non-existant file '%s'" % (os.path.join(backupDepotConfigDir, u'product.locks')))
 	
 	
 	
@@ -1171,368 +1189,368 @@ def updateFileBackend():
 	updatedConfigs = []
 	updatedConfigStates = []
 	
-	logger.notice(u"Updating depots ...")
-	for depotId in os.listdir(backupDepotConfigDir):
-		oldPath = os.path.join(backupDepotConfigDir, depotId)
-		oldDepot = os.path.join(oldPath, u'depot.ini')
-		if (not oldDepot.endswith('.ini')) or (not os.path.isfile(oldDepot)):
-			logger.debug2(u"Ignoring '%s'" % (oldPath))
-			continue
-		try:
-			depotId = forceHostId(depotId)
-		except Exception, e:
-			logger.error(u"Invalid depot: '%s': %s" % (oldPath, e))
-			continue
-		
-		oldDepotDict = {
-			'id':                  depotId,
-			'opsiHostKey':         None,
-			'depotLocalUrl':       None,
-			'depotRemoteUrl':      None,
-			'repositoryLocalUrl':  None,
-			'repositoryRemoteUrl': None,
-			'description':         None,
-			'notes':               None,
-			'hardwareAddress':     None,
-			'ipAddress':           None,
-			'inventoryNumber':     None,
-			'networkAddress':      None,
-			'maxBandwidth':        None
-		}
-		
-		if depotId in opsiHostKeys.keys():
-			oldDepotDict['opsiHostKey'] = opsiHostKeys[depotId]
-		
-		
-		updatedProductPropertyStates = []
-		try:
-			iniFile = IniFile(filename = oldDepot)
-			ini = iniFile.parse()
-			
-			if ini.has_option('depotshare', 'localurl'):
-				oldDepotDict['depotLocalUrl']       = ini.get('depotshare', 'localurl')
-			if ini.has_option('depotshare', 'remoteurl'):
-				oldDepotDict['depotRemoteUrl']      = ini.get('depotshare', 'remoteurl')
-			if ini.has_option('repository', 'localurl'):
-				oldDepotDict['repositoryLocalUrl']  = ini.get('repository', 'localurl')
-			if ini.has_option('repository', 'remoteurl'):
-				oldDepotDict['repositoryRemoteUrl'] = ini.get('repository', 'remoteurl')
-			if ini.has_option('repository', 'maxbandwidth'):
-				oldDepotDict['maxBandwidth']        = ini.get('repository', 'maxbandwidth')
-			if ini.has_option('depotserver', 'description'):
-				oldDepotDict['description']         = ini.get('depotserver', 'description')
-			if ini.has_option('depotserver', 'notes'):
-				oldDepotDict['notes']               = ini.get('depotserver', 'notes')
-			if ini.has_option('depotserver', 'network'):
-				oldDepotDict['networkAddress']      = ini.get('depotserver', 'network')
-			if ini.has_option('depotserver', 'hardwareaddress'):
-				oldDepotDict['hardwareAddress']     = ini.get('depotserver', 'hardwareaddress')
-			if ini.has_option('depotserver', 'ipaddress'):
-				oldDepotDict['ipAddress']      = ini.get('depotserver', 'ipaddress')
-			if ini.has_option('depotserver', 'inventorynumber'):
-				oldDepotDict['inventoryNumber']      = ini.get('depotserver', 'inventorynumber')
-			
-			for section in ini.sections():
-				if (section.lower().endswith(u'-install')):
-					for option in ini.options(section):
-						try:
-							updatedProductPropertyStates.append(
-								ProductPropertyState.fromHash(
-									{
-									'productId':  section[:-8],
-									'propertyId': option,
-									'objectId':   depotId,
-									'values':     [ini.get(section, option)]
-									}
-									)
-								)
-						except Exception, e:
-							logger.warning(u"Exception while creating ProductPropertyState from '%s': %s" % (section, e))
-				
-				if (section.lower() in (u'networkconfig', u'generalconfig')):
-					configId = configId = option.lower()
-					value = ini.get(section, option)
-					
-					try:
-						if (section.lower() == u'networkconfig'):
-							if (option.lower() == u'opsidepotserverreference'):
-								configId = u'clientconfig.depot.id'
-								#TODO: example? just copied from ldap
-								value = forceHostId(value.split(',')[0].split('=')[1])
-							elif (option.lower() == u'opsidepotdrive'):
-								configId = u'clientconfig.depot.drive'
-							elif (option.lower() == u'opsinextbootserviceurl'):
-								configId = u'clientconfig.configserver.url'
-							elif (option.lower() == u'opsiwindomain'):
-								configId = u'clientconfig.windows.domain'
-							
-					except Exception, e:
-						logger.error(u"%s" % (e))
-						continue
-					
-					updatedConfigStates.append(ConfigState(configId = configId, objectId = clientId, values = [value]))
-		except Exception, e:
-			logger.warning(u"Could not get all information on depot: %s" % (e))
-		
-		backend.host_createObjects([OpsiDepotserver.fromHash(oldDepotDict)])
-		
-		
-		
-		logger.notice(u"Updating products on depot '%s'" % (depotId))
-		productFilenames = []
-		
-		for productPath in (os.path.join(oldPath, u'products', u'localboot'), os.path.join(oldPath, u'products', u'netboot')):
-			if not os.path.isdir(productPath):
-				logger.warning(u"Path does not exist, skipping: '%s'" % (productPath))
+	if not noDepotDir:
+		logger.notice(u"Updating depots ...")
+		for depotId in os.listdir(backupDepotConfigDir):
+			oldPath = os.path.join(backupDepotConfigDir, depotId)
+			oldDepot = os.path.join(oldPath, u'depot.ini')
+			if (not oldDepot.endswith('.ini')) or (not os.path.isfile(oldDepot)):
+				logger.debug2(u"Ignoring '%s'" % (oldPath))
+				continue
+			try:
+				depotId = forceHostId(depotId)
+			except Exception, e:
+				logger.error(u"Invalid depot: '%s': %s" % (oldPath, e))
 				continue
 			
-			for productId in os.listdir(productPath):
-				try:
-					productFilename = os.path.join(productPath, forceProductId(productId))
-					if not (os.path.isfile(productFilename)):
-						logger.debug2(u"Ignoring '%s'" % (productFilename))
-						continue
-					productFilenames.append(productFilename)
-				except Exception, e:
-					logger.warning(u"Invalid product: '%s' in '%s': %s" % (productId, productPath, e))
-					continue
-		
-		
-		
-		updatedProductDependencies = []
-		for productFilename in productFilenames:
-			packageControlFile = PackageControlFile(filename = productFilename)
-			oldProduct = None
+			oldDepotDict = {
+				'id':                  depotId,
+				'opsiHostKey':         None,
+				'depotLocalUrl':       None,
+				'depotRemoteUrl':      None,
+				'repositoryLocalUrl':  None,
+				'repositoryRemoteUrl': None,
+				'description':         None,
+				'notes':               None,
+				'hardwareAddress':     None,
+				'ipAddress':           None,
+				'inventoryNumber':     None,
+				'networkAddress':      None,
+				'maxBandwidth':        None
+			}
 			
+			if depotId in opsiHostKeys.keys():
+				oldDepotDict['opsiHostKey'] = opsiHostKeys[depotId]
+			
+			
+			updatedProductPropertyStates = []
 			try:
-				oldProduct = packageControlFile.getProduct()
-			except Exception, e:
-				logger.error(u"Invalid product '%s': %s" % (path, e))
-				continue
-			
-			backend.product_createObjects([oldProduct])
-			
-			
-			
-			logger.notice(u"Updating ProductProperties in '%s'" % (oldProduct.getId()))
-			for pp in packageControlFile.getProductProperties():
-				try:
-					pp.setPropertyId(pp.getPropertyId().replace(u' ', u'_'))
-					backend.productProperty_createObjects([pp])
-				except Exception, e:
-					logger.error(u"Could not create ProductProperty '%s': %s" % (pp.getIdent(), e))
-			
-			
-			
-			#logger.notice(u"Updating ProductDependencies in '%s'" % (depotId))
-			#will be updated after all products
-			#updatedProductDependencies = []
-			for pd in packageControlFile.getProductDependencies():
-				updatedProductDependencies.append(pd)
-			
-			
-			
-			logger.notice(u"Updating ProductOnDepot in '%s'" % (depotId))
-			
-			locked = None
-			if (len(lockedList) > 0):
-				try:
-					key = u'%s' % (oldProduct.getId().lower() + '#' + depotId.lower())
-					locked = lockedList[key]
-				except:
-					pass
-			
-			backend.productOnDepot_createObjects(
-				[
-				ProductOnDepot.fromHash(
-					{
-					'productId':      oldProduct.getId(),
-					'productType':    oldProduct.getType(),
-					'productVersion': oldProduct.getProductVersion(),
-					'packageVersion': oldProduct.getPackageVersion(),
-					'depotId':        depotId,
-					'locked':         locked
-					}
-					)
-				]
-				)
-		
-		
-		
-		logger.notice(u"Updating ProductDependencies in '%s'" % (depotId))
-		for pd in updatedProductDependencies:
-			try:
-				backend.productDependency_createObjects([pd])
-			except Exception, e:
-				logger.error(u"Could not create ProductDependency '%s': %s" % (pd.getIdent(), e))
-		
-		
-		
-		logger.notice(u"Updating ProductPropertyStates in '%s'" % (depotId))
-		for pps in updatedProductPropertyStates:
-			try:
-				backend.productPropertyState_createObjects([pps])
-			except Exception, e:
-				logger.error(u"Could not create ProductPropertyState '%s': %s" % (pps.getIdent(), e))
-		
-	
-	
-	
-	logger.notice(u"Updating clients ...")
-	for clientId in os.listdir(backupClientConfigDir):
-		oldClient = os.path.join(backupClientConfigDir, clientId)
-		if not (clientId.endswith('.ini')) and (os.path.isfile(oldClient)):
-			logger.debug2(u"Ignoring '%s'" % (oldClient))
-			continue
-		try:
-			clientId = forceHostId(clientId[:-4])
-		except Exception, e:
-			logger.error(u"Invalid client: '%s': %s" % (oldClient, e))
-			continue
-		
-		oldClientDict = {
-		'id':              clientId,
-		'opsiHostKey':     None,
-		'description':     None,
-		'notes':           None,
-		'hardwareAddress': None,
-		'ipAddress':       None,
-		'inventoryNumber': None,
-		'created':         None,
-		'lastSeen':        None
-		}
-		
-		if clientId in opsiHostKeys.keys():
-			oldClientDict['opsiHostKey'] = opsiHostKeys[clientId]
-		
-		
-		updatedProductPropertyStates = []
-		updatedProductOnClients = []
-		try:
-			iniFile = IniFile(filename = oldClient)
-			ini = iniFile.parse()
-			
-			if ini.has_option('info', 'description'):
-				oldClientDict['description']     = ini.get('info', 'description')
-			if ini.has_option('info', 'notes'):
-				oldClientDict['notes']           = ini.get('info', 'notes')
-			if ini.has_option('info', 'hardwareaddress'):
-				oldClientDict['hardwareAddress'] = ini.get('info', 'hardwareaddress')
-			if ini.has_option('info', 'ipaddress'):
-				oldClientDict['ipAddress']       = ini.get('info', 'ipaddress')
-			if ini.has_option('info', 'inventorynumber'):
-				oldClientDict['inventoryNumber'] = ini.get('info', 'inventorynumber')
-			if ini.has_option('info', 'created'):
-				oldClientDict['created']         = ini.get('info', 'created')
-			if ini.has_option('info', 'lastSeen'):
-				oldClientDict['lastSeen']        = ini.get('info', 'lastSeen')
-			
-			for section in ini.sections():
-				if (section.lower().endswith(u'-install')):
-					for option in ini.options(section):
-						try:
-							updatedProductPropertyStates.append(
-								ProductPropertyState.fromHash(
-									{
-									'productId':  section[:-8],
-									'propertyId': option,
-									'objectId':   clientId,
-									'values':     [ini.get(section, option)]
-									}
+				iniFile = IniFile(filename = oldDepot)
+				ini = iniFile.parse()
+				
+				if ini.has_option('depotshare', 'localurl'):
+					oldDepotDict['depotLocalUrl']       = ini.get('depotshare', 'localurl')
+				if ini.has_option('depotshare', 'remoteurl'):
+					oldDepotDict['depotRemoteUrl']      = ini.get('depotshare', 'remoteurl')
+				if ini.has_option('repository', 'localurl'):
+					oldDepotDict['repositoryLocalUrl']  = ini.get('repository', 'localurl')
+				if ini.has_option('repository', 'remoteurl'):
+					oldDepotDict['repositoryRemoteUrl'] = ini.get('repository', 'remoteurl')
+				if ini.has_option('repository', 'maxbandwidth'):
+					oldDepotDict['maxBandwidth']        = ini.get('repository', 'maxbandwidth')
+				if ini.has_option('depotserver', 'description'):
+					oldDepotDict['description']         = ini.get('depotserver', 'description')
+				if ini.has_option('depotserver', 'notes'):
+					oldDepotDict['notes']               = ini.get('depotserver', 'notes')
+				if ini.has_option('depotserver', 'network'):
+					oldDepotDict['networkAddress']      = ini.get('depotserver', 'network')
+				if ini.has_option('depotserver', 'hardwareaddress'):
+					oldDepotDict['hardwareAddress']     = ini.get('depotserver', 'hardwareaddress')
+				if ini.has_option('depotserver', 'ipaddress'):
+					oldDepotDict['ipAddress']      = ini.get('depotserver', 'ipaddress')
+				if ini.has_option('depotserver', 'inventorynumber'):
+					oldDepotDict['inventoryNumber']      = ini.get('depotserver', 'inventorynumber')
+				
+				for section in ini.sections():
+					if (section.lower().endswith(u'-install')):
+						for option in ini.options(section):
+							try:
+								updatedProductPropertyStates.append(
+									ProductPropertyState.fromHash(
+										{
+										'productId':  section[:-8],
+										'propertyId': option,
+										'objectId':   depotId,
+										'values':     [ini.get(section, option)]
+										}
+										)
 									)
-								)
-						except Exception, e:
-							logger.error(u"Exception while creating ProductPropertyState from '%s': %s" % (section, e))
-				
-				elif (section.lower().endswith(u'_product_states')):
-					for productId in ini.options(section):
-						if (not ini.has_section(productId + u'-state')):
-							continue
-						
-						try:
-							poc = {
-							'productId':          productId,
-							'productType':        section[:-15],
-							'clientId':           clientId,
-							'installationStatus': None,
-							'actionRequest':      None,
-							'actionProgress':     None,
-							'productVersion':     None,
-							'packageVersion':     None,
-							'modificationTime':   None
-							}
-							
-							actionProgress = None
-							installationStatus = ini.get(section, productId).split(u':')[0]
-							if installationStatus not in (u'unknown', u'installed', u'not_installed'):
-								actionProgress = installationStatus
-								installationStatus = u'not_installed'
-							
-							actionRequest = ini.get(section, productId).split(u':')[1]
-							if (not actionRequest in (u'setup', u'uninstall', u'update', u'always', u'once', u'custom', u'none')):
-								actionProgress = actionRequest
-								actionRequest = u'none'
-							
-							poc['installationStatus'] = installationStatus
-							poc['actionRequest']      = actionRequest
-							poc['actionProgress']     = actionProgress
-							
-							if (ini.get(productId + u'-state', 'productversion') != u''):
-								poc['productVersion']     = ini.get(productId + u'-state', 'productversion')
-							if (ini.get(productId + u'-state', 'packageversion') != u''):
-								poc['packageVersion']     = ini.get(productId + u'-state', 'packageversion')
-							if ini.has_option(productId + u'-state', 'laststatechange'):
-								poc['modificationTime']   = ini.get(productId + u'-state', 'modificationtime')
-							
-							updatedProductOnClients.append(ProductOnClient.fromHash(poc))
-						except Exception, e:
-							logger.error(u"Exception while creating ProductOnClient from '%s': %s" % (productId + u'-state', e))
-				
-#				elif (section.lower().endswith(u'-state')):
-#					continue #will be handled above
-				
-				elif (section.lower() in (u'networkconfig', u'generalconfig')):
-					for option in ini.options(section):
+							except Exception, e:
+								logger.warning(u"Exception while creating ProductPropertyState from '%s': %s" % (section, e))
+					
+					if (section.lower() in (u'networkconfig', u'generalconfig')):
 						configId = configId = option.lower()
 						value = ini.get(section, option)
 						
 						try:
 							if (section.lower() == u'networkconfig'):
-								if (option.lower() == u'depotid'):
+								if (option.lower() == u'opsidepotserverreference'):
 									configId = u'clientconfig.depot.id'
-								elif (option.lower() == u'depotdrive'):
+									#TODO: example? just copied from ldap
+									value = forceHostId(value.split(',')[0].split('=')[1])
+								elif (option.lower() == u'opsidepotdrive'):
 									configId = u'clientconfig.depot.drive'
-								elif (option.lower() == u'nextbootserviceurl'):
+								elif (option.lower() == u'opsinextbootserviceurl'):
 									configId = u'clientconfig.configserver.url'
-								elif (option.lower() == u'windomain'):
+								elif (option.lower() == u'opsiwindomain'):
 									configId = u'clientconfig.windows.domain'
+								
 						except Exception, e:
 							logger.error(u"%s" % (e))
 							continue
 						
 						updatedConfigStates.append(ConfigState(configId = configId, objectId = clientId, values = [value]))
+			except Exception, e:
+				logger.warning(u"Could not get all information on depot: %s" % (e))
 			
-		except Exception, e:
-			logger.warning(u"Could not get all information on client: %s" % e)
-		
-		backend.host_createObjects([OpsiClient.fromHash(oldClientDict)])
-		
-		
-		
-		logger.notice(u"Updating ProductOnClients in '%s'" % (clientId))
-		for poc in updatedProductOnClients:
+			backend.host_createObjects([OpsiDepotserver.fromHash(oldDepotDict)])
+			
+			
+			
+			logger.notice(u"Updating products on depot '%s'" % (depotId))
+			productFilenames = []
+			
+			for productPath in (os.path.join(oldPath, u'products', u'localboot'), os.path.join(oldPath, u'products', u'netboot')):
+				if not os.path.isdir(productPath):
+					logger.warning(u"Path does not exist, skipping: '%s'" % (productPath))
+					continue
+				
+				for productId in os.listdir(productPath):
+					try:
+						productFilename = os.path.join(productPath, forceProductId(productId))
+						if not (os.path.isfile(productFilename)):
+							logger.debug2(u"Ignoring '%s'" % (productFilename))
+							continue
+						productFilenames.append(productFilename)
+					except Exception, e:
+						logger.warning(u"Invalid product: '%s' in '%s': %s" % (productId, productPath, e))
+						continue
+			
+			
+			
+			updatedProductDependencies = []
+			for productFilename in productFilenames:
+				packageControlFile = PackageControlFile(filename = productFilename)
+				oldProduct = None
+				
+				try:
+					oldProduct = packageControlFile.getProduct()
+				except Exception, e:
+					logger.error(u"Invalid product '%s': %s" % (path, e))
+					continue
+				
+				backend.product_createObjects([oldProduct])
+				
+				
+				
+				logger.notice(u"Updating ProductProperties in '%s'" % (oldProduct.getId()))
+				for pp in packageControlFile.getProductProperties():
+					try:
+						pp.setPropertyId(pp.getPropertyId().replace(u' ', u'_'))
+						backend.productProperty_createObjects([pp])
+					except Exception, e:
+						logger.error(u"Could not create ProductProperty '%s': %s" % (pp.getIdent(), e))
+				
+				
+				
+				#logger.notice(u"Updating ProductDependencies in '%s'" % (depotId))
+				#will be updated after all products
+				#updatedProductDependencies = []
+				for pd in packageControlFile.getProductDependencies():
+					updatedProductDependencies.append(pd)
+				
+				
+				
+				logger.notice(u"Updating ProductOnDepot in '%s'" % (depotId))
+				
+				locked = None
+				if (len(lockedList) > 0):
+					try:
+						key = u'%s' % (oldProduct.getId().lower() + '#' + depotId.lower())
+						locked = lockedList[key]
+					except:
+						pass
+				
+				backend.productOnDepot_createObjects(
+					[
+					ProductOnDepot.fromHash(
+						{
+						'productId':      oldProduct.getId(),
+						'productType':    oldProduct.getType(),
+						'productVersion': oldProduct.getProductVersion(),
+						'packageVersion': oldProduct.getPackageVersion(),
+						'depotId':        depotId,
+						'locked':         locked
+						}
+						)
+					]
+					)
+			
+			
+			
+			logger.notice(u"Updating ProductDependencies in '%s'" % (depotId))
+			for pd in updatedProductDependencies:
+				try:
+					backend.productDependency_createObjects([pd])
+				except Exception, e:
+					logger.error(u"Could not create ProductDependency '%s': %s" % (pd.getIdent(), e))
+			
+			
+			
+			logger.notice(u"Updating ProductPropertyStates in '%s'" % (depotId))
+			for pps in updatedProductPropertyStates:
+				try:
+					backend.productPropertyState_createObjects([pps])
+				except Exception, e:
+					logger.error(u"Could not create ProductPropertyState '%s': %s" % (pps.getIdent(), e))
+	
+	
+	
+	if not noClientDir:
+		logger.notice(u"Updating clients ...")
+		for clientId in os.listdir(backupClientConfigDir):
+			oldClient = os.path.join(backupClientConfigDir, clientId)
+			if not (clientId.endswith('.ini')) and (os.path.isfile(oldClient)):
+				logger.debug2(u"Ignoring '%s'" % (oldClient))
+				continue
 			try:
-				backend.productOnClient_createObjects([poc])
+				clientId = forceHostId(clientId[:-4])
 			except Exception, e:
-				logger.error(u"Could not create ProductOnClient '%s': %s" % (poc.getIdent(), e))
-		
-		
-		logger.notice(u"Updating ProductPropertyStates in '%s'" % (clientId))
-		for pps in updatedProductPropertyStates:
+				logger.error(u"Invalid client: '%s': %s" % (oldClient, e))
+				continue
+			
+			oldClientDict = {
+			'id':              clientId,
+			'opsiHostKey':     None,
+			'description':     None,
+			'notes':           None,
+			'hardwareAddress': None,
+			'ipAddress':       None,
+			'inventoryNumber': None,
+			'created':         None,
+			'lastSeen':        None
+			}
+			
+			if clientId in opsiHostKeys.keys():
+				oldClientDict['opsiHostKey'] = opsiHostKeys[clientId]
+			
+			
+			updatedProductPropertyStates = []
+			updatedProductOnClients = []
 			try:
-				backend.productPropertyState_createObjects([pps])
+				iniFile = IniFile(filename = oldClient)
+				ini = iniFile.parse()
+				
+				if ini.has_option('info', 'description'):
+					oldClientDict['description']     = ini.get('info', 'description')
+				if ini.has_option('info', 'notes'):
+					oldClientDict['notes']           = ini.get('info', 'notes')
+				if ini.has_option('info', 'hardwareaddress'):
+					oldClientDict['hardwareAddress'] = ini.get('info', 'hardwareaddress')
+				if ini.has_option('info', 'ipaddress'):
+					oldClientDict['ipAddress']       = ini.get('info', 'ipaddress')
+				if ini.has_option('info', 'inventorynumber'):
+					oldClientDict['inventoryNumber'] = ini.get('info', 'inventorynumber')
+				if ini.has_option('info', 'created'):
+					oldClientDict['created']         = ini.get('info', 'created')
+				if ini.has_option('info', 'lastSeen'):
+					oldClientDict['lastSeen']        = ini.get('info', 'lastSeen')
+				
+				for section in ini.sections():
+					if (section.lower().endswith(u'-install')):
+						for option in ini.options(section):
+							try:
+								updatedProductPropertyStates.append(
+									ProductPropertyState.fromHash(
+										{
+										'productId':  section[:-8],
+										'propertyId': option,
+										'objectId':   clientId,
+										'values':     [ini.get(section, option)]
+										}
+										)
+									)
+							except Exception, e:
+								logger.error(u"Exception while creating ProductPropertyState from '%s': %s" % (section, e))
+					
+					elif (section.lower().endswith(u'_product_states')):
+						for productId in ini.options(section):
+							if (not ini.has_section(productId + u'-state')):
+								continue
+							
+							try:
+								poc = {
+								'productId':          productId,
+								'productType':        section[:-15],
+								'clientId':           clientId,
+								'installationStatus': None,
+								'actionRequest':      None,
+								'actionProgress':     None,
+								'productVersion':     None,
+								'packageVersion':     None,
+								'modificationTime':   None
+								}
+								
+								actionProgress = None
+								installationStatus = ini.get(section, productId).split(u':')[0]
+								if installationStatus not in (u'unknown', u'installed', u'not_installed'):
+									actionProgress = installationStatus
+									installationStatus = u'not_installed'
+								
+								actionRequest = ini.get(section, productId).split(u':')[1]
+								if (not actionRequest in (u'setup', u'uninstall', u'update', u'always', u'once', u'custom', u'none')):
+									actionProgress = actionRequest
+									actionRequest = u'none'
+								
+								poc['installationStatus'] = installationStatus
+								poc['actionRequest']      = actionRequest
+								poc['actionProgress']     = actionProgress
+								
+								if (ini.get(productId + u'-state', 'productversion') != u''):
+									poc['productVersion']     = ini.get(productId + u'-state', 'productversion')
+								if (ini.get(productId + u'-state', 'packageversion') != u''):
+									poc['packageVersion']     = ini.get(productId + u'-state', 'packageversion')
+								if ini.has_option(productId + u'-state', 'laststatechange'):
+									poc['modificationTime']   = ini.get(productId + u'-state', 'modificationtime')
+								
+								updatedProductOnClients.append(ProductOnClient.fromHash(poc))
+							except Exception, e:
+								logger.error(u"Exception while creating ProductOnClient from '%s': %s" % (productId + u'-state', e))
+					
+#					elif (section.lower().endswith(u'-state')):
+#						continue #will be handled above
+					
+					elif (section.lower() in (u'networkconfig', u'generalconfig')):
+						for option in ini.options(section):
+							configId = configId = option.lower()
+							value = ini.get(section, option)
+							
+							try:
+								if (section.lower() == u'networkconfig'):
+									if (option.lower() == u'depotid'):
+										configId = u'clientconfig.depot.id'
+									elif (option.lower() == u'depotdrive'):
+										configId = u'clientconfig.depot.drive'
+									elif (option.lower() == u'nextbootserviceurl'):
+										configId = u'clientconfig.configserver.url'
+									elif (option.lower() == u'windomain'):
+										configId = u'clientconfig.windows.domain'
+							except Exception, e:
+								logger.error(u"%s" % (e))
+								continue
+							
+							updatedConfigStates.append(ConfigState(configId = configId, objectId = clientId, values = [value]))
+				
 			except Exception, e:
-				logger.error(u"Could not create ProductPropertyState '%s': %s" % (pps.getIdent(), e))
+				logger.warning(u"Could not get all information on client: %s" % e)
+			
+			backend.host_createObjects([OpsiClient.fromHash(oldClientDict)])
+			
+			
+			logger.notice(u"Updating ProductOnClients in '%s'" % (clientId))
+			for poc in updatedProductOnClients:
+				try:
+					backend.productOnClient_createObjects([poc])
+				except Exception, e:
+					logger.error(u"Could not create ProductOnClient '%s': %s" % (poc.getIdent(), e))
+			
+			
+			logger.notice(u"Updating ProductPropertyStates in '%s'" % (clientId))
+			for pps in updatedProductPropertyStates:
+				try:
+					backend.productPropertyState_createObjects([pps])
+				except Exception, e:
+					logger.error(u"Could not create ProductPropertyState '%s': %s" % (pps.getIdent(), e))
 	
 	
 	
@@ -1564,12 +1582,12 @@ def updateFileBackend():
 						elif (option.lower() == u'opsiwindomain'):
 							configId = u'clientconfig.windows.domain'
 				except Exception, e:
-					logger.error(u"%s" % (e))
+					logger.error(u"Error in option '%s' in section '%s': '%s'" % (option, section, e))
 					continue
 				
 				updatedConfigs.append(UnicodeConfig(id = configId, defaultValues = [value]))
 	except Exception, e:
-		logger.error(u"%s" % (e))
+		logger.warning(u"'%s': '%s'" % (os.path.join(backupDir, u'global.ini'), e))
 	
 	for c in updatedConfigs:
 		try:
@@ -1591,6 +1609,7 @@ def updateFileBackend():
 	backupClientGroupsFile = os.path.join(config["baseDir"], u'clientgroups.ini')
 	if os.path.isfile(backupClientGroupsFile):
 		iniFile = IniFile(filename = backupClientGroupsFile)
+		ini = iniFile.parse()
 		
 		parentGroupIdList= []
 		for section in ini.sections():
