@@ -1112,8 +1112,11 @@ def updateMySQLBackend():
 def updateFileBackend():
 	backendConfigFile = u'/etc/opsi/backends/file.conf'
 	
-	l = {'socket': socket, 'os': os, 'sys': sys, 'module': '', 'config': {}}
+	if not os.path.isfile(backendConfigFile):
+		raise Exception("Configuration file does not exist: '%s'" % (backendConfigFile))
+	
 	logger.info(u"Loading backend config '%s'" % backendConfigFile)
+	l = {'socket': socket, 'os': os, 'sys': sys, 'module': '', 'config': {}}
 	execfile(backendConfigFile, l)
 	config = l['config']
 	logger.info(u"Current file backend config: %s" % config)
@@ -1121,11 +1124,6 @@ def updateFileBackend():
 	logger.notice(u"Creating file backend instance")
 	backend = ExtendedConfigDataBackend(FileBackend(**config))
 	
-	clientConfigDir   = os.path.join(config["baseDir"], u'clients')
-	depotConfigDir    = os.path.join(config["baseDir"], u'depots')
-#	productDir        = os.path.join(config["baseDir"], u'products')
-#	auditDir          = os.path.join(config["baseDir"], u'audit')
-#	clientTemplateDir = os.path.join(config["baseDir"], u'templates')
 	
 	backupDir         = os.path.join(config["baseDir"], u'..', u'backup_%s' % time.time())
 	
@@ -1137,17 +1135,17 @@ def updateFileBackend():
 	
 	logger.info(u"Backing up current directory '%s' to '%s'" % (config["baseDir"], backupDir))
 	if not os.path.isdir(config["baseDir"]):
-		raise Exception("Base directory does not exist: '%s'" % (config["baseDir"]))
+		raise Exception("Base directory given from file '%s' does not exist: '%s'" % (backendConfigFile, config["baseDir"]))
 	
 	noClientDir = False
-	if not os.path.isdir(clientConfigDir):
+	if not os.path.isdir(os.path.join(config["baseDir"], u'clients')):
 		noClientDir = True
-		logger.warning("Client directory does not exist: '%s'" % (clientConfigDir))
+		logger.warning("Client directory does not exist: '%s'" % (os.path.join(config["baseDir"], u'clients')))
 
 	noDepotDir = False
-	if not os.path.isdir(depotConfigDir):
+	if not os.path.isdir(os.path.join(config["baseDir"], u'depots')):
 		noDepotDir = True
-		logger.warning("Depot directory does not exist: '%s'" % (depotConfigDir))
+		logger.warning("Depot directory does not exist: '%s'" % (os.path.join(config["baseDir"], u'depots')))
 	
 	
 	
@@ -1163,7 +1161,7 @@ def updateFileBackend():
 		logger.info(u"Backing up hostKeyFile '%s' to '%s'" % (config["hostKeyFile"], backupDir))
 		shutil.move(config["hostKeyFile"], backupDir)
 	else:
-		logger.warning(u"Could not backup non-existant hostKeyFile '%s'" % (config["hostKeyFile"]))
+		logger.warning(u"Host key file does not exist: '%s'" % (config["hostKeyFile"]))
 	
 	
 	
@@ -1181,7 +1179,7 @@ def updateFileBackend():
 		except Exception, e:
 			logger.error(u"Could not get all information on product.locks: %s" % (e))
 	else:
-		logger.warning(u"Could not backup non-existant file '%s'" % (os.path.join(backupDepotConfigDir, u'product.locks')))
+		logger.warning(u"Product locks fils does not exist: '%s'" % (os.path.join(backupDepotConfigDir, u'product.locks')))
 	
 	
 	
@@ -1189,8 +1187,8 @@ def updateFileBackend():
 	updatedConfigs = []
 	updatedConfigStates = []
 	
+	logger.notice(u"Updating depots ...")
 	if not noDepotDir:
-		logger.notice(u"Updating depots ...")
 		for depotId in os.listdir(backupDepotConfigDir):
 			oldPath = os.path.join(backupDepotConfigDir, depotId)
 			oldDepot = os.path.join(oldPath, u'depot.ini')
@@ -1393,11 +1391,13 @@ def updateFileBackend():
 					backend.productPropertyState_createObjects([pps])
 				except Exception, e:
 					logger.error(u"Could not create ProductPropertyState '%s': %s" % (pps.getIdent(), e))
+	else:
+		logger.info(u"No depot folder, skipping depots.")
 	
 	
 	
+	logger.notice(u"Updating clients ...")
 	if not noClientDir:
-		logger.notice(u"Updating clients ...")
 		for clientId in os.listdir(backupClientConfigDir):
 			oldClient = os.path.join(backupClientConfigDir, clientId)
 			if not (clientId.endswith('.ini')) and (os.path.isfile(oldClient)):
@@ -1551,6 +1551,8 @@ def updateFileBackend():
 					backend.productPropertyState_createObjects([pps])
 				except Exception, e:
 					logger.error(u"Could not create ProductPropertyState '%s': %s" % (pps.getIdent(), e))
+	else:
+		logger.info(u"No client folder, skipping clients.")
 	
 	
 	
@@ -1604,9 +1606,10 @@ def updateFileBackend():
 	
 	
 	
+	logger.notice(u"Updating Groups ..." % ())
 	updatedGroups = []
 	updatedObjectToGroups = []
-	backupClientGroupsFile = os.path.join(config["baseDir"], u'clientgroups.ini')
+	backupClientGroupsFile = os.path.join(backupDir, u'clientgroups.ini')
 	if os.path.isfile(backupClientGroupsFile):
 		iniFile = IniFile(filename = backupClientGroupsFile)
 		ini = iniFile.parse()
@@ -1666,26 +1669,21 @@ def updateFileBackend():
 			unsortedGroups = nowUnsorted
 		
 		updatedGroups = switchedGroups
+		
+		
+		for g in updatedGroups:
+			try:
+				backend.group_createObjects([g])
+			except Exception, e:
+				logger.error(u"Could not create Group '%s': %s" % (g.getIdent(), e))
+		
+		for otg in updatedObjectToGroups:
+			try:
+				backend.objectToGroup_createObjects([otg])
+			except Exception, e:
+				logger.error(u"Could not create ObjectToGroup '%s': %s" % (otg.getIdent(), e))
 	else:
-		logger.warning(u"Could not create groups for update, missing file: %s" % (backupClientGroupsFile))
-	
-	
-	
-	logger.notice(u"Updating Groups ..." % ())
-	for g in updatedGroups:
-		try:
-			backend.group_createObjects([g])
-		except Exception, e:
-			logger.error(u"Could not create Group '%s': %s" % (g.getIdent(), e))
-	
-	
-	
-	logger.notice(u"Updating ObjectToGroups ..." % ())
-	for otg in updatedObjectToGroups:
-		try:
-			backend.objectToGroup_createObjects([otg])
-		except Exception, e:
-			logger.error(u"Could not create Group '%s': %s" % (otg.getIdent(), e))
+		logger.info(u"No groups file, skipping groups.")
 	
 	
 	
