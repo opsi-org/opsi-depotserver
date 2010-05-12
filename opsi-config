@@ -2103,6 +2103,15 @@ def initializeBackends():
 				multiValue     = True
 			)
 		)
+	if not 'license-management.use' in configIdents:
+		configs.append(
+			BoolConfig(
+				id             = u'license-management.use',
+				description    = u'Activate license management',
+				defaultValues  = [ False ],
+			)
+		)
+	
 	if configs:
 		backend.config_createObjects(configs)
 	
