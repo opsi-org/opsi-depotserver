@@ -965,6 +965,7 @@ def updateMySQLBackend():
 		mysql.query(u"alter table HOST add `inventoryNumber` varchar(30);")
 		mysql.query(u"alter table HOST add `created` TIMESTAMP;")
 		mysql.query(u"alter table HOST add `opsiHostKey` varchar(32);")
+		mysql.query(u"alter table HOST add `oneTimePassword` varchar(32);")
 		mysql.query(u"alter table HOST add `maxBandwidth` int;")
 		mysql.query(u"alter table HOST add `depotLocalUrl` varchar(128);")
 		mysql.query(u"alter table HOST add `depotRemoteUrl` varchar(255);")
@@ -1124,8 +1125,7 @@ def updateFileBackend():
 	logger.notice(u"Creating file backend instance")
 	backend = ExtendedConfigDataBackend(FileBackend(**config))
 	
-	
-	backupDir         = os.path.join(config["baseDir"], u'..', u'backup_%s' % time.time())
+	backupDir = os.path.join(os.path.dirname(config["baseDir"]), u'backup_%s' % time.time())
 	
 	backupClientConfigDir   = os.path.join(backupDir, u'clients')
 	backupDepotConfigDir    = os.path.join(backupDir, u'depots')
@@ -1157,12 +1157,30 @@ def updateFileBackend():
 	
 	opsiHostKeys = {}
 	if os.path.isfile(config["hostKeyFile"]):
-		opsiHostKeys = HostKeyFile(filename = config["hostKeyFile"]).parse()
 		logger.notice(u"Backing up hostKeyFile '%s' to '%s'" % (config["hostKeyFile"], backupDir))
-		shutil.move(config["hostKeyFile"], backupDir)
+		shutil.copy(config["hostKeyFile"], backupDir)
+		lines = []
+		f = codecs.open(config["hostKeyFile"], 'r', 'utf-8')
+		for line in f.readlines():
+			line = line.strip()
+			if not line:
+				continue
+			if line[0] in ('#', ';'):
+				continue
+			try:
+				(hostId, key) = line.strip().split(':')
+				hostId = forceHostId(hostId.replace('_', '-'))
+			except Exception, e:
+				logger.error(u"Bad line in %s: '%s': %s" % (config["hostKeyFile"], line, e))
+				continue
+			lines.append(u"%s:%s\n" % (hostId, key))
+		f.close()
+		f = codecs.open(config["hostKeyFile"], 'w', 'utf-8')
+		f.writelines(lines)
+		f.close()
+		opsiHostKeys = HostKeyFile(filename = config["hostKeyFile"]).parse()
 	else:
 		logger.warning(u"Host key file does not exist: '%s'" % (config["hostKeyFile"]))
-	
 	
 	
 	lockedList = {}
@@ -1396,7 +1414,7 @@ def updateFileBackend():
 				
 				updatedConfigs.append(UnicodeConfig(id = configId, defaultValues = [value]))
 	except Exception, e:
-		logger.warning(u"'%s': '%s'" % (os.path.join(backupDir, u'global.ini'), e))
+		logger.error(u"Failed to update config '%s': '%s'" % (os.path.join(backupDir, u'global.ini'), e))
 	
 	for c in updatedConfigs:
 		try:
@@ -1407,17 +1425,17 @@ def updateFileBackend():
 	
 	logger.notice(u"Updating clients ...")
 	if not noClientDir:
-		for clientId in os.listdir(backupClientConfigDir):
+		for filename in os.listdir(backupClientConfigDir):
 			updatedConfigStates = []
 			
-			oldClient = os.path.join(backupClientConfigDir, clientId)
-			if not (clientId.endswith('.ini')) and (os.path.isfile(oldClient)):
-				logger.debug2(u"Ignoring '%s'" % (oldClient))
+			oldClient = os.path.join(backupClientConfigDir, filename)
+			if not (filename.endswith('.ini')) or not os.path.isfile(oldClient):
+				logger.debug2(u"Ignoring client ini '%s'" % (filename))
 				continue
 			try:
-				clientId = forceHostId(clientId[:-4])
+				clientId = forceHostId(filename[:-4].replace('_', '-'))
 			except Exception, e:
-				logger.error(u"Invalid client: '%s': %s" % (oldClient, e))
+				logger.error(u"Invalid client id '%s': %s" % (filename[:-4], e))
 				continue
 			
 			oldClientDict = {
@@ -1569,7 +1587,7 @@ def updateFileBackend():
 				except Exception, e:
 					logger.error(u"Could not create ProductPropertyState '%s': %s" % (pps.getIdent(), e))
 	else:
-		logger.info(u"No client folder, skipping clients.")
+		logger.error(u"No client folder, skipping clients.")
 	
 	
 	
@@ -1585,10 +1603,10 @@ def updateFileBackend():
 		for section in ini.sections():
 			try:
 				g = {
-				'id':            forceGroupId(section),
-				'description':   None,
-				'notes':         None,
-				'parentGroupId': None
+					'id':            forceGroupId(section),
+					'description':   None,
+					'notes':         None,
+					'parentGroupId': None
 				}
 				
 				for option in ini.options(section):
@@ -1603,8 +1621,8 @@ def updateFileBackend():
 						continue
 					
 					otg = {
-					'groupId':  section, #already forced above
-					'objectId': forceObjectId(option)
+						'groupId':  section, #already forced above
+						'objectId': forceObjectId(option)
 					}
 					
 					updatedObjectToGroups.append(ObjectToGroup.fromHash(otg))
@@ -1650,7 +1668,7 @@ def updateFileBackend():
 			except Exception, e:
 				logger.error(u"Could not create ObjectToGroup '%s': %s" % (otg.getIdent(), e))
 	else:
-		logger.info(u"No groups file, skipping groups.")
+		logger.error(u"No groups file, skipping groups.")
 	
 	
 	
@@ -2122,6 +2140,7 @@ def usage():
 	print u"   -h, --help  show this help"
 	print u"   -l          log-level 0..9"
 	print u""
+	print u"   --log-file <path>          path to log file"
 	print u"   --register-depot           register depot at config server"
 	print u"   --set-rights               set default rights on opsi files"
 	print u"   --init-current-config      init current backend configuration"
@@ -2140,7 +2159,7 @@ def main():
 	
 	try:
 		(opts, args) = getopt.getopt(sys.argv[1:], "hl:",
-			['help', 'init-current-config', 'set-rights', 'auto-configure-samba', 'auto-configure-dhcpd',
+			['help', 'log-file=', 'init-current-config', 'set-rights', 'auto-configure-samba', 'auto-configure-dhcpd',
 			 'register-depot', 'configure-mysql', 'update-mysql', 'update-ldap', 'update-file'])
 			#, 'update-from='])
 		if (len(args) > 0):
@@ -2159,6 +2178,9 @@ def main():
 		if opt in ("-h", "--help"):
 			usage()
 			return
+		elif (opt == "--log-file"):
+			logger.setLogFile(arg)
+			logger.setFileLevel(LOG_DEBUG)
 		elif (opt == "-l"):
 			logger.setConsoleLevel(int(arg))
 		elif (opt == "--init-current-config"):
