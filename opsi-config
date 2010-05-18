@@ -1179,6 +1179,7 @@ def updateFileBackend():
 		f.writelines(lines)
 		f.close()
 		opsiHostKeys = HostKeyFile(filename = config["hostKeyFile"]).parse()
+		os.remove(config["hostKeyFile"])
 	else:
 		logger.warning(u"Host key file does not exist: '%s'" % (config["hostKeyFile"]))
 	
