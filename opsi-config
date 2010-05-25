@@ -6,7 +6,7 @@
 # = = = = = = = = = = = = = = = = = = = = = = =
 
 import os, sys, socket, re, shutil, getopt, pwd, grp, stat, codecs, time
-import MySQLdb
+import MySQLdb, ldap
 
 
 
@@ -464,11 +464,7 @@ def update(fromVersion = None):
 		depotbackend       = False
 	)
 	backend.backend_createBase()
-	depots = backend.host_getObjects(type = 'OpsiDepotserver')
-	for depot in depots:
-		depot.setRepositoryLocalUrl(depot.getRepositoryLocalUrl().replace(u'/products', u'/repository'))
-		depot.setRepositoryRemoteUrl(depot.getRepositoryRemoteUrl().replace(u'/products', u'/repository'))
-	backend.host_createObjects(depots)
+	
 	
 def updateLDAPBackend():
 	backendConfigFile = u'/etc/opsi/backends/ldap.conf'
@@ -477,28 +473,29 @@ def updateLDAPBackend():
 	logger.info(u"Loading backend config '%s'" % backendConfigFile)
 	execfile(backendConfigFile, l)
 	config = l['config']
+	baseDn = l['baseDn']
 	logger.info(u"Current ldap backend config: %s" % config)
 	
 	logger.notice(u"Creating ldap backend instance")
 	backend = ExtendedConfigDataBackend(LDAPBackend(**config))
 	
-	ldap = LDAPSession(address = config['address'], username = config['username'], password = config['password'])
-	ldap.connect()
+	ldapSession = LDAPSession(address = config['address'], username = config['username'], password = config['password'])
+	ldapSession.connect()
 	
 	for container in ('configs', 'configStates', 'objectToGroups', 'productOnClients', 'productOnDepots', 'productPropertyStates'):
-		ldapObj = LDAPObject(u"cn=%s,%s" % (container, opsiBaseDn))
-		if ldapObj.exists(ldap):
+		ldapObj = LDAPObject(u"cn=%s,%s" % (container, config['opsiBaseDn']))
+		if ldapObj.exists(ldapSession):
 			logger.notice(u"Deleting container: %s" % ldapObj.getDn())
-			ldapObj.deleteFromDirectory(ldap, recursive = True)
+			ldapObj.deleteFromDirectory(ldapSession, recursive = True)
 	
 	backend.backend_createBase()
 	
 	logger.notice(u"Converting opsiHost")
-	search = LDAPObjectSearch(ldap, baseDn, filter = u'(objectClass=opsiConfigserver)')
+	search = LDAPObjectSearch(ldapSession, baseDn, filter = u'(objectClass=opsiConfigserver)')
 	for obj in search.getObjects():
 		logger.info(u"Found config server: %s" % obj.getDn())
 		try:
-			obj.readFromDirectory(ldap)
+			obj.readFromDirectory(ldapSession)
 			hostId = forceHostId(obj.getCn())
 			obj.removeObjectClass('opsiHost')
 			obj.removeObjectClass('opsiDepotserver')
@@ -506,39 +503,47 @@ def updateLDAPBackend():
 			obj.addObjectClass('OpsiHost')
 			obj.addObjectClass('OpsiDepotserver')
 			obj.addObjectClass('OpsiConfigserver')
-			obj.writeToDirectory(ldap)
+			url = obj.getAttribute('opsiRepositoryLocalUrl', default = "", valuesAsList = False).replace(u'/products', u'/repository')
+			obj.setAttribute('opsiRepositoryLocalUrl',[url])
+			url = obj.getAttribute('opsiRepositoryRemoteUrl', default = "", valuesAsList = False).replace(u'/products', u'/repository')
+			obj.setAttribute('opsiRepositoryRemoteUrl',[url])
+			obj.writeToDirectory(ldapSession)
 		except Exception, e:
-			obj.deleteFromDirectory(ldap)
+			obj.deleteFromDirectory(ldapSession)
 			logger.error(e)
 	
-	search = LDAPObjectSearch(ldap, baseDn, filter = u'(objectClass=opsiDepotserver)')
+	search = LDAPObjectSearch(ldapSession, baseDn, filter = u'(objectClass=opsiDepotserver)')
 	for obj in search.getObjects():
 		logger.info(u"Found depot server: %s" % obj.getDn())
 		try:
-			obj.readFromDirectory(ldap)
+			obj.readFromDirectory(ldapSession)
 			hostId = forceHostId(obj.getCn())
 			obj.removeObjectClass('opsiHost')
 			obj.removeObjectClass('opsiDepotserver')
 			obj.addObjectClass('OpsiHost')
 			obj.addObjectClass('OpsiDepotserver')
-			obj.writeToDirectory(ldap)
+			url = obj.getAttribute('opsiRepositoryLocalUrl', default = "", valuesAsList = False).replace(u'/products', u'/repository')
+			obj.setAttribute('opsiRepositoryLocalUrl',[url])
+			url = obj.getAttribute('opsiRepositoryRemoteUrl', default = "", valuesAsList = False).replace(u'/products', u'/repository')
+			obj.setAttribute('opsiRepositoryRemoteUrl',[url])
+			obj.writeToDirectory(ldapSession)
 		except Exception, e:
-			obj.deleteFromDirectory(ldap)
+			obj.deleteFromDirectory(ldapSession)
 			logger.error(e)
 	
-	search = LDAPObjectSearch(ldap, baseDn, filter = u'(objectClass=opsiClient)')
+	search = LDAPObjectSearch(ldapSession, baseDn, filter = u'(objectClass=opsiClient)')
 	for obj in search.getObjects():
 		logger.info(u"Found client: %s" % obj.getDn())
 		try:
-			obj.readFromDirectory(ldap)
+			obj.readFromDirectory(ldapSession)
 			hostId = forceHostId(obj.getCn())
 			obj.removeObjectClass('opsiHost')
 			obj.removeObjectClass('opsiClient')
 			obj.addObjectClass('OpsiHost')
 			obj.addObjectClass('OpsiClient')
-			obj.writeToDirectory(ldap)
+			obj.writeToDirectory(ldapSession)
 		except Exception, e:
-			obj.deleteFromDirectory(ldap)
+			obj.deleteFromDirectory(ldapSession)
 			logger.error(e)
 		
 	serverIds = backend.host_getIdents(returnType = 'unicode', type = u'OpsiConfigserver')
@@ -546,10 +551,10 @@ def updateLDAPBackend():
 	clientIds = backend.host_getIdents(returnType = 'unicode', type = u'OpsiClient')
 	
 	logger.notice(u"Converting opsiGeneralConfig")
-	search = LDAPObjectSearch(ldap, opsiBaseDn, filter = u'(objectClass=opsiGeneralConfig)')
+	search = LDAPObjectSearch(ldapSession, config['opsiBaseDn'], filter = u'(objectClass=opsiGeneralConfig)')
 	for obj in search.getObjects():
 		try:
-			obj.readFromDirectory(ldap)
+			obj.readFromDirectory(ldapSession)
 			logger.info(u"Found general config: %s" % obj.getDn())
 			hostId = forceHostId(obj.getCn())
 			for opsiKeyValuePair in obj.getAttribute('opsiKeyValuePair', default = [], valuesAsList = True):
@@ -567,10 +572,10 @@ def updateLDAPBackend():
 			logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
 	
 	logger.notice(u"Converting opsiNetworkConfig")
-	search = LDAPObjectSearch(ldap, opsiBaseDn, filter = u'(objectClass=opsiNetworkConfig)')
+	search = LDAPObjectSearch(ldapSession, config['opsiBaseDn'], filter = u'(objectClass=opsiNetworkConfig)')
 	for obj in search.getObjects():
 		try:
-			obj.readFromDirectory(ldap)
+			obj.readFromDirectory(ldapSession)
 			logger.info(u"Found network config: %s" % obj.getDn())
 			hostId = forceHostId(obj.getCn())
 			for (key, value) in obj.getAttributeDict(valuesAsList = False).items():
@@ -604,35 +609,40 @@ def updateLDAPBackend():
 			logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
 			
 	logger.notice(u"Converting opsiGroup")
-	search = LDAPObjectSearch(ldap, opsiBaseDn, filter = u'(objectClass=opsiGroup)')
-	for obj in search.getObjects():
+	
+	def convertGroupObject(obj, parentGroupId = None):
 		try:
-			obj.readFromDirectory(ldap)
-			logger.info(u"Found opsi group: %s" % obj.getDn())
 			groupId = forceGroupId(obj.getCn())
-			obj.deleteFromDirectory(ldap, recursive = True)
-			backend.group_createObjects( HostGroup(id = groupId) )
+			
+			search = LDAPObjectSearch(ldapSession, obj.getDn(), scope = ldap.SCOPE_ONELEVEL, filter = u'(objectClass=opsiGroup)')
+			for obj2 in search.getObjects():
+				convertGroupObject(obj2, parentGroupId = groupId)
 			objectToGroups = []
 			for value in obj.getAttribute('uniqueMember', default = [], valuesAsList = True):
 				try:
 					objectId = forceHostId(value.split(',')[0].split('=')[1])
 					objectToGroups.append( ObjectToGroup(groupId = groupId, objectId = objectId) )
 				except Exception, e:
-					logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
+					logger.error(u"Failure while processing group member %s of group %s: %s" % (value, obj.getDn(), e))
+			obj.deleteFromDirectory(ldapSession)
+			backend.group_createObjects( HostGroup(id = groupId, parentGroupId = parentGroupId) )
 			backend.objectToGroup_createObjects(objectToGroups)
 		except Exception, e:
-			logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
+			logger.error(u"Failure while processing group %s: %s" % (obj.getDn(), e))
 	
+	search = LDAPObjectSearch(ldapSession, "cn=groups,%s" % config['opsiBaseDn'], scope = ldap.SCOPE_ONELEVEL, filter = u'(objectClass=opsiGroup)')
+	for obj in search.getObjects():
+		convertGroupObject(obj)
 	
 	localbootProductIds = []
 	netbootProductIds = []
 	deleteDns = []
 	for objectClass in ('opsiLocalBootProduct', 'opsiNetBootProduct'):
 		logger.notice(u"Converting %s" % objectClass)
-		search = LDAPObjectSearch(ldap, opsiBaseDn, filter = u'(objectClass=%s)' % objectClass)
+		search = LDAPObjectSearch(ldapSession, config['opsiBaseDn'], filter = u'(objectClass=%s)' % objectClass)
 		for obj in search.getObjects():
 			try:
-				obj.readFromDirectory(ldap)
+				obj.readFromDirectory(ldapSession)
 				logger.info(u"Found product: %s" % obj.getDn())
 				
 				depotId = forceHostId( obj.getDn().split(',')[1].split('=')[1] )
@@ -658,7 +668,6 @@ def updateLDAPBackend():
 					priority           = obj.getAttribute('opsiProductPriority',        default = None, valuesAsList = False),
 					description        = obj.getAttribute('description',                default = None, valuesAsList = False),
 					advice             = obj.getAttribute('opsiProductAdvice',          default = None, valuesAsList = False),
-					productClassNames  = obj.getAttribute('opsiProductClassProvided',   default = None, valuesAsList = True),
 					windowsSoftwareIds = obj.getAttribute('opsiWindowsSoftwareId',      default = None, valuesAsList = True)
 				)
 				if (objectClass == 'opsiNetBootProduct'):
@@ -686,12 +695,12 @@ def updateLDAPBackend():
 	
 	
 	logger.notice(u"Converting opsiProductPropertyDefinition")
-	search = LDAPObjectSearch(ldap, opsiBaseDn, filter = u'(objectClass=opsiProductPropertyDefinition)')
+	search = LDAPObjectSearch(ldapSession, config['opsiBaseDn'], filter = u'(objectClass=opsiProductPropertyDefinition)')
 	for obj in search.getObjects():
 		try:
-			obj.readFromDirectory(ldap)
+			obj.readFromDirectory(ldapSession)
 			logger.info(u"Found product property: %s" % obj.getDn())
-			#obj.deleteFromDirectory(ldap, recursive = True)
+			#obj.deleteFromDirectory(ldapSession, recursive = True)
 			
 			
 			productId = forceProductId( obj.getDn().split(',')[2].split('=')[1].replace('_', '-') )
@@ -727,15 +736,16 @@ def updateLDAPBackend():
 			logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
 	
 	logger.notice(u"Converting opsiProductDependency")
-	search = LDAPObjectSearch(ldap, opsiBaseDn, filter = u'(objectClass=opsiProductDependency)')
+	search = LDAPObjectSearch(ldapSession, config['opsiBaseDn'], filter = u'(objectClass=opsiProductDependency)')
 	for obj in search.getObjects():
 		try:
-			obj.readFromDirectory(ldap)
+			obj.readFromDirectory(ldapSession)
 			logger.info(u"Found product dependency: %s" % obj.getDn())
 			
-			action    = forceActionRequest( obj.getDn().split(',')[1].split('=')[1] )
-			productId = forceProductId( obj.getDn().split(',')[3].split('=')[1].replace('_', '-') )
-			depotId   = forceHostId( obj.getDn().split(',')[4].split('=')[1] )
+			productId         = forceProductId(     obj.getDn().split(',')[0].split('=')[1].replace('_', '-') )
+			action            = forceActionRequest( obj.getDn().split(',')[1].split('=')[1] )
+			requiredProductId = forceProductId(     obj.getDn().split(',')[3].split('=')[1].replace('_', '-') )
+			depotId           = forceHostId(        obj.getDn().split(',')[4].split('=')[1] )
 			
 			productOnDepot = backend.productOnDepot_getObjects(productId = productId, depotId = depotId)
 			if not productOnDepot:
@@ -748,7 +758,7 @@ def updateLDAPBackend():
 					productVersion             = productOnDepot.productVersion,
 					packageVersion             = productOnDepot.packageVersion,
 					productAction              = action,
-					requiredProductId          = obj.getAttribute('opsiRequiredProductId',          default = None, valuesAsList = False).replace('_', '-'),
+					requiredProductId          = requiredProductId,
 					requiredAction             = obj.getAttribute('opsiActionRequired',             default = None, valuesAsList = False),
 					requiredInstallationStatus = obj.getAttribute('opsiInstallationStatusRequired', default = None, valuesAsList = False),
 					requirementType            = obj.getAttribute('opsiRequirementType',            default = None, valuesAsList = False)
@@ -761,76 +771,81 @@ def updateLDAPBackend():
 	for deleteDn in deleteDns:
 		try:
 			logger.notice(u"Deleting %s" % deleteDn)
-			LDAPObject(deleteDn).deleteFromDirectory(ldap, recursive = True)
+			LDAPObject(deleteDn).deleteFromDirectory(ldapSession, recursive = True)
 		except Exception, e:
 			logger.error(e)
 	
 	
 	
 	logger.notice(u"Converting opsiProductState")
-	search = LDAPObjectSearch(ldap, opsiBaseDn, filter = u'(objectClass=opsiProductState)')
-	for obj in search.getObjects():
-		try:
-			obj.readFromDirectory(ldap)
-			logger.info(u"Found product state: %s" % obj.getDn())
-			
-			productType = 'LocalbootProduct'
-			if obj.getCn() in netbootProductIds:
-				productType = 'NetbootProduct'
-			
-			actionRequest       = obj.getAttribute('opsiProductActionRequestForced', default = None, valuesAsList = False)
-			installationStatus  = obj.getAttribute('opsiProductInstallationStatus', default = None, valuesAsList = False)
-			actionProgress      = obj.getAttribute('opsiProductActionProgress', default = None, valuesAsList = False)
-			actionResult        = None
-			targetConfiguration = None
-			
-			if installationStatus in ('failed',):
-				actionResult = 'failed'
-				installationStatus = 'not_installed'
-			if installationStatus in ('installing',):
-				actionProgress = 'installing'
-				installationStatus = 'not_installed'
+	contSearch = LDAPObjectSearch(ldapSession, "cn=productStates,%s" % config['opsiBaseDn'], scope = ldap.SCOPE_ONELEVEL, filter = u'(objectClass=organizationalRole)')
+	for contObj in contSearch.getObjects():
+		search = LDAPObjectSearch(ldapSession, contObj.getDn(), filter = u'(objectClass=opsiProductState)')
+		for obj in search.getObjects():
 			try:
-				installationStatus = forceInstallationStatus(installationStatus)
-			except:
-				installationStatus = 'not_installed'
-			try:
-				actionRequest = forceActionRequest(actionRequest)
-			except:
-				actionRequest = 'none'
-			
-			if (installationStatus == 'not_installed') and (actionRequest == 'none') and actionResult is None:
-				continue
-			
-			if (installationStatus == 'installed'):
-				targetConfiguration = 'installed'
-			
-			clientId = forceHostId( obj.getDn().split(',')[1].split('=')[1] )
-			if not clientId in clientIds:
-				continue
-			
-			backend.productOnClient_insertObject(
-				ProductOnClient(
-					productId           = obj.getCn().replace('_', '-'),
-					productType         = productType,
-					productVersion      = obj.getAttribute('opsiProductVersion', default = None, valuesAsList = False),
-					packageVersion      = obj.getAttribute('opsiPackageVersion', default = None, valuesAsList = False),
-					clientId            = clientId,
-					installationStatus  = installationStatus,
-					targetConfiguration = targetConfiguration,
-					actionRequest       = actionRequest,
-					actionProgress      = actionProgress
+				obj.readFromDirectory(ldapSession)
+				logger.info(u"Found product state: %s" % obj.getDn())
+				
+				productType = 'LocalbootProduct'
+				if obj.getCn() in netbootProductIds:
+					productType = 'NetbootProduct'
+				
+				actionRequest       = obj.getAttribute('opsiProductActionRequestForced', default = None, valuesAsList = False)
+				installationStatus  = obj.getAttribute('opsiProductInstallationStatus', default = None, valuesAsList = False)
+				actionProgress      = obj.getAttribute('opsiProductActionProgress', default = None, valuesAsList = False)
+				actionResult        = None
+				targetConfiguration = None
+				
+				if installationStatus in ('failed',):
+					actionResult = 'failed'
+					installationStatus = 'not_installed'
+				if installationStatus in ('installing',):
+					actionProgress = 'installing'
+					installationStatus = 'not_installed'
+				try:
+					installationStatus = forceInstallationStatus(installationStatus)
+				except:
+					installationStatus = 'not_installed'
+				try:
+					actionRequest = forceActionRequest(actionRequest)
+				except:
+					actionRequest = 'none'
+				
+				if (actionProgress == '{}'):
+					actionProgress = None
+				
+				if (installationStatus == 'not_installed') and (actionRequest == 'none') and actionResult is None:
+					continue
+				
+				if (installationStatus == 'installed'):
+					targetConfiguration = 'installed'
+				
+				clientId = forceHostId( obj.getDn().split(',')[1].split('=')[1] )
+				if not clientId in clientIds:
+					continue
+				
+				backend.productOnClient_insertObject(
+					ProductOnClient(
+						productId           = obj.getCn().replace('_', '-'),
+						productType         = productType,
+						productVersion      = obj.getAttribute('opsiProductVersion', default = None, valuesAsList = False),
+						packageVersion      = obj.getAttribute('opsiPackageVersion', default = None, valuesAsList = False),
+						clientId            = clientId,
+						installationStatus  = installationStatus,
+						targetConfiguration = targetConfiguration,
+						actionRequest       = actionRequest,
+						actionProgress      = actionProgress
+					)
 				)
-			)
-		except Exception, e:
-			logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
+			except Exception, e:
+				logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
 	
 	
 	logger.notice(u"Converting opsiProductProperty")
-	search = LDAPObjectSearch(ldap, u'cn=productProperties,%s' % opsiBaseDn, filter = u'(objectClass=opsiProductProperty)')
+	search = LDAPObjectSearch(ldapSession, u'cn=productProperties,%s' % config['opsiBaseDn'], filter = u'(objectClass=opsiProductProperty)')
 	for obj in search.getObjects():
 		try:
-			obj.readFromDirectory(ldap)
+			obj.readFromDirectory(ldapSession)
 			logger.info(u"Found product property: %s" % obj.getDn())
 			
 			clientId = forceHostId( obj.getDn().split(',')[1].split('=')[1] )
@@ -862,10 +877,10 @@ def updateLDAPBackend():
 	
 	
 	for container in ('generalConfigs', 'networkConfigs', 'productClasses', 'productLicenses', 'productProperties', 'productStates'):
-		ldapObj = LDAPObject(u"cn=%s,%s" % (container, opsiBaseDn))
-		if ldapObj.exists(ldap):
+		ldapObj = LDAPObject(u"cn=%s,%s" % (container, config['opsiBaseDn']))
+		if ldapObj.exists(ldapSession):
 			logger.notice(u"Deleting container: %s" % ldapObj.getDn())
-			ldapObj.deleteFromDirectory(ldap, recursive = True)
+			ldapObj.deleteFromDirectory(ldapSession, recursive = True)
 
 def updateMySQLBackend():
 	backendConfigFile = u'/etc/opsi/backends/mysql.conf'
@@ -1256,9 +1271,9 @@ def updateFileBackend():
 				if ini.has_option('depotshare', 'remoteurl'):
 					oldDepotDict['depotRemoteUrl']      = ini.get('depotshare', 'remoteurl')
 				if ini.has_option('repository', 'localurl'):
-					oldDepotDict['repositoryLocalUrl']  = ini.get('repository', 'localurl')
+					oldDepotDict['repositoryLocalUrl']  = ini.get('repository', 'localurl').replace(u'/products', u'/repository')
 				if ini.has_option('repository', 'remoteurl'):
-					oldDepotDict['repositoryRemoteUrl'] = ini.get('repository', 'remoteurl')
+					oldDepotDict['repositoryRemoteUrl'] = ini.get('repository', 'remoteurl').replace(u'/products', u'/repository')
 				if ini.has_option('repository', 'maxbandwidth'):
 					oldDepotDict['maxBandwidth']        = ini.get('repository', 'maxbandwidth')
 				if ini.has_option('depotserver', 'description'):
@@ -1509,7 +1524,7 @@ def updateFileBackend():
 									'productId':           productId,
 									'productType':         section[:-15],
 									'clientId':            clientId,
-									'targetConfiguration': 'undefined'
+									'targetConfiguration': 'undefined',
 									'installationStatus':  'not_installed',
 									'actionRequest':       None,
 									'actionProgress':      None,
