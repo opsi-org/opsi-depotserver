@@ -778,10 +778,12 @@ def updateLDAPBackend():
 			if obj.getCn() in netbootProductIds:
 				productType = 'NetbootProduct'
 			
-			actionRequest      = obj.getAttribute('opsiProductActionRequestForced', default = None, valuesAsList = False)
-			installationStatus = obj.getAttribute('opsiProductInstallationStatus', default = None, valuesAsList = False)
-			actionProgress     = obj.getAttribute('opsiProductActionProgress', default = None, valuesAsList = False)
-			actionResult       = None
+			actionRequest       = obj.getAttribute('opsiProductActionRequestForced', default = None, valuesAsList = False)
+			installationStatus  = obj.getAttribute('opsiProductInstallationStatus', default = None, valuesAsList = False)
+			actionProgress      = obj.getAttribute('opsiProductActionProgress', default = None, valuesAsList = False)
+			actionResult        = None
+			targetConfiguration = None
+			
 			if installationStatus in ('failed',):
 				actionResult = 'failed'
 				installationStatus = 'not_installed'
@@ -800,20 +802,24 @@ def updateLDAPBackend():
 			if (installationStatus == 'not_installed') and (actionRequest == 'none') and actionResult is None:
 				continue
 			
+			if (installationStatus == 'installed'):
+				targetConfiguration = 'installed'
+			
 			clientId = forceHostId( obj.getDn().split(',')[1].split('=')[1] )
 			if not clientId in clientIds:
 				continue
 			
 			backend.productOnClient_insertObject(
 				ProductOnClient(
-					productId          = obj.getCn().replace('_', '-'),
-					productType        = productType,
-					productVersion     = obj.getAttribute('opsiProductVersion', default = None, valuesAsList = False),
-					packageVersion     = obj.getAttribute('opsiPackageVersion', default = None, valuesAsList = False),
-					clientId           = clientId,
-					installationStatus = installationStatus,
-					actionRequest      = actionRequest,
-					actionProgress     = actionProgress
+					productId           = obj.getCn().replace('_', '-'),
+					productType         = productType,
+					productVersion      = obj.getAttribute('opsiProductVersion', default = None, valuesAsList = False),
+					packageVersion      = obj.getAttribute('opsiPackageVersion', default = None, valuesAsList = False),
+					clientId            = clientId,
+					installationStatus  = installationStatus,
+					targetConfiguration = targetConfiguration,
+					actionRequest       = actionRequest,
+					actionProgress      = actionProgress
 				)
 			)
 		except Exception, e:
@@ -1500,15 +1506,16 @@ def updateFileBackend():
 							
 							try:
 								poc = {
-									'productId':          productId,
-									'productType':        section[:-15],
-									'clientId':           clientId,
-									'installationStatus': None,
-									'actionRequest':      None,
-									'actionProgress':     None,
-									'productVersion':     None,
-									'packageVersion':     None,
-									'modificationTime':   None
+									'productId':           productId,
+									'productType':         section[:-15],
+									'clientId':            clientId,
+									'targetConfiguration': 'undefined'
+									'installationStatus':  'not_installed',
+									'actionRequest':       None,
+									'actionProgress':      None,
+									'productVersion':      None,
+									'packageVersion':      None,
+									'modificationTime':    None
 								}
 								
 								actionProgress = None
@@ -1516,6 +1523,9 @@ def updateFileBackend():
 								if installationStatus not in (u'unknown', u'installed', u'not_installed'):
 									actionProgress = installationStatus
 									installationStatus = u'not_installed'
+								
+								if (installationStatus == 'installed'):
+									poc['targetConfiguration'] = 'installed'
 								
 								actionRequest = ini.get(section, productId).split(u':')[1]
 								if (not actionRequest in (u'setup', u'uninstall', u'update', u'always', u'once', u'custom', u'none')):
