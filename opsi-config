@@ -618,10 +618,11 @@ def updateLDAPBackend():
 			for obj2 in search.getObjects():
 				convertGroupObject(obj2, parentGroupId = groupId)
 			objectToGroups = []
+			obj.readFromDirectory(ldapSession)
 			for value in obj.getAttribute('uniqueMember', default = [], valuesAsList = True):
 				try:
 					objectId = forceHostId(value.split(',')[0].split('=')[1])
-					objectToGroups.append( ObjectToGroup(groupId = groupId, objectId = objectId) )
+					objectToGroups.append( ObjectToGroup(groupId = groupId, groupType = 'HostGroup', objectId = objectId) )
 				except Exception, e:
 					logger.error(u"Failure while processing group member %s of group %s: %s" % (value, obj.getDn(), e))
 			obj.deleteFromDirectory(ldapSession)
@@ -1647,8 +1648,9 @@ def updateFileBackend():
 						continue
 					
 					otg = {
-						'groupId':  section, #already forced above
-						'objectId': forceObjectId(option)
+						'groupId'   :  section, #already forced above
+						'groupType' : 'HostGroup',
+						'objectId'  : forceObjectId(option)
 					}
 					
 					updatedObjectToGroups.append(ObjectToGroup.fromHash(otg))
