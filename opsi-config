@@ -1203,6 +1203,11 @@ def updateFileBackend():
 	config = l['config']
 	logger.info(u"Current file backend config: %s" % config)
 	
+	#test for version 40
+	newConfigFile = os.path.join(os.path.dirname(config["baseDir"]), u'config', u'config.ini')
+	if os.path.isfile(newConfigFile):
+		raise Exception(u"Detected a file ('%s') that should only be in opsi version 4.0, update denied!" % (newConfigFile))
+	
 	logger.notice(u"Creating file backend instance")
 	backend = ExtendedConfigDataBackend(FileBackend(**config))
 	
