@@ -1011,7 +1011,7 @@ def updateMySQLBackend():
 				continue
 			
 			logger.notice(u"Updating database table %s from opsi 3.4 to 4.0" % key)
-			for vendorId in ('NDIS' 'SSTP' 'AGIL' 'L2TP' 'PPTP' 'PPPO'):
+			for vendorId in ('NDIS', 'SSTP', 'AGIL', 'L2TP', 'PPTP', 'PPPO', 'PTIM'):
 				mysql.query(u"update %s set `vendorId`=NULL where `vendorId`='%s';" % (key, vendorId))
 			
 			for attr in ('vendorId' 'deviceId' 'subsystemVendorId' 'subsystemDeviceId'):
