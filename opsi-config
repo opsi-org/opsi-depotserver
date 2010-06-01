@@ -1245,8 +1245,6 @@ def updateMySQLBackend():
 		
 		mysql.query(u"drop table WINDOWS_SOFTWARE_ID_TO_LICENSE_POOL;")
 		
-		mysql.query(u"alter table SOFTWARE drop `windowsSoftwareId`;")
-		
 	mysqlBackend = MySQLBackend(**config)
 	mysqlBackend.backend_createBase()
 	mysqlBackend.backend_exit()
