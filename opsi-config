@@ -1029,7 +1029,7 @@ def updateMySQLBackend():
 			for vendorId in ('NDIS', 'SSTP', 'AGIL', 'L2TP', 'PPTP', 'PPPO', 'PTIM'):
 				mysql.query(u"update %s set `vendorId`=NULL where `vendorId`='%s';" % (key, vendorId))
 			
-			for attr in ('vendorId' 'deviceId' 'subsystemVendorId' 'subsystemDeviceId'):
+			for attr in ('vendorId', 'deviceId', 'subsystemVendorId', 'subsystemDeviceId'):
 				if not attr in tables[key]:
 					continue
 				mysql.query(u"update %s set `%s`=NULL where `%s`='';" % (key, attr, attr))
@@ -1172,7 +1172,7 @@ def updateMySQLBackend():
 			update += u", `firstseen`='%s'"    % res['audit_firstseen']
 			update += u", `lastseen`='%s'"     % res['audit_lastseen']
 			update += u", `state`=%s"          % res['audit_state']
-			update += u" where `softwareId`='%s';"   % res['softwareId'].replace("'", "\\'")
+			update += u" where `softwareId`='%s' and `hostId`='%s';" % (res['softwareId'].replace("'", "\\'"), res['hostId'].replace("'", "\\'"))
 			mysql.query(update)
 		mysql.query(u"alter table SOFTWARE_CONFIG drop `softwareId`;")
 		mysql.query(u"alter table SOFTWARE_CONFIG drop `hostId`;")
