@@ -1004,8 +1004,48 @@ def updateMySQLBackend():
 		mysql.query(u"update HOST set `hardwareAddress`=NULL where `hardwareAddress`='None';")
 		
 		mysql.query(u"alter table HOST add INDEX(`type`);")
-	
+		
 	for key in tables.keys():
+		if key.startswith(u'HARDWARE_DEVICE'):
+			if not 'vendorId' in tables[key]:
+				continue
+			
+			logger.notice(u"Updating database table %s from opsi 3.4 to 4.0" % key)
+			for vendorId in ('NDIS' 'SSTP' 'AGIL' 'L2TP' 'PPTP' 'PPPO'):
+				mysql.query(u"update %s set `vendorId`=NULL where `vendorId`='%s';" % (key, vendorId))
+			
+			for attr in ('vendorId' 'deviceId' 'subsystemVendorId' 'subsystemDeviceId'):
+				if not attr in tables[key]:
+					continue
+				mysql.query(u"update %s set `%s`=NULL where `%s`='';" % (key, attr, attr))
+				mysql.query(u"update %s set `%s`=NULL where `%s`='None';" % (key, attr, attr))
+				
+			for res in mysql.getSet(u"SELECT * FROM %s" % key):
+				if res.get('vendorId'):
+					try:
+						forceHardwareVendorId(res['vendorId'])
+					except:
+						logger.warning(u"Dropping bad vendorId '%s'" % res['vendorId'])
+						mysql.query(u"update %s set `vendorId`=NULL where `vendorId`='%s';" % (key, res['vendorId']))
+				if res.get('subsystemVendorId'):
+					try:
+						forceHardwareVendorId(res['subsystemVendorId'])
+					except:
+						logger.warning(u"Dropping bad subsystemVendorId id '%s'" % res['subsystemVendorId'])
+						mysql.query(u"update %s set `subsystemVendorId`=NULL where `subsystemVendorId`='%s';" % (key, res['subsystemVendorId']))
+				if res.get('deviceId'):
+					try:
+						forceHardwareDeviceId(res['deviceId'])
+					except:
+						logger.warning(u"Dropping bad deviceId '%s'" % res['deviceId'])
+						mysql.query(u"update %s set `deviceId`=NULL where `deviceId`='%s';" % (key, res['deviceId']))
+				if res.get('subsystemDeviceId'):
+					try:
+						forceHardwareDeviceId(res['subsystemDeviceId'])
+					except:
+						logger.warning(u"Dropping bad subsystemDeviceId '%s'" % res['subsystemDeviceId'])
+						mysql.query(u"update %s set `subsystemDeviceId`=NULL where `subsystemDeviceId`='%s';" % (key, res['subsystemDeviceId']))
+					
 		# HARDWARE_CONFIG
 		if key.startswith(u'HARDWARE_CONFIG') and 'audit_lastseen' in tables[key]:
 			logger.notice(u"Updating database table %s from opsi 3.4 to 4.0" % key)
