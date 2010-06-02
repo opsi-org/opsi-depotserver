@@ -497,6 +497,17 @@ def updateLDAPBackend():
 	ldapSession = LDAPSession(address = config['address'], username = config['username'], password = config['password'])
 	ldapSession.connect()
 	
+	logger.notice(u"Testing ldap schema")
+	
+	try:
+		ldapObj = LDAPObject(u"cn=opsi-config-test,%s" % (container, config['opsiBaseDn']))
+		ldapObj.new("opsiProductOnClient")
+		ldapObj.writeToDirectory(ldapSession)
+		ldapObj.deleteFromDirectory(ldapSession)
+	except Exception, e:
+		raise Exception(u'Test of opsi-ldap 4.0 schema failed: %s, Please verify opsi.schema and restart slapd.' % e)
+	
+	
 	for container in ('configs', 'configStates', 'objectToGroups', 'productOnClients', 'productOnDepots', 'productPropertyStates'):
 		ldapObj = LDAPObject(u"cn=%s,%s" % (container, config['opsiBaseDn']))
 		if ldapObj.exists(ldapSession):
@@ -1214,7 +1225,6 @@ def updateMySQLBackend():
 		logger.notice(u"Updating database table LICENSE_POOL from opsi 3.4 to 4.0")
 		# LICENSE_POOL
 		mysql.query(u"alter table LICENSE_POOL add `type` varchar(30) NOT NULL;")
-		mysql.query(u"alter table LICENSE_POOL modify `licensePoolId` VARCHAR(200) NOT NULL;")
 		mysql.query(u"update LICENSE_POOL set `type`='LicensePool' where 1=1")
 		
 		mysql.query(u"alter table LICENSE_POOL add INDEX( `type` );")
