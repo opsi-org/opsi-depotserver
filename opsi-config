@@ -1677,11 +1677,11 @@ def updateFileBackend():
 								poc['actionProgress']     = actionProgress
 								
 								if (ini.get(productId + u'-state', 'productversion') != u''):
-									poc['productVersion']     = ini.get(productId + u'-state', 'productversion')
+									poc['productVersion']   = ini.get(productId + u'-state', 'productversion')
 								if (ini.get(productId + u'-state', 'packageversion') != u''):
-									poc['packageVersion']     = ini.get(productId + u'-state', 'packageversion')
+									poc['packageVersion']   = ini.get(productId + u'-state', 'packageversion')
 								if ini.has_option(productId + u'-state', 'laststatechange'):
-									poc['modificationTime']   = ini.get(productId + u'-state', 'laststatechange')
+									poc['modificationTime'] = ini.get(productId + u'-state', 'laststatechange')
 								
 								updatedProductOnClients.append(ProductOnClient.fromHash(poc))
 							except Exception, e:
