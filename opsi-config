@@ -2162,7 +2162,7 @@ def registerDepot():
 	f.close()
 	f = codecs.open(backendConfigFile, 'w', 'utf-8')
 	f.writelines(lines)
-	f.write("config = %s\n" % objectToBeautifiedText(config))
+	f.write("config = %s\n" % forceUnicode(config).replace(',', ',\n').replace('{', '{\n').replace('}', '\n}'))
 	f.close()
 	logger.notice(u"Backend config '%s' updated" % backendConfigFile)
 	
