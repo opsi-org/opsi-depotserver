@@ -500,8 +500,11 @@ def updateLDAPBackend():
 	logger.notice(u"Testing ldap schema")
 	
 	try:
-		ldapObj = LDAPObject(u"cn=opsi-config-test,%s" % (container, config['opsiBaseDn']))
+		ldapObj = LDAPObject(u"cn=opsi-config-test,%s" % config['opsiBaseDn'])
 		ldapObj.new("opsiProductOnClient")
+		ldapObj.setAttribute('opsiProductId', ['test'])
+		ldapObj.setAttribute('opsiClientId', ['test.domain.tld'])
+		ldapObj.setAttribute('opsiProductType', ['LocalbootProduct'])
 		ldapObj.writeToDirectory(ldapSession)
 		ldapObj.deleteFromDirectory(ldapSession)
 	except Exception, e:
