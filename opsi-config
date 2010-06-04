@@ -1060,7 +1060,7 @@ def updateMySQLBackend():
 				) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 				''')
 		
-		mysql.query(u"insert into LICENSE_ON_CLIENT (`softwareLicenseId`, `licensePoolId`, `clientId`) select `softwareLicenseId`, `licensePoolId`, `hostId` from LICENSE_USED_BY_HOST where `softwareLicenseId` != ''")
+		mysql.query(u"insert into LICENSE_ON_CLIENT (`softwareLicenseId`, `licensePoolId`, `clientId`, `licenseKey`, `notes`) select `softwareLicenseId`, `licensePoolId`, `hostId`, `licenseKey`, `notes` from LICENSE_USED_BY_HOST where `softwareLicenseId` != ''")
 		mysql.query(u"drop table LICENSE_USED_BY_HOST")
 		
 	if 'SOFTWARE' in tables.keys() and not 'name' in tables['SOFTWARE']:
