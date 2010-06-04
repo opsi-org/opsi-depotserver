@@ -394,6 +394,10 @@ def setRights():
 			for f in os.listdir(dirname):
 				if os.path.isfile(os.path.join(dirname, f)):
 					files.append(os.path.join(dirname, f))
+				if os.path.isdir(os.path.join(dirname, f)):
+					os.chmod(os.path.join(dirname, f), 0770)
+					for f2 in os.listdir(os.path.join(dirname, f)):
+						files.append(os.path.join(dirname, f2))
 	for filename in files:
 		if os.path.isfile(filename):
 			logger.info(u"   Setting rights on file '%s'" % filename)
