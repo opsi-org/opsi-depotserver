@@ -349,8 +349,7 @@ def setRights():
 	
 	os.chown(u'/tftpboot/linux', 0, adminGroupGid)
 	os.chmod(u'/tftpboot/linux', 0775)
-	for f in findFiles(u'/tftpboot/linux', returnLinks = False):
-		f = os.path.join(u'/tftpboot/linux', f)
+	for f in findFiles(u'/tftpboot/linux', prefix = u'/tftpboot/linux', returnLinks = False):
 		os.chown(f, 0, adminGroupGid)
 		if os.path.isdir(f):
 			logger.debug(u"   Setting rights on directory '%s'" % f)
@@ -359,8 +358,7 @@ def setRights():
 			logger.debug(u"   Setting rights on file '%s'" % f)
 			os.chmod(f, 0664)
 		
-	for f in findFiles(u'/home/opsiproducts', returnLinks = False):
-		f = os.path.join(u'/home/opsiproducts', f)
+	for f in findFiles(u'/home/opsiproducts', prefix = u'/home/opsiproducts', returnLinks = False):
 		os.chown(f, 0, fileAdminGroupGid)
 		if os.path.isdir(f):
 			logger.debug(u"   Setting rights on directory '%s'" % f)
@@ -369,56 +367,14 @@ def setRights():
 			logger.debug(u"   Setting rights on file '%s'" % f)
 			os.chmod(f, 0660)
 	
-	files = []
-	for dirname in (u'/var/log/opsi', u'/var/log/opsi/bootimage', u'/var/log/opsi/instlog', u'/var/log/opsi/clientconnect', u'/var/log/opsi/opsiconfd'):
-		if os.path.isdir(dirname):
-			logger.info(u"   Setting rights on directory '%s'" % dirname)
-			os.chown(dirname, opsiconfdUid, adminGroupGid)
-			os.chmod(dirname, 0750)
-			for f in os.listdir(dirname):
-				if os.path.isfile(os.path.join(dirname, f)):
-					files.append(os.path.join(dirname, f))
-	for filename in files:
-		if os.path.isfile(filename):
-			logger.info(u"   Setting rights on file '%s'" % filename)
-			os.chown(filename, opsiconfdUid, adminGroupGid)
-			os.chmod(filename, 0640)
-	
-	files = [ u'/etc/opsi/passwd', u'/etc/opsi/modules', u'/etc/opsi/version', u'/etc/opsi/opsiconfd.conf', u'/etc/opsi/opsiconfd.pem' ]
-	for dirname in (u'/etc/opsi/hwaudit', u'/etc/opsi/hwaudit/locales', u'/etc/opsi/backends', u'/etc/opsi/backendManager', u'/etc/opsi/backendManager/extend.d',
-			u'/var/lib/opsi', u'/var/lib/opsi/depot', u'/var/lib/opsi/repository'):
-		if os.path.isdir(dirname):
-			logger.info(u"   Setting rights on directory '%s'" % dirname)
-			os.chown(dirname, opsiconfdUid, adminGroupGid)
-			os.chmod(dirname, 0770)
-			for f in os.listdir(dirname):
-				if os.path.isfile(os.path.join(dirname, f)):
-					files.append(os.path.join(dirname, f))
-				if os.path.isdir(os.path.join(dirname, f)):
-					os.chown(os.path.join(dirname, f), opsiconfdUid, adminGroupGid)
-					os.chmod(os.path.join(dirname, f), 0770)
-					for f2 in os.listdir(os.path.join(dirname, f)):
-						files.append(os.path.join(dirname, f, f2))
-	for filename in files:
-		if os.path.isfile(filename):
-			logger.info(u"   Setting rights on file '%s'" % filename)
-			os.chown(filename, opsiconfdUid, adminGroupGid)
-			os.chmod(filename, 0660)
-	
-	files = [ u'/var/lib/opsi/config/clientgroups.ini', u'/var/lib/opsi/config/config.ini', u'/var/lib/opsi/config/global.ini' ]
-	for dirname in (u'/var/lib/opsi/config/audit', u'/var/lib/opsi/config/clients', u'/var/lib/opsi/config/depots', u'/var/lib/opsi/config/products', u'/var/lib/opsi/config/templates'):
-		if os.path.isdir(dirname):
-			logger.info(u"   Setting rights on directory '%s'" % dirname)
-			os.chown(dirname, opsiconfdUid, adminGroupGid)
-			os.chmod(dirname, 0770)
-			for f in os.listdir(dirname):
-				if os.path.isfile(os.path.join(dirname, f)):
-					files.append(os.path.join(dirname, f))
-	for filename in files:
-		if os.path.isfile(filename):
-			logger.info(u"   Setting rights on file '%s'" % filename)
-			os.chown(filename, opsiconfdUid, adminGroupGid)
-			os.chmod(filename, 0660)
+	for dirname in (u'/var/log/opsi', u'/var/lib/opsi', u'/etc/opsi'):
+		for f in findFiles(dirname, prefix = dirname, returnLinks = False):
+			os.chown(f, opsiconfdUid, adminGroupGid)
+			if os.path.isdir(f):
+				logger.debug(u"   Setting rights on directory '%s'" % f)
+				os.chmod(f, 0770)
+			elif os.path.isfile(f):
+				logger.debug(u"   Setting rights on file '%s'" % f)
 	
 	filename = u'/etc/opsi/opsipxeconfd.conf'
 	if os.path.isfile(filename):
