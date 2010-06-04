@@ -941,9 +941,9 @@ def updateMySQLBackend():
 		mysql.query(u"alter table SOFTWARE_CONFIG add `hostId` varchar(50) NOT NULL;")
 		mysql.query(u"alter table SOFTWARE_CONFIG add `softwareId` varchar(100) NOT NULL;")
 		for res in mysql.getSet(u"SELECT hostId,host_id FROM `HOST` WHERE `hostId` != ''"):
-			mysql.query(u"update SOFTWARE_CONFIG set `hostId`='%s' where `host_id`=%s;" % (res['hostId'], res['host_id']))
+			mysql.query(u"update SOFTWARE_CONFIG set `hostId`='%s' where `host_id`=%s;" % (res['hostId'].replace("'", "\\'"), res['host_id']))
 		for res in mysql.getSet(u"SELECT softwareId,software_id FROM `SOFTWARE` WHERE `softwareId` != ''"):
-			mysql.query(u"update SOFTWARE_CONFIG set `softwareId`='%s' where `software_id`=%s;" % (res['softwareId'], res['software_id']))
+			mysql.query(u"update SOFTWARE_CONFIG set `softwareId`='%s' where `software_id`=%s;" % (res['softwareId'].replace("'", "\\'"), res['software_id']))
 		mysql.query(u"alter table SOFTWARE_CONFIG drop `host_id`;")
 		mysql.query(u"alter table SOFTWARE_CONFIG drop `software_id`;")
 		mysql.query(u"alter table SOFTWARE_CONFIG DEFAULT CHARACTER set utf8;")
@@ -955,7 +955,7 @@ def updateMySQLBackend():
 			logger.notice(u"Updating database table %s from opsi 3.3 to 3.4" % key)
 			mysql.query(u"alter table %s add `hostId` varchar(50) NOT NULL;" % key)
 			for res in mysql.getSet(u"SELECT hostId,host_id FROM `HOST` WHERE `hostId` != ''"):
-				mysql.query(u"update %s set `hostId` = '%s' where `host_id` = %s;" % (key, res['hostId'], res['host_id']))
+				mysql.query(u"update %s set `hostId` = '%s' where `host_id` = %s;" % (key, res['hostId'].replace("'", "\\'"), res['host_id']))
 			mysql.query(u"alter table %s drop `host_id`;" % key)
 			mysql.query(u"alter table %s DEFAULT CHARACTER set utf8;" % key)
 			mysql.query(u"alter table %s ENGINE = InnoDB;" % key)
@@ -966,7 +966,7 @@ def updateMySQLBackend():
 		logger.notice(u"Updating table HARDWARE_INFO")
 		mysql.query(u"alter table HARDWARE_INFO add `hostId` varchar(50) NOT NULL;")
 		for res in mysql.getSet(u"SELECT hostId,host_id FROM `HOST` WHERE `hostId` != ''"):
-			mysql.query(u"update HARDWARE_INFO set `hostId` = '%s' where `host_id` = %s;" % (res['hostId'], res['host_id']))
+			mysql.query(u"update HARDWARE_INFO set `hostId` = '%s' where `host_id` = %s;" % (res['hostId'].replace("'", "\\'"), res['host_id']))
 		mysql.query(u"alter table HARDWARE_INFO drop `host_id`;")
 		mysql.query(u"alter table HARDWARE_INFO DEFAULT CHARACTER set utf8;")
 		mysql.query(u"alter table HARDWARE_INFO ENGINE = InnoDB;")
@@ -1853,7 +1853,7 @@ def configureMySQLBackend():
 	
 	consoleLevel = logger.getConsoleLevel()
 	logger.setConsoleLevel(LOG_NONE)
-	ui = UIFactory()
+	ui = UIFactory(type = 'snack')
 	try:
 		dbAdminUser = u'root'
 		dbAdminPass = u''
@@ -1987,7 +1987,7 @@ def registerDepot():
 	
 	consoleLevel = logger.getConsoleLevel()
 	logger.setConsoleLevel(LOG_NONE)
-	ui = UIFactory()
+	ui = UIFactory(type = 'snack')
 	try:
 		adminUser = u'root'
 		adminPass = u''
@@ -2293,12 +2293,99 @@ def initializeBackends():
 			BoolConfig(
 				id             = u'license-management.use',
 				description    = u'Activate license management',
-				defaultValues  = [ False ],
+				defaultValues  = [ False ]
 			)
 		)
 	
 	if configs:
 		backend.config_createObjects(configs)
+
+
+def editConfigDefaults():
+	from OPSI.Backend.BackendManager import BackendManager
+	backend = BackendManager(
+		dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
+		backendConfigDir   = u'/etc/opsi/backends',
+		extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
+		depotbackend       = False
+	)
+	configs = backend.config_getObjects()
+	
+	consoleLevel = logger.getConsoleLevel()
+	logger.setConsoleLevel(LOG_NONE)
+	ui = UIFactory(type = 'snack')
+	try:
+		while True:
+			entries = []
+			maxConfigIdLen = 0
+			for config in configs:
+				if (len(config.id) > maxConfigIdLen):
+					maxConfigIdLen = len(config.id)
+			format = u"%-10s %-" + str(maxConfigIdLen) + "s = %s"
+			for config in configs:
+				type = '[unicode]'
+				if (config.getType() == 'BoolConfig'):
+					type = '[bool]'
+				entries.append({ "id": config.id, "name": format % ( type, config.id, u', '.join(forceUnicodeList(config.defaultValues)) ) })
+			
+			selection = ui.getSelection(entries, radio = True, width=100, height=10, title=u'Please select config value to change', okLabel='OK', cancelLabel='Cancel')
+			
+			if not selection:
+				return
+			
+			configId = None
+			for entry in entries:
+				if (selection[0] == entry['name']):
+					configId = entry['id']
+					break
+			
+			selectedConfig = -1
+			for i in range(len(configs)):
+				if (configs[i].id == configId):
+					selectedConfig = i
+					break
+			
+			addNewValue = False
+			cancelLabel = u'Back'
+			title = u'Edit default values for: %s' % configs[selectedConfig].id
+			text = configs[selectedConfig].description or u''
+			if configs[selectedConfig].possibleValues:
+				entries = []
+				for possibleValue in configs[selectedConfig].possibleValues:
+					entries.append({'name': possibleValue, 'value': possibleValue, 'selected': possibleValue in configs[selectedConfig].defaultValues})
+				radio = not configs[selectedConfig].multiValue
+				if configs[selectedConfig].editable:
+					entries.append({'name': '<other value>', 'value': '<other value>', 'selected': False})
+				selection = ui.getSelection(entries, radio = radio, width = 65, height = 10, title = title, text = text, cancelLabel = cancelLabel)
+				
+				if selection is None:
+					continue
+				if "<other value>" in selection:
+					addNewValue = True
+				else:
+					configs[selectedConfig].setDefaultValues(selection)
+			else:
+				addNewValue = True
+			
+			if addNewValue:
+				default = u''
+				if configs[selectedConfig].defaultValues:
+					default = configs[selectedConfig].defaultValues[0]
+				value = ui.getValue(width = 65, height = 13, title = title, default = default, password = False, text = text, cancelLabel = cancelLabel)
+				if value is None:
+					continue
+				
+				possibleValues = configs[selectedConfig].getPossibleValues()
+				if not value in possibleValues:
+					possibleValues.append(value)
+					configs[selectedConfig].setPossibleValues(possibleValues)
+				configs[selectedConfig].setDefaultValues(value)
+			
+			backend.config_updateObjects([configs[selectedConfig]])
+	
+	finally:
+		ui.exit()
+		logger.setConsoleLevel(consoleLevel)
 	
 def usage():
 	print u"\nUsage: %s [options]" % os.path.basename(sys.argv[0])
@@ -2316,6 +2403,7 @@ def usage():
 	print u"   --update-ldap              update ldap backend"
 	print u"   --update-file              update file backend"
 	print u"   --configure-mysql          configure mysql backend"
+	print u"   --edit-config-defaults     edit global config defaults"
 	print u"   --auto-configure-samba     patch smb.conf"
 	print u"   --auto-configure-dhcpd     patch dhcpd.conf"
 	print u""
@@ -2327,7 +2415,7 @@ def main():
 	try:
 		(opts, args) = getopt.getopt(sys.argv[1:], "hl:",
 			['help', 'log-file=', 'init-current-config', 'set-rights', 'auto-configure-samba', 'auto-configure-dhcpd',
-			 'register-depot', 'configure-mysql', 'update-mysql', 'update-ldap', 'update-file'])
+			 'register-depot', 'configure-mysql', 'update-mysql', 'update-ldap', 'update-file', 'edit-config-defaults'])
 			#, 'update-from='])
 		if (len(args) > 0):
 			raise Exception(u"Too many arguments")
@@ -2364,6 +2452,8 @@ def main():
 			task = 'update-ldap'
 		elif (opt == "--update-file"):
 			task = 'update-file'
+		elif (opt == "--edit-config-defaults"):
+			task = 'edit-config-defaults'
 		#elif (opt == "--update-from"):
 		#	updateFrom = arg
 		elif (opt == "--auto-configure-samba"):
@@ -2427,6 +2517,9 @@ def main():
 		registerDepot()
 		configureClientUser()
 	
+	elif (task == 'edit-config-defaults'):
+		editConfigDefaults()
+		
 	elif autoConfigureSamba:
 		getSysConfig()
 		configureSamba()
