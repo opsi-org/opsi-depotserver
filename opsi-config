@@ -347,10 +347,10 @@ def setRights():
 	adminGroupGid     = grp.getgrnam(ADMIN_GROUP)[2]
 	fileAdminGroupGid = grp.getgrnam(FILE_ADMIN_GROUP)[2]
 	
-	os.chown(u'/tftpboot/linux', 0, adminGroupGid)
+	os.chown(u'/tftpboot/linux', opsiconfdUid, fileAdminGroupGid)
 	os.chmod(u'/tftpboot/linux', 0775)
 	for f in findFiles(u'/tftpboot/linux', prefix = u'/tftpboot/linux', returnLinks = False):
-		os.chown(f, 0, adminGroupGid)
+		os.chown(f, opsiconfdUid, fileAdminGroupGid)
 		if os.path.isdir(f):
 			logger.debug(u"   Setting rights on directory '%s'" % f)
 			os.chmod(f, 0775)
