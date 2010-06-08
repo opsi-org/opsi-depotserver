@@ -368,6 +368,8 @@ def setRights():
 			os.chmod(f, 0660)
 	
 	for dirname in (u'/var/log/opsi', u'/var/lib/opsi', u'/etc/opsi'):
+		os.chown(dirname, opsiconfdUid, adminGroupGid)
+		os.chmod(dirname, 0770)
 		for f in findFiles(dirname, prefix = dirname, returnLinks = False):
 			os.chown(f, opsiconfdUid, adminGroupGid)
 			if os.path.isdir(f):
