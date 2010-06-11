@@ -1226,6 +1226,7 @@ def updateMySQLBackend():
 		if (res['licenseContractId'] != forceLicenseContractId(res['licenseContractId'])):
 			deleteLicenseContractId = res['licenseContractId']
 			res['licenseContractId'] = forceLicenseContractId(res['licenseContractId'])
+			logger.warning(u"Changing license contract id '%s' to '%s'" % (deleteLicenseContractId, res['licenseContractId']))
 			mysql.insert('LICENSE_CONTRACT', res)
 			
 			for tab in ('SOFTWARE_LICENSE', ):
@@ -1239,6 +1240,7 @@ def updateMySQLBackend():
 		if (res['licensePoolId'] != forceLicensePoolId(res['licensePoolId'])):
 			deleteLicensePoolId = res['licensePoolId']
 			res['licensePoolId'] = forceLicensePoolId(res['licensePoolId'])
+			logger.warning(u"Changing license pool id '%s' to '%s'" % (deleteLicensePoolId, res['licensePoolId']))
 			mysql.insert('LICENSE_POOL', res)
 			
 			for tab in ('AUDIT_SOFTWARE_TO_LICENSE_POOL', 'PRODUCT_ID_TO_LICENSE_POOL', 'SOFTWARE_LICENSE_TO_LICENSE_POOL', 'LICENSE_ON_CLIENT'):
@@ -1252,6 +1254,7 @@ def updateMySQLBackend():
 		if (res['softwareLicenseId'] != forceSoftwareLicenseId(res['softwareLicenseId'])):
 			deleteSoftwareLicenseId = res['softwareLicenseId']
 			res['softwareLicenseId'] = forceSoftwareLicenseId(res['softwareLicenseId'])
+			logger.warning(u"Changing software license id '%s' to '%s'" % (deleteSoftwareLicenseId, res['softwareLicenseId']))
 			mysql.insert('SOFTWARE_LICENSE', res)
 			
 			for tab in ('SOFTWARE_LICENSE_TO_LICENSE_POOL', 'LICENSE_ON_CLIENT'):
