@@ -1230,7 +1230,7 @@ def updateMySQLBackend():
 			mysql.insert('LICENSE_CONTRACT', res)
 			
 			for tab in ('SOFTWARE_LICENSE', ):
-				for res2 in mysql.getSet(u"SELECT * FROM `%s` where licenseContractId = '%s'" % (tab, deleteLicenseContractId):
+				for res2 in mysql.getSet(u"SELECT * FROM `%s` where licenseContractId = '%s'" % (tab, deleteLicenseContractId)):
 					res2['licenseContractId'] = res['licenseContractId']
 					mysql.insert(tab, res2)
 				mysql.delete(tab, "licenseContractId = '%s'" % deleteLicenseContractId)
@@ -1244,7 +1244,7 @@ def updateMySQLBackend():
 			mysql.insert('LICENSE_POOL', res)
 			
 			for tab in ('AUDIT_SOFTWARE_TO_LICENSE_POOL', 'PRODUCT_ID_TO_LICENSE_POOL', 'SOFTWARE_LICENSE_TO_LICENSE_POOL', 'LICENSE_ON_CLIENT'):
-				for res2 in mysql.getSet(u"SELECT * FROM `%s` where licensePoolId = '%s'" % (tab, deleteLicensePoolId):
+				for res2 in mysql.getSet(u"SELECT * FROM `%s` where licensePoolId = '%s'" % (tab, deleteLicensePoolId)):
 					res2['licensePoolId'] = res['licensePoolId']
 					mysql.insert(tab, res2)
 				mysql.delete(tab, "licensePoolId = '%s'" % deleteLicensePoolId)
@@ -1258,7 +1258,7 @@ def updateMySQLBackend():
 			mysql.insert('SOFTWARE_LICENSE', res)
 			
 			for tab in ('SOFTWARE_LICENSE_TO_LICENSE_POOL', 'LICENSE_ON_CLIENT'):
-				for res2 in mysql.getSet(u"SELECT * FROM `%s` where softwareLicenseId = '%s'" % (tab, deleteSoftwareLicenseId):
+				for res2 in mysql.getSet(u"SELECT * FROM `%s` where softwareLicenseId = '%s'" % (tab, deleteSoftwareLicenseId)):
 					res2['softwareLicenseId'] = res['softwareLicenseId']
 					mysql.insert(tab, res2)
 				mysql.delete(tab, "softwareLicenseId = '%s'" % deleteSoftwareLicenseId)
