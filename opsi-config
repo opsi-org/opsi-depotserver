@@ -648,7 +648,7 @@ def updateLDAPBackend():
 					Class = NetbootProduct
 				
 				product = Class(
-					id                 = obj.getCn().replace('_', '-'),
+					id                 = obj.getCn(),
 					productVersion     = obj.getAttribute('opsiProductVersion',         default = None, valuesAsList = False),
 					packageVersion     = obj.getAttribute('opsiPackageVersion',         default = None, valuesAsList = False),
 					name               = obj.getAttribute('opsiProductName',            default = None, valuesAsList = False),
@@ -696,7 +696,7 @@ def updateLDAPBackend():
 			#obj.deleteFromDirectory(ldapSession, recursive = True)
 			
 			
-			productId = forceProductId( obj.getDn().split(',')[2].split('=')[1].replace('_', '-') )
+			productId = forceProductId( obj.getDn().split(',')[2].split('=')[1] )
 			depotId   = forceHostId( obj.getDn().split(',')[3].split('=')[1] )
 			
 			productOnDepot = backend.productOnDepot_getObjects(productId = productId, depotId = depotId)
@@ -734,10 +734,10 @@ def updateLDAPBackend():
 		try:
 			obj.readFromDirectory(ldapSession)
 			logger.info(u"Found product dependency: %s" % obj.getDn())
-			
-			productId         = forceProductId(     obj.getDn().split(',')[0].split('=')[1].replace('_', '-') )
+			#cn=javavm,cn=setup,cn=productDependencies,cn=ooffice3,cn=exp-srv-005.uib.local,cn=products,cn=opsi,dc=uib,dc=local
+			requiredProductId = forceProductId(     obj.getDn().split(',')[0].split('=')[1] )
 			action            = forceActionRequest( obj.getDn().split(',')[1].split('=')[1] )
-			requiredProductId = forceProductId(     obj.getDn().split(',')[3].split('=')[1].replace('_', '-') )
+			productId         = forceProductId(     obj.getDn().split(',')[3].split('=')[1] )
 			depotId           = forceHostId(        obj.getDn().split(',')[4].split('=')[1] )
 			
 			productOnDepot = backend.productOnDepot_getObjects(productId = productId, depotId = depotId)
@@ -819,7 +819,7 @@ def updateLDAPBackend():
 				
 				backend.productOnClient_insertObject(
 					ProductOnClient(
-						productId           = obj.getCn().replace('_', '-'),
+						productId           = obj.getCn(),
 						productType         = productType,
 						productVersion      = obj.getAttribute('opsiProductVersion', default = None, valuesAsList = False),
 						packageVersion      = obj.getAttribute('opsiPackageVersion', default = None, valuesAsList = False),
@@ -845,7 +845,7 @@ def updateLDAPBackend():
 			if not clientId in clientIds:
 				continue
 			
-			productId = obj.getAttribute('opsiProductReference', valuesAsList = False).split(',')[0].split('=')[1].replace('_', '-')
+			productId = obj.getAttribute('opsiProductReference', valuesAsList = False).split(',')[0].split('=')[1]
 			
 			productPropertyStates = []
 			for opsiKeyValuePair in obj.getAttribute('opsiKeyValuePair', default = [], valuesAsList = True):
