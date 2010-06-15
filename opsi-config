@@ -734,6 +734,7 @@ def updateLDAPBackend():
 		try:
 			obj.readFromDirectory(ldapSession)
 			logger.info(u"Found product dependency: %s" % obj.getDn())
+			
 			#cn=javavm,cn=setup,cn=productDependencies,cn=ooffice3,cn=exp-srv-005.uib.local,cn=products,cn=opsi,dc=uib,dc=local
 			requiredProductId = forceProductId(     obj.getDn().split(',')[0].split('=')[1] )
 			action            = forceActionRequest( obj.getDn().split(',')[1].split('=')[1] )
