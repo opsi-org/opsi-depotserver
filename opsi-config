@@ -1004,6 +1004,8 @@ def updateMySQLBackend():
 		mysql.query(u"alter table HOST add `repositoryLocalUrl` varchar(128);")
 		mysql.query(u"alter table HOST add `repositoryRemoteUrl` varchar(255);")
 		mysql.query(u"alter table HOST add `networkAddress` varchar(31);")
+		mysql.query(u"alter table HOST add `isMasterDepot` bool;")
+		mysql.query(u"alter table HOST add `masterDepotId` varchar(255);")
 		
 		mysql.query(u"update HOST set `type`='OpsiClient' where `type`='OPSI_CLIENT';")
 		mysql.query(u"update HOST set `description`=NULL where `description`='None';")
