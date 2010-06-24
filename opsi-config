@@ -1117,7 +1117,7 @@ def updateMySQLBackend():
 			update += u", `windowsDisplayName`='%s'"    % res['displayName'].replace("'", "\\'")
 			update += u", `windowsDisplayVersion`='%s'" % res['displayVersion'].replace("'", "\\'")
 			update += u", `architecture`='x86'"
-			update += u", `language`='en'"
+			update += u", `language`=''"
 			update += u", `name`='%s'" % name
 			update += u", `version`='%s'" % version
 			update += u", `subVersion`=''"
@@ -2319,7 +2319,7 @@ def initializeBackends():
 			UnicodeConfig(
 				id             = u'opsi-linux-bootimage.append',
 				description    = u'Extra options to append to kernel command line',
-				possibleValues = [ u'acpi=off', u'irqpoll' u'noapic' ],
+				possibleValues = [ u'acpi=off', u'irqpoll', u'noapic' ],
 				defaultValues  = [ u'' ],
 				editable       = True,
 				multiValue     = True
