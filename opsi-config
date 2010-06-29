@@ -345,6 +345,8 @@ def configureClientUser():
 	
 def setRights(path=u'/'):
 	logger.notice(u"Setting rights")
+	if not os.path.isdir(path):
+		path = os.path.dirname(path)
 	
 	opsiconfdUid      = pwd.getpwnam(OPSICONFD_USER)[2]
 	adminGroupGid     = grp.getgrnam(ADMIN_GROUP)[2]
@@ -413,14 +415,15 @@ def setRights(path=u'/'):
 				if not depotUrl.startswith('file:///'):
 					raise Exception(u"Bad repository local url '%s'" % depotUrl)
 				depotDir = depotUrl[7:]
-				if os.path.exists(depotDir) and depotDir.startswith(path):
+				if os.path.exists(depotDir) and (depotDir.startswith(path) or path.startswith(depotDir)):
 					logger.notice(u"Local depot directory '%s' found, setting rights" % depotDir)
 					
-					os.chown(depotDir, opsiconfdUid, fileAdminGroupGid)
-					os.chmod(depotDir, 02770)
+					if depotDir.startswith(path):
+						os.chown(depotDir, opsiconfdUid, fileAdminGroupGid)
+						os.chmod(depotDir, 02770)
+					else:
+						depotDir = path
 					for f in findFiles(depotDir, returnLinks = False):
-						if not f.startswith(path):
-							continue
 						f = os.path.join(depotDir, f)
 						os.chown(f, opsiconfdUid, fileAdminGroupGid)
 						if os.path.isdir(f):
@@ -2331,6 +2334,18 @@ def initializeBackends():
 				id             = u'license-management.use',
 				description    = u'Activate license management',
 				defaultValues  = [ False ]
+			)
+		)
+	
+	if not 'product_sort_algorithm' in configIdents:
+		configs.append(
+			UnicodeConfig(
+				id             = u'product_sort_algorithm',
+				description    = u'Product sorting algorithm',
+				possibleValues = [ u'algorithm1', u'algorithm2' ],
+				defaultValues  = [ u'algorithm2' ],
+				editable       = False,
+				multiValue     = False
 			)
 		)
 	
