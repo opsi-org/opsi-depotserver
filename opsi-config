@@ -1704,7 +1704,7 @@ def updateFileBackend():
 									'clientId':            clientId,
 									'targetConfiguration': 'undefined',
 									'installationStatus':  'not_installed',
-									'actionRequest':       None,
+									'actionRequest':       'none',
 									'actionProgress':      None,
 									'productVersion':      None,
 									'packageVersion':      None,
@@ -1713,16 +1713,12 @@ def updateFileBackend():
 								
 								actionProgress = None
 								installationStatus = ini.get(section, productId).split(u':')[0]
-								if installationStatus not in (u'unknown', u'installed', u'not_installed'):
+								if installationStatus not in (u'installed', u'not_installed'):
 									actionProgress = installationStatus
 									installationStatus = u'not_installed'
 								
-								if (installationStatus == 'installed'):
-									poc['targetConfiguration'] = 'installed'
-								
 								actionRequest = ini.get(section, productId).split(u':')[1]
 								if (not actionRequest in (u'setup', u'uninstall', u'update', u'always', u'once', u'custom', u'none')):
-									actionProgress = actionRequest
 									actionRequest = u'none'
 								
 								poc['installationStatus'] = installationStatus
