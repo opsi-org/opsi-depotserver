@@ -1092,7 +1092,7 @@ def updateMySQLBackend():
 		mysql.query(u"alter table SOFTWARE add `name` varchar(100) NOT NULL;")
 		mysql.query(u"alter table SOFTWARE add `version` varchar(100) NOT NULL;")
 		mysql.query(u"alter table SOFTWARE add `subVersion` varchar(100) NOT NULL;")
-		mysql.query(u"alter table SOFTWARE add `language` varchar(5) NOT NULL;")
+		mysql.query(u"alter table SOFTWARE add `language` varchar(10) NOT NULL;")
 		mysql.query(u"alter table SOFTWARE add `architecture` varchar(3) NOT NULL;")
 		mysql.query(u"alter table SOFTWARE add `windowsSoftwareId` varchar(100) NOT NULL;")
 		mysql.query(u"alter table SOFTWARE add `windowsDisplayName` varchar(100) NOT NULL;")
@@ -1146,13 +1146,14 @@ def updateMySQLBackend():
 		mysql.query(u"alter table SOFTWARE_CONFIG add `name` varchar(100) NOT NULL;")
 		mysql.query(u"alter table SOFTWARE_CONFIG add `version` varchar(100) NOT NULL;")
 		mysql.query(u"alter table SOFTWARE_CONFIG add `subVersion` varchar(100) NOT NULL;")
-		mysql.query(u"alter table SOFTWARE_CONFIG add `language` varchar(5) NOT NULL;")
+		mysql.query(u"alter table SOFTWARE_CONFIG add `language` varchar(10) NOT NULL;")
 		mysql.query(u"alter table SOFTWARE_CONFIG add `architecture` varchar(3) NOT NULL;")
 		mysql.query(u"alter table SOFTWARE_CONFIG add `uninstallString` varchar(200);")
 		mysql.query(u"alter table SOFTWARE_CONFIG add `binaryName` varchar(100);")
 		mysql.query(u"alter table SOFTWARE_CONFIG add `firstseen` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00';")
 		mysql.query(u"alter table SOFTWARE_CONFIG add `lastseen` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00';")
 		mysql.query(u"alter table SOFTWARE_CONFIG add `state` TINYINT NOT NULL;")
+		mysql.query(u"alter table SOFTWARE_CONFIG add `licenseKey` varchar(100);")
 		for res in mysql.getSet(u"SELECT * FROM `SOFTWARE_CONFIG`"):
 			res2 = mysql.getSet(u"SELECT * FROM `SOFTWARE` where `windowsSoftwareId` = '%s'" % res['softwareId'].replace("'", "\\'"))
 			if not res2:
@@ -1225,7 +1226,7 @@ def updateMySQLBackend():
 					`name` varchar(100) NOT NULL,
 					`version` varchar(100) NOT NULL,
 					`subVersion` varchar(100) NOT NULL,
-					`language` varchar(5) NOT NULL,
+					`language` varchar(10) NOT NULL,
 					`architecture` varchar(3) NOT NULL,
 					PRIMARY KEY( `name`, `version`, `subVersion`, `language`, `architecture` )
 				) ENGINE=InnoDB DEFAULT CHARSET=utf8;
