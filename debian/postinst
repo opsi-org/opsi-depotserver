@@ -40,10 +40,13 @@ case "$1" in
 			echo "/usr/share/opsi/opsi-config --init-current-config $arguments"
 			/usr/share/opsi/opsi-config --init-current-config $arguments || true
 		else
-			echo "/usr/share/opsi/opsi-config --set-rights $arguments"
-			/usr/share/opsi/opsi-config --set-rights $arguments || true
+			echo "/usr/share/opsi/opsi-config $arguments --set-rights /etc/opsi"
+			/usr/share/opsi/opsi-config $arguments --set-rights /etc/opsi || true
+			echo "/usr/share/opsi/opsi-config --set-rights /tftpboot"
+			/usr/share/opsi/opsi-config --set-rights /tftpboot || true
+			echo "/usr/share/opsi/opsi-config --set-rights /var/lib/opsi"
+			/usr/share/opsi/opsi-config --set-rights /var/lib/opsi || true
 		fi
-		
 	;;
 	
 	abort-upgrade|abort-remove|abort-deconfigure)
