@@ -1019,6 +1019,7 @@ def updateMySQLBackend():
 		mysql.query(u"alter table HOST add `maxBandwidth` int;")
 		mysql.query(u"alter table HOST add `depotLocalUrl` varchar(128);")
 		mysql.query(u"alter table HOST add `depotRemoteUrl` varchar(255);")
+		mysql.query(u"alter table HOST add `depotWebdavUrl` varchar(255);")
 		mysql.query(u"alter table HOST add `repositoryLocalUrl` varchar(128);")
 		mysql.query(u"alter table HOST add `repositoryRemoteUrl` varchar(255);")
 		mysql.query(u"alter table HOST add `networkAddress` varchar(31);")
