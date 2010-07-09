@@ -1711,43 +1711,39 @@ def updateFileBackend():
 					
 					elif (section.lower().endswith(u'_product_states')):
 						for productId in ini.options(section):
-							if (not ini.has_section(productId + u'-state')):
-								continue
-							
 							try:
 								poc = {
 									'productId':           productId,
 									'productType':         section[:-15],
 									'clientId':            clientId,
-									'targetConfiguration': 'undefined',
-									'installationStatus':  'not_installed',
-									'actionRequest':       'none',
+									'installationStatus':  u'not_installed',
+									'actionRequest':       u'none',
 									'actionProgress':      None,
+									'targetConfiguration': None,
 									'productVersion':      None,
 									'packageVersion':      None,
 									'modificationTime':    None
 								}
 								
-								actionProgress = None
-								installationStatus = ini.get(section, productId).split(u':')[0]
-								if installationStatus not in (u'installed', u'not_installed'):
-									actionProgress = installationStatus
-									installationStatus = u'not_installed'
+								try:
+									(poc['installationStatus'], poc['actionRequest']) = ini.get(section, productId).split(u':')
+								except Exception, e:
+									logger.error(u"Failed to get state from '%s': %s" % (ini.get(section, productId), e))
 								
-								actionRequest = ini.get(section, productId).split(u':')[1]
-								if (not actionRequest in (u'setup', u'uninstall', u'update', u'always', u'once', u'custom', u'none')):
-									actionRequest = u'none'
+								if poc['installationStatus'] not in (u'installed', u'not_installed'):
+									poc['actionProgress'] = poc['installationStatus']
+									poc['installationStatus'] = u'not_installed'
 								
-								poc['installationStatus'] = installationStatus
-								poc['actionRequest']      = actionRequest
-								poc['actionProgress']     = actionProgress
+								if not poc['actionRequest'] in (u'setup', u'uninstall', u'update', u'always', u'once', u'custom', u'none'):
+									poc['actionRequest'] = u'none'
 								
-								if (ini.get(productId + u'-state', 'productversion') != u''):
-									poc['productVersion']   = ini.get(productId + u'-state', 'productversion')
-								if (ini.get(productId + u'-state', 'packageversion') != u''):
-									poc['packageVersion']   = ini.get(productId + u'-state', 'packageversion')
-								if ini.has_option(productId + u'-state', 'laststatechange'):
-									poc['modificationTime'] = ini.get(productId + u'-state', 'laststatechange')
+								if ini.has_section(productId + u'-state'):
+									if (ini.get(productId + u'-state', 'productversion') != u''):
+										poc['productVersion']   = ini.get(productId + u'-state', 'productversion')
+									if (ini.get(productId + u'-state', 'packageversion') != u''):
+										poc['packageVersion']   = ini.get(productId + u'-state', 'packageversion')
+									if ini.has_option(productId + u'-state', 'laststatechange'):
+										poc['modificationTime'] = ini.get(productId + u'-state', 'laststatechange')
 								
 								updatedProductOnClients.append(ProductOnClient.fromHash(poc))
 							except Exception, e:
