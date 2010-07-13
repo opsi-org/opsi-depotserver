@@ -2352,7 +2352,7 @@ def initializeBackends():
 				id             = u'product_sort_algorithm',
 				description    = u'Product sorting algorithm',
 				possibleValues = [ u'algorithm1', u'algorithm2' ],
-				defaultValues  = [ u'algorithm2' ],
+				defaultValues  = [ u'algorithm1' ],
 				editable       = False,
 				multiValue     = False
 			)
