@@ -5,13 +5,14 @@
 # =          All rights reserved.             =
 # = = = = = = = = = = = = = = = = = = = = = = =
 
+
 from OPSI.Logger import *
 from OPSI.Types import *
 from OPSI.Object import *
 from OPSI.System import *
 from OPSI.Util.File import *
 from OPSI.Util.File.Opsi import *
-from OPSI.Util import findFiles, randomString, blowfishDecrypt, objectToBeautifiedText
+from OPSI.Util import * #findFiles, randomString, blowfishDecrypt, objectToBeautifiedText
 from OPSI.UI import *
 from OPSI.Backend.MySQL import *
 from OPSI.Backend.LDAP import *
@@ -342,75 +343,15 @@ def configureClientUser():
 	
 def setRights(path=u'/'):
 	logger.notice(u"Setting rights")
-	if not os.path.isdir(path):
-		path = os.path.dirname(path)
+	basedir = path
+	if not os.path.isdir(basedir):
+		basedir = os.path.dirname(basedir)
 	
 	opsiconfdUid      = pwd.getpwnam(OPSICONFD_USER)[2]
 	adminGroupGid     = grp.getgrnam(ADMIN_GROUP)[2]
 	fileAdminGroupGid = grp.getgrnam(FILE_ADMIN_GROUP)[2]
 	
-	if '/tftpboot/linux'.startswith(path):
-		os.chown(u'/tftpboot/linux', opsiconfdUid, fileAdminGroupGid)
-		os.chmod(u'/tftpboot/linux', 0775)
-		for f in findFiles(u'/tftpboot/linux', prefix = u'/tftpboot/linux', returnLinks = False):
-			if not f.startswith(path):
-				continue
-			os.chown(f, opsiconfdUid, fileAdminGroupGid)
-			if os.path.isdir(f):
-				logger.debug(u"   Setting rights on directory '%s'" % f)
-				os.chmod(f, 0775)
-			elif os.path.isfile(f):
-				logger.debug(u"   Setting rights on file '%s'" % f)
-				os.chmod(f, 0664)
-	
-	if '/home/opsiproducts'.startswith(path):
-		for f in findFiles(u'/home/opsiproducts', prefix = u'/home/opsiproducts', returnLinks = False):
-			if not f.startswith(path):
-				continue
-			os.chown(f, 0, fileAdminGroupGid)
-			if os.path.isdir(f):
-				logger.debug(u"   Setting rights on directory '%s'" % f)
-				os.chmod(f, 02770)
-			elif os.path.isfile(f):
-				logger.debug(u"   Setting rights on file '%s'" % f)
-				os.chmod(f, 0660)
-	
-	for dirname in (u'/var/log/opsi', u'/etc/opsi'):
-		if not dirname.startswith(path):
-			continue
-		os.chown(dirname, opsiconfdUid, adminGroupGid)
-		os.chmod(dirname, 0770)
-		for f in findFiles(dirname, prefix = dirname, returnLinks = False):
-			if not f.startswith(path):
-				continue
-			os.chown(f, opsiconfdUid, adminGroupGid)
-			if os.path.isdir(f):
-				logger.debug(u"   Setting rights on directory '%s'" % f)
-				os.chmod(f, 0770)
-			elif os.path.isfile(f):
-				logger.debug(u"   Setting rights on file '%s'" % f)
-	
-	for dirname in (u'/var/lib/opsi',):
-		if not dirname.startswith(path):
-			continue
-		os.chown(dirname, opsiconfdUid, fileAdminGroupGid)
-		os.chmod(dirname, 0770)
-		for f in findFiles(dirname, prefix = dirname, returnLinks = False):
-			if not f.startswith(path):
-				continue
-			os.chown(f, opsiconfdUid, fileAdminGroupGid)
-			if os.path.isdir(f):
-				logger.debug(u"   Setting rights on directory '%s'" % f)
-				os.chmod(f, 0770)
-			elif os.path.isfile(f):
-				logger.debug(u"   Setting rights on file '%s'" % f)
-	
-	filename = u'/etc/opsi/opsipxeconfd.conf'
-	if filename.startswith(path) and os.path.isfile(filename):
-		logger.info(u"   Setting rights on file '%s'" % filename)
-		os.chown(filename, 0, adminGroupGid)
-		os.chmod(filename, 0660)
-	
+	dirnames = [u'/tftpboot/linux', u'/home/opsiproducts', u'/var/log/opsi', u'/etc/opsi', u'/var/lib/opsi']
 	if not path.startswith('/etc') and not path.startswith('/tftpboot'):
 		try:
 			from OPSI.Backend.BackendManager import BackendManager
@@ -427,26 +368,61 @@ def setRights(path=u'/'):
 				if not depotUrl.startswith('file:///'):
 					raise Exception(u"Bad repository local url '%s'" % depotUrl)
 				depotDir = depotUrl[7:]
-				if os.path.exists(depotDir) and (depotDir.startswith(path) or path.startswith(depotDir)):
-					logger.notice(u"Local depot directory '%s' found, setting rights" % depotDir)
-					
-					if depotDir.startswith(path):
-						depotDir = path
-					os.chown(depotDir, opsiconfdUid, fileAdminGroupGid)
-					os.chmod(depotDir, 02770)
-					for f in findFiles(depotDir, returnLinks = False):
-						f = os.path.join(depotDir, f)
-						os.chown(f, opsiconfdUid, fileAdminGroupGid)
-						if os.path.isdir(f):
-							logger.debug(u"   Setting rights on directory '%s'" % f)
-							os.chmod(f, 02770)
-						elif os.path.isfile(f):
-							logger.debug(u"   Setting rights on file '%s'" % f)
-							mode = (os.stat(f)[0] | 0660) & 0770
-							os.chmod(f, mode)
+				if os.path.exists(depotDir):
+					logger.info(u"Local depot directory '%s' found" % depotDir)
+					dirnames.append(depotDir)
 		except Exception, e:
 			logger.error(e)
-
+	
+	for dirname in dirnames:
+		if not dirname.startswith(basedir) and not basedir.startswith(dirname):
+			continue
+		uid  = opsiconfdUid
+		gid  = fileAdminGroupGid
+		fmod = 0660
+		dmod = 0770
+		
+		isProduct = False
+		if dirname not in (u'/tftpboot/linux', u'/var/log/opsi', u'/etc/opsi', u'/var/lib/opsi'):
+			isProduct = True
+		
+		if dirname in (u'/tftpboot/linux',):
+			uid = -1
+			fmod = 0664
+			dmod = 0775
+		if dirname in (u'/var/log/opsi', u'/etc/opsi'):
+			gid = adminGroupGid
+		if dirname in (u'/home/opsiproducts',):
+			uid = -1
+			dmod = 02770
+		
+		if os.path.isfile(path):
+			logger.debug(u"Setting rights on file '%s'" % path)
+			os.chown(path, uid, gid)
+			if isProduct:
+				os.chmod(path, (os.stat(path)[0] | 0660) & 0770)
+			else:
+				os.chmod(path, fmod)
+			continue
+		
+		startPath = dirname
+		if basedir.startswith(dirname):
+			startPath = basedir
+		
+		logger.notice(u"Setting rights on directory '%s'" % startPath)
+		os.chown(startPath, uid, gid)
+		os.chmod(startPath, dmod)
+		for f in findFiles(startPath, prefix = startPath, returnLinks = False):
+			os.chown(f, uid, gid)
+			if os.path.isdir(f):
+				logger.debug(u"Setting rights on directory '%s'" % f)
+				os.chmod(f, dmod)
+			elif os.path.isfile(f):
+				logger.debug(u"Setting rights on file '%s'" % f)
+				if isProduct:
+					os.chmod(f, (os.stat(f)[0] | 0660) & 0770)
+				else:
+					os.chmod(f, fmod)
 
 def update(fromVersion = None):
 	if os.path.exists(u'/var/lib/opsi/products'):
