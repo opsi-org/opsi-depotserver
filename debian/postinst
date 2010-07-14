@@ -38,7 +38,7 @@ case "$1" in
 		fi
 		if [ "$2" = "" ]; then
 			echo "/usr/bin/opsi-setup --init-current-config $arguments"
-			/usr/bin/opsi-config --init-current-config $arguments || true
+			/usr/bin/opsi-setup --init-current-config $arguments || true
 		fi
 		echo "/usr/bin/opsi-setup --set-rights /etc/opsi"
 		/usr/bin/opsi-setup --set-rights /etc/opsi || true
