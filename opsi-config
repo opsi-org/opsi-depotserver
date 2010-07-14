@@ -434,10 +434,9 @@ def setRights(path=u'/'):
 					logger.notice(u"Local depot directory '%s' found, setting rights" % depotDir)
 					
 					if depotDir.startswith(path):
-						os.chown(depotDir, opsiconfdUid, fileAdminGroupGid)
-						os.chmod(depotDir, 02770)
-					else:
 						depotDir = path
+					os.chown(depotDir, opsiconfdUid, fileAdminGroupGid)
+					os.chmod(depotDir, 02770)
 					for f in findFiles(depotDir, returnLinks = False):
 						f = os.path.join(depotDir, f)
 						os.chown(f, opsiconfdUid, fileAdminGroupGid)
