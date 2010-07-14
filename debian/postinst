@@ -39,14 +39,13 @@ case "$1" in
 		if [ "$2" = "" ]; then
 			echo "/usr/bin/opsi-setup --init-current-config $arguments"
 			/usr/bin/opsi-config --init-current-config $arguments || true
-		else
-			echo "/usr/bin/opsi-setup $arguments --set-rights /etc/opsi"
-			/usr/bin/opsi-setup $arguments --set-rights /etc/opsi || true
-			echo "/usr/bin/opsi-setup --set-rights /tftpboot"
-			/usr/bin/opsi-setup --set-rights /tftpboot || true
-			echo "/usr/bin/opsi-setup --set-rights /var/lib/opsi"
-			/usr/bin/opsi-setup --set-rights /var/lib/opsi || true
 		fi
+		echo "/usr/bin/opsi-setup --set-rights /etc/opsi"
+		/usr/bin/opsi-setup --set-rights /etc/opsi || true
+		echo "/usr/bin/opsi-setup --set-rights /tftpboot"
+		/usr/bin/opsi-setup --set-rights /tftpboot || true
+		echo "/usr/bin/opsi-setup --set-rights /var/lib/opsi"
+		/usr/bin/opsi-setup --set-rights /var/lib/opsi || true
 	;;
 	
 	abort-upgrade|abort-remove|abort-deconfigure)

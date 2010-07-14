@@ -2511,7 +2511,6 @@ def main():
 	elif (task == 'init-current-config'):
 		initializeBackends()
 		configureClientUser()
-		setRights()
 	
 	elif (task == 'configure-mysql'):
 		configureMySQLBackend()
@@ -2519,17 +2518,14 @@ def main():
 	elif (task == 'update-mysql'):
 		updateMySQLBackend()
 		update()
-		setRights()
 	
 	elif (task == 'update-ldap'):
 		updateLDAPBackend()
 		update()
-		setRights()
 	
 	elif (task == 'update-file'):
 		updateFileBackend()
 		update()
-		setRights()
 	
 	elif (task == 'register-depot'):
 		registerDepot()
