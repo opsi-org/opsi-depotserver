@@ -387,7 +387,6 @@ def setRights(path=u'/'):
 			isProduct = True
 		
 		if dirname in (u'/tftpboot/linux',):
-			uid = -1
 			fmod = 0664
 			dmod = 0775
 		if dirname in (u'/var/log/opsi', u'/etc/opsi'):
