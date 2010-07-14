@@ -5,11 +5,6 @@
 # =          All rights reserved.             =
 # = = = = = = = = = = = = = = = = = = = = = = =
 
-import os, sys, socket, re, shutil, getopt, pwd, grp, stat, codecs, time
-import MySQLdb, ldap
-
-
-
 from OPSI.Logger import *
 from OPSI.Types import *
 from OPSI.Object import *
@@ -23,6 +18,8 @@ from OPSI.Backend.LDAP import *
 from OPSI.Backend.File import *
 from OPSI.Backend.JSONRPC import *
 from OPSI.Backend.Backend import ExtendedConfigDataBackend
+
+import os, sys, socket, re, shutil, getopt, pwd, grp, stat, codecs, time, MySQLdb, ldap
 
 logger = Logger()
 logger.setConsoleLevel(LOG_NOTICE)
