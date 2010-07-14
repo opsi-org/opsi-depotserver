@@ -2200,6 +2200,9 @@ def registerDepot():
 	f.write(".*         : jsonrpc\n")
 	f.close()
 	logger.notice(u"Dispatch config '%s' updated" % dispatchConfigFile)
+	
+	setRights()
+	
 	logger.notice(u"Restarting services")
 	execute("/etc/init.d/opsiconfd restart")
 	execute("/etc/init.d/opsipxeconfd restart")
@@ -2530,7 +2533,7 @@ def main():
 	elif (task == 'register-depot'):
 		registerDepot()
 		configureClientUser()
-	
+		
 	elif (task == 'edit-config-defaults'):
 		editConfigDefaults()
 		
