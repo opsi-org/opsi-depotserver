@@ -2286,11 +2286,11 @@ def initializeBackends():
 		configs.append(
 			UnicodeConfig(
 				id             = u'clientconfig.configserver.url',
-				description    = u'URL of opsi config service to use',
+				description    = u'URL(s) of opsi config service(s) to use',
 				possibleValues = [ u'https://%s:4447' % configServer.getIpAddress() ],
 				defaultValues  = [ u'https://%s:4447' % configServer.getIpAddress() ],
 				editable       = True,
-				multiValue     = False
+				multiValue     = True
 			)
 		)
 	if not 'clientconfig.depot.id' in configIdents:
