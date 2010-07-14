@@ -12,7 +12,7 @@ install:
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-	install -m 0755 opsi-config debian/opsi-depotserver/usr/bin/opsi-config
+	install -m 0755 opsi-setup debian/opsi-depotserver/usr/bin/opsi-setup
 	dh_install
 	
 binary-indep: install
