@@ -1,6 +1,6 @@
 home/opsiproducts
 opt/pcbin/install
-usr/share/opsi
+usr/bin
 var/lib/opsi/repository
 var/log/opsi/clientconnect
 var/log/opsi/bootimage
