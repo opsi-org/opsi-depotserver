@@ -523,9 +523,10 @@ def updateLDAPBackend():
 			obj.addObjectClass('OpsiDepotserver')
 			obj.addObjectClass('OpsiConfigserver')
 			url = obj.getAttribute('opsiRepositoryLocalUrl', default = "", valuesAsList = False).replace(u'/products', u'/repository')
-			obj.setAttribute('opsiRepositoryLocalUrl',[url])
+			obj.setAttribute('opsiRepositoryLocalUrl', [url])
 			url = obj.getAttribute('opsiRepositoryRemoteUrl', default = "", valuesAsList = False).replace(u'/products', u'/repository')
-			obj.setAttribute('opsiRepositoryRemoteUrl',[url])
+			obj.setAttribute('opsiRepositoryRemoteUrl', [url])
+			obj.setAttribute('opsiIsMasterDepot', ['TRUE'])
 			obj.writeToDirectory(ldapSession)
 		except Exception, e:
 			obj.deleteFromDirectory(ldapSession)
@@ -542,9 +543,10 @@ def updateLDAPBackend():
 			obj.addObjectClass('OpsiHost')
 			obj.addObjectClass('OpsiDepotserver')
 			url = obj.getAttribute('opsiRepositoryLocalUrl', default = "", valuesAsList = False).replace(u'/products', u'/repository')
-			obj.setAttribute('opsiRepositoryLocalUrl',[url])
+			obj.setAttribute('opsiRepositoryLocalUrl', [url])
 			url = obj.getAttribute('opsiRepositoryRemoteUrl', default = "", valuesAsList = False).replace(u'/products', u'/repository')
-			obj.setAttribute('opsiRepositoryRemoteUrl',[url])
+			obj.setAttribute('opsiRepositoryRemoteUrl', [url])
+			obj.setAttribute('opsiIsMasterDepot', ['TRUE'])
 			obj.writeToDirectory(ldapSession)
 		except Exception, e:
 			obj.deleteFromDirectory(ldapSession)
@@ -1450,7 +1452,8 @@ def updateFileBackend():
 				'ipAddress':           None,
 				'inventoryNumber':     None,
 				'networkAddress':      None,
-				'maxBandwidth':        None
+				'maxBandwidth':        None,
+				'isMasterDepot':       True
 			}
 			
 			if depotId in opsiHostKeys.keys():
