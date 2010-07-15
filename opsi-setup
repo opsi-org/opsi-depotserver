@@ -2071,7 +2071,7 @@ def registerDepot():
 					inventoryNumber     = u'',
 					networkAddress      = u'%s/%s' % (getSysConfig()['subnet'], getSysConfig()['netmask']),
 					maxBandwidth        = 0,
-					isMasterDepot       = 1,
+					isMasterDepot       = True,
 					masterDepotId       = u'',
 			)
 		while True:
@@ -2276,7 +2276,9 @@ def initializeBackends():
 				ipAddress           = getSysConfig()['ipAddress'],
 				inventoryNumber     = u'',
 				networkAddress      = u'%s/%s' % (getSysConfig()['subnet'], getSysConfig()['netmask']),
-				maxBandwidth        = 0
+				maxBandwidth        = 0,
+				isMasterDepot       = True,
+				masterDepotId       = None,
 			)
 		else:
 			logger.notice(u"Converting depot server '%s' to config server" % getSysConfig()['fqdn'])
