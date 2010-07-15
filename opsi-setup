@@ -285,13 +285,7 @@ def configureDHCPD():
 def configureClientUser():
 	logger.notice(u"Configuring client user %s" % CLIENT_USER)
 	
-	clientUserUid  = pwd.getpwnam(CLIENT_USER)[2]
 	clientUserHome = pwd.getpwnam(CLIENT_USER)[5]
-	adminGroupGid  = grp.getgrnam(ADMIN_GROUP)[2]
-	
-	os.chown(clientUserHome, clientUserUid, adminGroupGid)
-	os.chmod(clientUserHome, 0750)
-	
 	sshDir = os.path.join(clientUserHome, '.ssh')
 	
 	if os.path.exists(sshDir):
@@ -301,24 +295,17 @@ def configureClientUser():
 	idRsaPub = os.path.join(sshDir, u'id_rsa.pub')
 	authorizedKeys = os.path.join(sshDir, u'authorized_keys')
 	if not os.path.exists(sshDir):
-		os.mkdir(sshDir, 0750)
-		os.chown(sshDir, clientUserUid, adminGroupGid)
+		os.mkdir(sshDir)
 	if not os.path.exists(idRsa):
 		logger.notice(u"   Creating RSA private key for user %s in '%s'" % (CLIENT_USER, idRsa))
 		execute(u"%s -N '' -t rsa -f %s" % ( which('ssh-keygen'), idRsa))
-		os.chmod(idRsa, 0640)
-		os.chown(idRsa, clientUserUid, adminGroupGid)
-		os.chmod(idRsaPub, 0644)
-		os.chown(idRsaPub, clientUserUid, adminGroupGid)
 	if not os.path.exists(authorizedKeys):
 		f = open(idRsaPub, 'r')
 		f2 = open(authorizedKeys, 'w')
 		f2.write(f.read())
 		f2.close()
 		f.close()
-		os.chmod(authorizedKeys, 0600)
-		os.chown(authorizedKeys, clientUserUid, adminGroupGid)
-	
+	setRights(sshDir)
 	
 	password = None
 	backend = None
@@ -347,6 +334,7 @@ def setRights(path=u'/'):
 	if not os.path.isdir(basedir):
 		basedir = os.path.dirname(basedir)
 	
+	clientUserUid     = pwd.getpwnam(CLIENT_USER)[2]
 	opsiconfdUid      = pwd.getpwnam(OPSICONFD_USER)[2]
 	adminGroupGid     = grp.getgrnam(ADMIN_GROUP)[2]
 	fileAdminGroupGid = grp.getgrnam(FILE_ADMIN_GROUP)[2]
@@ -422,7 +410,25 @@ def setRights(path=u'/'):
 					os.chmod(f, (os.stat(f)[0] | 0660) & 0770)
 				else:
 					os.chmod(f, fmod)
-
+		
+		if startPath.startswith(u'/var/lib/opsi'):
+			sshDir = u'/var/lib/opsi/.ssh'
+			if os.path.exists(sshDir):
+				os.chown(sshDir, clientUserUid, adminGroupGid)
+				os.chmod(sshDir, 0750)
+				idRsa = os.path.join(sshDir, u'id_rsa')
+				if os.path.exists(idRsa):
+					os.chmod(idRsa, 0640)
+					os.chown(idRsa, clientUserUid, adminGroupGid)
+				idRsaPub = os.path.join(sshDir, u'id_rsa.pub')
+				if os.path.exists(idRsaPub):
+					os.chmod(idRsaPub, 0644)
+					os.chown(idRsaPub, clientUserUid, adminGroupGid)
+				authorizedKeys = os.path.join(sshDir, u'authorized_keys')
+				if os.path.exists(authorizedKeys):
+					os.chmod(authorizedKeys, 0600)
+					os.chown(authorizedKeys, clientUserUid, adminGroupGid)
+			
 def update(fromVersion = None):
 	if os.path.exists(u'/var/lib/opsi/products'):
 		logger.notice(u"Found /var/lib/opsi/products, moving to /var/lib/opsi/repository")
@@ -2047,12 +2053,15 @@ def registerDepot():
 		if depots:
 			# Already exists
 			depot = depots[0]
+			if not depot.depotWebdavUrl: depot.depotWebdavUrl = u''
+			if not depot.masterDepotId:  depot.masterDepotId = u''
 		else:
 			depot = OpsiDepotserver(
 					id                  = getSysConfig()['fqdn'],
 					opsiHostKey         = None,
 					depotLocalUrl       = u'file:///opt/pcbin/install',
 					depotRemoteUrl      = u'smb://%s/opt_pcbin/install' % getSysConfig()['hostname'],
+					depotWebdavUrl      = u'webdavs://%s:4447/depot' % getSysConfig()['fqdn'],
 					repositoryLocalUrl  = u'file:///var/lib/opsi/repository',
 					repositoryRemoteUrl = u'webdavs://%s:4447/repository' % getSysConfig()['fqdn'],
 					description         = u'',
@@ -2061,7 +2070,9 @@ def registerDepot():
 					ipAddress           = getSysConfig()['ipAddress'] or u'',
 					inventoryNumber     = u'',
 					networkAddress      = u'%s/%s' % (getSysConfig()['subnet'], getSysConfig()['netmask']),
-					maxBandwidth        = 0
+					maxBandwidth        = 0,
+					isMasterDepot       = 1,
+					masterDepotId       = u'',
 			)
 		while True:
 			if (depot.maxBandwidth < 0):
@@ -2079,8 +2090,11 @@ def registerDepot():
 				{ "name": u"Maximum bandwidth (kbyte/s)", "value": depot.maxBandwidth        },
 				{ "name": u"Local depot url",             "value": depot.depotLocalUrl       },
 				{ "name": u"Remote depot url",            "value": depot.depotRemoteUrl      },
+				{ "name": u"Depot webdav url",            "value": depot.depotWebdavUrl      },
 				{ "name": u"Local repository url",        "value": depot.repositoryLocalUrl  },
 				{ "name": u"Remote repository url",       "value": depot.repositoryRemoteUrl },
+				{ "name": u"Is master depot",             "value": depot.isMasterDepot       },
+				{ "name": u"Master depot id",             "value": depot.masterDepotId       },
 				
 			]
 			values = ui.getValues(title = u'Depot server settings', width = 80, height = 16, entries = values)
@@ -2134,15 +2148,35 @@ def registerDepot():
 				if not error: error = u'Depot remote url invalid'
 			
 			try:
-				depot.setRepositoryLocalUrl( values[9].get('value') )
+				if values[9].get('value'):
+					depot.setDepotWebdavUrl( values[9].get('value') )
+				else:
+					depot.depotWebdavUrl = None
+			except Exception, e:
+				if not error: error = u'Depot webdav url invalid'
+			
+			try:
+				depot.setRepositoryLocalUrl( values[10].get('value') )
 			except Exception, e:
 				if not error: error = u'Repository local url invalid'
 			
 			try:
-				depot.setRepositoryRemoteUrl( values[10].get('value') )
+				depot.setRepositoryRemoteUrl( values[11].get('value') )
 			except Exception, e:
 				if not error: error = u'Repository remote url invalid'
 			
+			try:
+				depot.setIsMasterDepot( values[12].get('value') )
+			except Exception, e:
+				if not error: error = u'Invalid value for is master depot'
+			
+			try:
+				if values[13].get('value'):
+					depot.setMasterDepotId( values[13].get('value') )
+				else:
+					depot.masterDepotId = None
+			except Exception, e:
+				if not error: error = u'Master depot id invalid'
 			
 			if error:
 				ui.showError(title = u'Bad value', text = error, width = 50, height = 5)
@@ -2253,6 +2287,11 @@ def initializeBackends():
 	if not configServer:
 		raise Exception(u"Config server '%s' not found" % getSysConfig()['fqdn'])
 	configServer = configServer[0]
+	if getSysConfig()['ipAddress']:
+		configServer.setIpAddress(getSysConfig()['ipAddress'])
+	if getSysConfig()['hardwareAddress']:
+		configServer.setHardwareAddress(getSysConfig()['hardwareAddress'])
+	backend.host_updateObjects([configServer])
 	
 	configs = []
 	configIdents = backend.config_getIdents(returnType = 'unicode')
@@ -2261,8 +2300,8 @@ def initializeBackends():
 			UnicodeConfig(
 				id             = u'clientconfig.configserver.url',
 				description    = u'URL(s) of opsi config service(s) to use',
-				possibleValues = [ u'https://%s:4447' % configServer.getIpAddress() ],
-				defaultValues  = [ u'https://%s:4447' % configServer.getIpAddress() ],
+				possibleValues = [ u'https://%s:4447/rpc' % configServer.getIpAddress() ],
+				defaultValues  = [ u'https://%s:4447/rpc' % configServer.getIpAddress() ],
 				editable       = True,
 				multiValue     = True
 			)
