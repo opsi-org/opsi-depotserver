@@ -1911,7 +1911,7 @@ def configureMySQLBackend():
 				{ "name": u"Opsi database user",        "value": config['username'] },
 				{ "name": u"Opsi database password",    "value": config['password'], "password": True }
 			]
-			values = ui.getValues(title = u'MysQL config', width = 80, height = 15, entries = values)
+			values = ui.getValues(title = u'MysQL config', width = 70, height = 15, entries = values)
 			if values is None:
 				raise Exception(u"Canceled")
 			
@@ -1922,7 +1922,7 @@ def configureMySQLBackend():
 			config['username'] = values[4]["value"]
 			config['password'] = values[5]["value"]
 			
-			messageBox = ui.createMessageBox(width = 80, height = 20, title = u'MysQL config', text = u'')
+			messageBox = ui.createMessageBox(width = 70, height = 20, title = u'MysQL config', text = u'')
 			# Connect to database host
 			logger.notice(u"Connecting to host '%s' as user '%s'" % (config['address'], dbAdminUser))
 			messageBox.addText(u"Connecting to host '%s' as user '%s'\n" % (config['address'], dbAdminUser))
@@ -1933,7 +1933,7 @@ def configureMySQLBackend():
 				messageBox.hide()
 				logger.error(u"Failed to connect to host '%s' as user '%s': %s" % (config['address'], dbAdminUser, e))
 				ui.showError(text = u"Failed to connect to host '%s' as user '%s': %s" % (config['address'], dbAdminUser, e),
-						title = u'Failed to connect', width = 80, height = 6, seconds = 0)
+						title = u'Failed to connect', width = 70, height = 6, seconds = 0)
 				continue
 			logger.notice(u"Successfully connected to host '%s' as user '%s'" % (config['address'], dbAdminUser))
 			messageBox.addText(u"Successfully connected to host '%s' as user '%s'\n" % (config['address'], dbAdminUser))
@@ -1973,7 +1973,7 @@ def configureMySQLBackend():
 				messageBox.hide()
 				logger.error(u"Failed to connect to host '%s' as user '%s': %s" % (config['address'], config['username'], e))
 				ui.showError(text = u"Failed to connect to host '%s' as user '%s': %s" % (config['address'], config['username'], e),
-						title = u'Connection failed', width = 80, height = 6, seconds = 0)
+						title = u'Connection failed', width = 70, height = 6, seconds = 0)
 				continue
 			
 			logger.notice(u"Successfully connected to host '%s' as user '%s'" % (config['address'], config['username']))
@@ -2007,7 +2007,7 @@ def configureMySQLBackend():
 		time.sleep(2)
 		messageBox.hide()
 		
-		ui.showMessage(title = u'Success', text = u"MySQL Backend configuration done", width = 80, height = 4, seconds = 0)
+		ui.showMessage(title = u'Success', text = u"MySQL Backend configuration done", width = 70, height = 4, seconds = 0)
 		
 	finally:
 		ui.exit()
@@ -2042,7 +2042,7 @@ def registerDepot():
 				{ "name": u"Opsi admin user",           "value": adminUser },
 				{ "name": u"Opsi admin password",       "value": adminPass, "password": True }
 			]
-			values = ui.getValues(title = u'Config server connection', width = 80, height = 10, entries = values)
+			values = ui.getValues(title = u'Config server connection', width = 70, height = 10, entries = values)
 			if values is None:
 				raise Exception(u"Canceled")
 			
@@ -2050,7 +2050,7 @@ def registerDepot():
 			adminUser          = values[1]["value"]
 			adminPass          = values[2]["value"]
 			
-			messageBox = ui.createMessageBox(width = 80, height = 20, title = u'Register depot', text = u'')
+			messageBox = ui.createMessageBox(width = 70, height = 20, title = u'Register depot', text = u'')
 			# Connect to config server
 			logger.notice(u"Connecting to config server '%s' as user '%s'" % (config['address'], adminUser))
 			messageBox.addText(u"Connecting to config server '%s' as user '%s'\n" % (config['address'], adminUser))
@@ -2061,7 +2061,7 @@ def registerDepot():
 				messageBox.hide()
 				logger.error(u"Failed to connect to config server '%s' as user '%s': %s" % (config['address'], adminUser, e))
 				ui.showError(text = u"Failed to connect to config server '%s' as user '%s': %s" % (config['address'], adminUser, e),
-						title = u'Failed to connect', width = 80, height = 6, seconds = 0)
+						title = u'Failed to connect', width = 70, height = 6, seconds = 0)
 				continue
 			logger.notice(u"Successfully connected to config server '%s' as user '%s'" % (config['address'], adminUser))
 			messageBox.addText(u"Successfully connected to config server '%s' as user '%s'\n" % (config['address'], adminUser))
@@ -2115,7 +2115,7 @@ def registerDepot():
 				{ "name": u"Master depot id",             "value": depot.masterDepotId       },
 				
 			]
-			values = ui.getValues(title = u'Depot server settings', width = 80, height = 16, entries = values)
+			values = ui.getValues(title = u'Depot server settings', width = 70, height = 16, entries = values)
 			if values is None:
 				raise Exception(u"Canceled")
 			
