@@ -612,6 +612,8 @@ def updateLDAPBackend():
 						configId = u'clientconfig.depot.drive'
 					elif (key == 'opsiNextBootServiceURL'):
 						configId = u'clientconfig.configserver.url'
+						if (value.find('/rpc') == -1):
+							value = value + '/rpc'
 						multiValue = True
 					elif (key == 'opsiWinDomain'):
 						configId = u'clientconfig.windows.domain'
@@ -1626,6 +1628,8 @@ def updateFileBackend():
 							configId = u'clientconfig.depot.drive'
 						elif (option.lower() == u'nextbootserviceurl'):
 							configId = u'clientconfig.configserver.url'
+							if (value.find('/rpc') == -1):
+								value = value + '/rpc'
 							multiValue = True
 						elif (option.lower() == u'windomain'):
 							configId = u'clientconfig.windows.domain'
@@ -1769,6 +1773,8 @@ def updateFileBackend():
 										configId = u'clientconfig.depot.drive'
 									elif (option.lower() == u'nextbootserviceurl'):
 										configId = u'clientconfig.configserver.url'
+										if (value.find('/rpc') == -1):
+											value = value + '/rpc'
 									elif (option.lower() == u'windomain'):
 										configId = u'clientconfig.windows.domain'
 							except Exception, e:
