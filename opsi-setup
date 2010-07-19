@@ -604,6 +604,7 @@ def updateLDAPBackend():
 					if not value:
 						continue
 					configId = None
+					multiValue = False
 					if   (key == 'opsiDepotserverReference'):
 						configId = u'clientconfig.depot.id'
 						value = forceHostId(value.split(',')[0].split('=')[1])
@@ -611,6 +612,7 @@ def updateLDAPBackend():
 						configId = u'clientconfig.depot.drive'
 					elif (key == 'opsiNextBootServiceURL'):
 						configId = u'clientconfig.configserver.url'
+						multiValue = True
 					elif (key == 'opsiWinDomain'):
 						configId = u'clientconfig.windows.domain'
 					
@@ -620,9 +622,9 @@ def updateLDAPBackend():
 					logger.info(u"Converting network config %s" % key)
 					
 					if   hostId in serverIds:
-						backend.config_createObjects( UnicodeConfig(id = configId, defaultValues = [ value ]) )
+						backend.config_createObjects( UnicodeConfig(id = configId, defaultValues = [ value ], multiValue = multiValue) )
 					elif hostId in clientIds:
-						backend.config_createObjects( UnicodeConfig(id = configId) )
+						backend.config_createObjects( UnicodeConfig(id = configId, multiValue = multiValue) )
 						backend.configState_createObjects( ConfigState(configId = configId, objectId = hostId, values = [ value ] ) )
 				except Exception, e:
 					logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
@@ -1615,6 +1617,7 @@ def updateFileBackend():
 				configId = configId = option.lower()
 				value = ini.get(section, option)
 				
+				multiValue = False
 				try:
 					if (section.lower() == u'networkconfig'):
 						if (option.lower() == u'depotid'):
@@ -1623,13 +1626,14 @@ def updateFileBackend():
 							configId = u'clientconfig.depot.drive'
 						elif (option.lower() == u'nextbootserviceurl'):
 							configId = u'clientconfig.configserver.url'
+							multiValue = True
 						elif (option.lower() == u'windomain'):
 							configId = u'clientconfig.windows.domain'
 				except Exception, e:
 					logger.error(u"Error in option '%s' in section '%s': '%s'" % (option, section, e))
 					continue
 				
-				updatedConfigs.append(UnicodeConfig(id = configId, defaultValues = [value]))
+				updatedConfigs.append(UnicodeConfig(id = configId, defaultValues = [value], multiValue = multiValue))
 	except Exception, e:
 		logger.error(u"Failed to update config '%s': '%s'" % (os.path.join(backupDir, u'global.ini'), e))
 	
