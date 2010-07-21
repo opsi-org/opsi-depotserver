@@ -2355,6 +2355,14 @@ def initializeBackends():
 				multiValue     = False
 			)
 		)
+	if not 'clientconfig.depot.dynamic' in configIdents:
+		configs.append(
+			BoolConfig(
+				id             = u'clientconfig.depot.dynamic',
+				description    = u'Use dynamic depot selection',
+				defaultValues  = [ False ]
+			)
+		)
 	if not 'clientconfig.depot.drive' in configIdents:
 		configs.append(
 			UnicodeConfig(
