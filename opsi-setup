@@ -37,6 +37,9 @@ ADMIN_GROUP      = u'opsiadmin'
 CLIENT_USER      = u'pcpatch'
 FILE_ADMIN_GROUP = u'pcpatch'
 
+if os.path.exists(u'/etc/init.d/smbd'):
+	SMB_INIT = u'/etc/init.d/smbd'
+
 sysConfig = {}
 
 def getSysConfig():
