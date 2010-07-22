@@ -2506,6 +2506,68 @@ def editConfigDefaults():
 	finally:
 		ui.exit()
 		logger.setConsoleLevel(consoleLevel)
+
+def cleanupBackend():
+	from OPSI.Backend.BackendManager import BackendManager
+	backend = BackendManager(
+		dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
+		backendConfigDir   = u'/etc/opsi/backends',
+		extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
+		depotbackend       = False
+	)
+	
+	logger.notice(u"Cleaning up products")
+	productIds = []
+	productIdents = []
+	for productOnDepot in backend.productOnDepot_getObjects():
+		productIdent = u"%s;%s;%s" % (productOnDepot.productId, productOnDepot.productVersion, productOnDepot.packageVersion)
+		if not productIdent in productIdents:
+			productIdents.append(productIdent)
+	deleteProducts = []
+	for product in backend.product_getObjects():
+		if not product.getIdent(returnType = 'unicode') in productIdents:
+			logger.info(u"Marking unreferenced product %s for deletion" % product)
+			deleteProducts.append(product)
+		else:
+			if not product.id in productIds:
+				productIds.append(product.id)
+	if deleteProducts:
+		backend.product_deleteObjects(deleteProducts)
+	
+	logger.notice(u"Cleaning up product properties")
+	productPropertyIdents = []
+	deleteProductProperties = []
+	for productProperty in backend.productProperty_getObjects():
+		if not productProperty.productId in productIds:
+			logger.info(u"Marking productProperty %s of non existent product '%s' for deletion" % (productProperty, productProperty.productId))
+			deleteProductProperties.append(productProperty)
+		else:
+			productPropertyIdent = u'%s;%s' % (productProperty.productId, productProperty.propertyId)
+			if not productPropertyIdent in productPropertyIdents:
+				productPropertyIdents.append(productPropertyIdent)
+	if deleteProductProperties:
+		backend.productProperty_deleteObjects(deleteProductProperties)
+	
+	logger.notice(u"Cleaning up product property states")
+	deleteProductPropertyStates = []
+	for productPropertyState in backend.productPropertyState_getObjects():
+		productPropertyIdent = u'%s;%s' % (productPropertyState.productId, productPropertyState.propertyId)
+		if not productPropertyIdent in productPropertyIdents:
+			logger.info(u"Marking productPropertyState %s of non existent productProperty '%s' for deletion" % (productPropertyState, productPropertyIdent))
+			deleteProductPropertyStates.append(productPropertyState)
+	if deleteProductPropertyStates:
+		backend.productPropertyState_deleteObjects(deleteProductPropertyStates)
+	
+	logger.notice(u"Cleaning up config states")
+	deleteConfigStates = []
+	configIds = backend.config_getIdents()
+	for configState in backend.configState_getObjects():
+		if not configState.configId in configIds:
+			logger.info(u"Marking configState %s of non existent config '%s' for deletion" % (configState, configState.configId))
+			deleteConfigStates.append(configState)
+	if deleteConfigStates:
+		backend.configState_deleteObjects(deleteConfigStates)
+	
 	
 def usage():
 	print u"\nUsage: %s [options]" % os.path.basename(sys.argv[0])
@@ -2524,6 +2586,7 @@ def usage():
 	print u"   --update-file              update file backend"
 	print u"   --configure-mysql          configure mysql backend"
 	print u"   --edit-config-defaults     edit global config defaults"
+	print u"   --cleanup-backend          cleanup backend"
 	print u"   --auto-configure-samba     patch smb.conf"
 	print u"   --auto-configure-dhcpd     patch dhcpd.conf"
 	print u""
@@ -2535,7 +2598,7 @@ def main():
 	try:
 		(opts, args) = getopt.getopt(sys.argv[1:], "hl:",
 			['help', 'log-file=', 'init-current-config', 'set-rights', 'auto-configure-samba', 'auto-configure-dhcpd',
-			 'register-depot', 'configure-mysql', 'update-mysql', 'update-ldap', 'update-file', 'edit-config-defaults'])
+			 'register-depot', 'configure-mysql', 'update-mysql', 'update-ldap', 'update-file', 'edit-config-defaults', 'cleanup-backend'])
 			#, 'update-from='])
 		
 	except Exception, e:
@@ -2572,6 +2635,8 @@ def main():
 			task = 'update-file'
 		elif (opt == "--edit-config-defaults"):
 			task = 'edit-config-defaults'
+		elif (opt == "--cleanup-backend"):
+			task = 'cleanup-backend'
 		#elif (opt == "--update-from"):
 		#	updateFrom = arg
 		elif (opt == "--auto-configure-samba"):
@@ -2621,7 +2686,10 @@ def main():
 		
 	elif (task == 'edit-config-defaults'):
 		editConfigDefaults()
-		
+	
+	elif (task == 'cleanup-backend'):
+		cleanupBackend()
+	
 	elif not autoConfigureSamba and not autoConfigureDhcpd:
 		usage()
 		sys.exit(1)
