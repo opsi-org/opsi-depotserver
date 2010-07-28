@@ -360,6 +360,7 @@ def setRights(path=u'/'):
 	adminGroupGid     = grp.getgrnam(ADMIN_GROUP)[2]
 	fileAdminGroupGid = grp.getgrnam(FILE_ADMIN_GROUP)[2]
 	
+	depotDir = ''
 	dirnames = [u'/tftpboot/linux', u'/home/opsiproducts', u'/var/log/opsi', u'/etc/opsi', u'/var/lib/opsi']
 	if not path.startswith('/etc') and not path.startswith('/tftpboot'):
 		try:
@@ -402,6 +403,8 @@ def setRights(path=u'/'):
 			gid = adminGroupGid
 		if dirname in (u'/home/opsiproducts',):
 			uid = -1
+			dmod = 02770
+		if dirname in (depotDir,):
 			dmod = 02770
 		
 		if os.path.isfile(path):
