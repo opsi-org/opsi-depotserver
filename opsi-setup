@@ -2519,6 +2519,20 @@ def cleanupBackend():
 		depotbackend       = False
 	)
 	
+	logger.notice(u"Cleaning up groups")
+	updatedGroups = []
+	groupIds = []
+	groups = backend.group_getObjects(type = 'HostGroup')
+	for group in groups:
+		groupIds.append(group.id)
+	for group in groups:
+		if group.getParentGroupId() and group.getParentGroupId() not in groupIds:
+			logger.info(u"Removing parent group id '%s' from group '%s' because parent group does not exist" % (group.parentGroupId, group.id))
+			group.parentGroupId = None
+			updatedGroups.append(group)
+	if updatedGroups:
+		backend.group_createObjects(updatedGroups)
+	
 	logger.notice(u"Cleaning up products")
 	productIds = []
 	productIdents = []
