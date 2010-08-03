@@ -1541,7 +1541,7 @@ def updateFileBackend():
 				
 				
 				
-				logger.notice(u"Updating ProductProperties in '%s'" % (oldProduct.getId()))
+				logger.info(u"Updating ProductProperties in '%s'" % (oldProduct.getId()))
 				for pp in packageControlFile.getProductProperties():
 					try:
 						pp.setPropertyId(pp.getPropertyId().replace(u' ', u'_'))
@@ -1569,7 +1569,7 @@ def updateFileBackend():
 				for pd in packageControlFile.getProductDependencies():
 					updatedProductDependencies.append(pd)
 				
-				logger.notice(u"Updating ProductOnDepot in '%s'" % (depotId))
+				logger.info(u"Updating ProductOnDepot in '%s'" % (depotId))
 				
 				locked = None
 				if (len(lockedList) > 0):
