@@ -1669,6 +1669,8 @@ def updateFileBackend():
 				logger.error(u"Invalid client id '%s': %s" % (filename[:-4], e))
 				continue
 			
+			logger.info(u"Updating client '%s'" % clientId)
+			
 			oldClientDict = {
 				'id':              clientId,
 				'opsiHostKey':     None,
