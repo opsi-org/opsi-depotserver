@@ -1449,6 +1449,8 @@ def updateFileBackend():
 				logger.error(u"Invalid depot: '%s': %s" % (oldPath, e))
 				continue
 			
+			logger.notice(u"Updating depot '%s'" % depotId)
+			
 			oldDepotDict = {
 				'id':                  depotId,
 				'opsiHostKey':         None,
@@ -1669,7 +1671,7 @@ def updateFileBackend():
 				logger.error(u"Invalid client id '%s': %s" % (filename[:-4], e))
 				continue
 			
-			logger.info(u"Updating client '%s'" % clientId)
+			logger.notice(u"Updating client '%s'" % clientId)
 			
 			oldClientDict = {
 				'id':              clientId,
