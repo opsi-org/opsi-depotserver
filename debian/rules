@@ -1,6 +1,12 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 
+DIST_DEPENDS ?= ""
+
+ifeq (Ubuntu,$(shell lsb_release -is))
+	DIST_DEPENDS = samba-common-bin
+endif
+
 clean:
 	dh_testdir
 	dh_testroot
@@ -21,10 +27,12 @@ binary-indep: install
 	dh_installdebconf
 	dh_installchangelogs -i
 	dh_shlibdeps
+	echo "depend:opsi=$(DIST_DEPENDS)" >> debian/opsi-depotserver.substvars
 	dh_md5sums
 	dh_gencontrol
 	dh_installdeb
 	dh_builddeb
+
 
 binary: binary-indep
 build:
