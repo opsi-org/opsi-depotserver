@@ -1569,7 +1569,7 @@ def updateFileBackend():
 				for pd in packageControlFile.getProductDependencies():
 					updatedProductDependencies.append(pd)
 				
-				logger.info(u"Updating ProductOnDepot in '%s'" % (depotId))
+				logger.info(u"Updating ProductOnDepot on '%s'" % (depotId))
 				
 				locked = None
 				if (len(lockedList) > 0):
@@ -1590,7 +1590,7 @@ def updateFileBackend():
 						})
 				])
 			
-			logger.notice(u"Updating ProductDependencies in '%s'" % (depotId))
+			logger.notice(u"Updating ProductDependencies on '%s'" % (depotId))
 			for pd in updatedProductDependencies:
 				try:
 					backend.productDependency_createObjects([pd])
