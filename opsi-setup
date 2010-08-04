@@ -1762,6 +1762,8 @@ def updateFileBackend():
 										poc['packageVersion']   = ini.get(productId + u'-state', 'packageversion')
 									if ini.has_option(productId + u'-state', 'laststatechange'):
 										poc['modificationTime'] = ini.get(productId + u'-state', 'laststatechange')
+								elif (poc['installationStatus'] == 'not_installed') and (poc['actionRequest'] == 'none'):
+									continue
 								
 								updatedProductOnClients.append(ProductOnClient.fromHash(poc))
 							except Exception, e:
