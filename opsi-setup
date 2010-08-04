@@ -1755,6 +1755,9 @@ def updateFileBackend():
 								if not poc['actionRequest'] in (u'setup', u'uninstall', u'update', u'always', u'once', u'custom', u'none'):
 									poc['actionRequest'] = u'none'
 								
+								if (poc['installationStatus'] == 'not_installed') and (poc['actionRequest'] == 'none'):
+									continue
+								
 								if ini.has_section(productId + u'-state'):
 									if (ini.get(productId + u'-state', 'productversion') != u''):
 										poc['productVersion']   = ini.get(productId + u'-state', 'productversion')
@@ -1762,8 +1765,6 @@ def updateFileBackend():
 										poc['packageVersion']   = ini.get(productId + u'-state', 'packageversion')
 									if ini.has_option(productId + u'-state', 'laststatechange'):
 										poc['modificationTime'] = ini.get(productId + u'-state', 'laststatechange')
-								elif (poc['installationStatus'] == 'not_installed') and (poc['actionRequest'] == 'none'):
-									continue
 								
 								updatedProductOnClients.append(ProductOnClient.fromHash(poc))
 							except Exception, e:
