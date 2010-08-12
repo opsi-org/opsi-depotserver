@@ -37,15 +37,13 @@ case "$1" in
 			arguments="${arguments} --auto-configure-samba"
 		fi
 		if [ "$2" = "" ]; then
-			echo "/usr/bin/opsi-setup --init-current-config $arguments"
 			/usr/bin/opsi-setup --init-current-config $arguments || true
+			/usr/bin/opsi-setup --set-rights || true
+		else
+			/usr/bin/opsi-setup --set-rights /etc/opsi || true
+			/usr/bin/opsi-setup --set-rights /tftpboot || true
+			/usr/bin/opsi-setup --set-rights /var/lib/opsi || true
 		fi
-		echo "/usr/bin/opsi-setup --set-rights /etc/opsi"
-		/usr/bin/opsi-setup --set-rights /etc/opsi || true
-		echo "/usr/bin/opsi-setup --set-rights /tftpboot"
-		/usr/bin/opsi-setup --set-rights /tftpboot || true
-		echo "/usr/bin/opsi-setup --set-rights /var/lib/opsi"
-		/usr/bin/opsi-setup --set-rights /var/lib/opsi || true
 	;;
 	
 	abort-upgrade|abort-remove|abort-deconfigure)
