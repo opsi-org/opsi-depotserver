@@ -8,6 +8,10 @@
 
 Name:           opsi-depotserver
 Requires:       python-opsi opsiconfd opsipxeconfd opsi-utils opsi-linux-bootimage samba dhcp-server sudo wget
+%if 0%{?suse_version}
+BuildRequires:  pwdutils
+Requires:       pwdutils
+%endif
 Url:            http://www.opsi.org
 License:        GPL v2 or later
 Group:          Productivity/Networking/Opsi
