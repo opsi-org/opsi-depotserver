@@ -117,13 +117,13 @@ fi
 
 # directories
 %if 0%{?sles_version}
-mkdir -p /var/lib/opsi/workbench
-mkdir -p /var/lib/opsi/depot
+%dir /var/lib/opsi/workbench
+%dir /var/lib/opsi/depot
 %else
-mkdir -p /home/opsiproducts
-mkdir -p /opt/pcbin/install
+%dir /home/opsiproducts
+%dir /opt/pcbin/install
 %endif
-%dir /usr/bin
+%dir /var/lib/opsi
 %dir /var/lib/opsi/repository
 %dir /var/log/opsi
 %dir /var/log/opsi/clientconnect
