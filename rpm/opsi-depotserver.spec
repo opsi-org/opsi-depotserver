@@ -7,10 +7,13 @@
 #
 
 Name:           opsi-depotserver
-Requires:       python-opsi opsiconfd opsipxeconfd opsi-utils opsi-linux-bootimage samba dhcp-server sudo wget
+Requires:       python-opsi opsiconfd opsipxeconfd opsi-utils opsi-linux-bootimage samba sudo wget
 %if 0%{?suse_version}
 BuildRequires:  pwdutils
-Requires:       pwdutils
+Requires:       pwdutils dhcp-server
+%endif
+%if 0%{?rhel_version} || 0%{?centos_version}
+Requires:       dhcp
 %endif
 Url:            http://www.opsi.org
 License:        GPL v2 or later
@@ -42,8 +45,13 @@ opsi depotserver
 
 # ===[ install ]====================================
 %install
+%if 0%{?sles_version}
+mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/workbench
+mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/depot
+%else
 mkdir -p $RPM_BUILD_ROOT/home/opsiproducts
 mkdir -p $RPM_BUILD_ROOT/opt/pcbin/install
+%endif
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/repository
 mkdir -p $RPM_BUILD_ROOT/var/log/opsi/clientconnect
 mkdir -p $RPM_BUILD_ROOT/var/log/opsi/bootimage
@@ -108,8 +116,13 @@ fi
 /usr/bin/opsi-setup
 
 # directories
-%dir /home/opsiproducts
-%dir /opt/pcbin/install
+%if 0%{?sles_version}
+mkdir -p /var/lib/opsi/workbench
+mkdir -p /var/lib/opsi/depot
+%else
+mkdir -p /home/opsiproducts
+mkdir -p /opt/pcbin/install
+%endif
 %dir /usr/bin
 %dir /var/lib/opsi/repository
 %dir /var/log/opsi

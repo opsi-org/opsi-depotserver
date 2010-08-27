@@ -47,6 +47,14 @@ def getSysConfig():
 	if sysConfig:
 		return sysConfig
 	
+	sysConfig['distribution'] = u'unknown'
+	try:
+		f = os.popen('lsb_release -i')
+		sysConfig['distribution'] = f.read().split(':')[1].strip()
+		f.close()
+	except Exception, e:
+		logger.error(u"Failed to get distribution: %s" % e)
+		
 	logger.notice(u"Getting current system config")
 	try:
 		sysConfig['fqdn'] = forceHostId(socket.getfqdn())
@@ -95,14 +103,15 @@ def getSysConfig():
 		f.close()
 	
 	logger.notice(u"System information:")
-	logger.notice(u"   ip address : %s" % sysConfig['ipAddress'])
-	logger.notice(u"   netmask    : %s" % sysConfig['netmask'])
-	logger.notice(u"   subnet     : %s" % sysConfig['subnet'])
-	logger.notice(u"   broadcast  : %s" % sysConfig['broadcast'])
-	logger.notice(u"   fqdn       : %s" % sysConfig['fqdn'])
-	logger.notice(u"   hostname   : %s" % sysConfig['hostname'])
-	logger.notice(u"   domain     : %s" % sysConfig['domain'])
-	logger.notice(u"   win domain : %s" % sysConfig['winDomain'])
+	logger.notice(u"   distribution : %s" % sysConfig['distribution'])
+	logger.notice(u"   ip address   : %s" % sysConfig['ipAddress'])
+	logger.notice(u"   netmask      : %s" % sysConfig['netmask'])
+	logger.notice(u"   subnet       : %s" % sysConfig['subnet'])
+	logger.notice(u"   broadcast    : %s" % sysConfig['broadcast'])
+	logger.notice(u"   fqdn         : %s" % sysConfig['fqdn'])
+	logger.notice(u"   hostname     : %s" % sysConfig['hostname'])
+	logger.notice(u"   domain       : %s" % sysConfig['domain'])
+	logger.notice(u"   win domain   : %s" % sysConfig['winDomain'])
 	
 	return sysConfig
 
@@ -135,10 +144,16 @@ def configureSamba():
 	if not depotShareFound:
 		logger.notice(u"   Adding share [opt_pcbin]")
 		confChanged = True
-		newlines.append(u"[opt_pcbin]\n")
+		if (getSysConfig()['distribution'].lower().find('sles') != -1):
+			newlines.append(u"[opsi_depot]\n")
+		else:
+			newlines.append(u"[opt_pcbin]\n")
 		newlines.append(u"   available = yes\n")
 		newlines.append(u"   comment = opsi depot share\n")
-		newlines.append(u"   path = /opt/pcbin\n")
+		if (getSysConfig()['distribution'].lower().find('sles') != -1):
+			newlines.append(u"   path = /var/lib/opsi/depot\n")
+		else:
+			newlines.append(u"   path = /opt/pcbin\n")
 		newlines.append(u"   oplocks = no\n")
 		newlines.append(u"   level2 oplocks = no\n")
 		newlines.append(u"   writeable = yes\n")
@@ -162,7 +177,10 @@ def configureSamba():
 		newlines.append(u"[opsi_workbench]\n")
 		newlines.append(u"   available = yes\n")
 		newlines.append(u"   comment = opsi workbench\n")
-		newlines.append(u"   path = /home/opsiproducts\n")
+		if (getSysConfig()['distribution'].lower().find('sles') != -1):
+			newlines.append(u"   path = /var/lib/opsi/workbench\n")
+		else:
+			newlines.append(u"   path = /home/opsiproducts\n")
 		newlines.append(u"   writeable = yes\n")
 		newlines.append(u"   invalid users = root\n")
 		newlines.append(u"   create mask = 0660\n")
@@ -362,6 +380,8 @@ def setRights(path=u'/'):
 	
 	depotDir = ''
 	dirnames = [u'/tftpboot/linux', u'/home/opsiproducts', u'/var/log/opsi', u'/etc/opsi', u'/var/lib/opsi']
+	if (getSysConfig()['distribution'].lower().find('sles') != -1):
+		dirnames = [u'/var/log/opsi', u'/etc/opsi', u'/var/lib/opsi', u'/var/lib/opsi/workbench']
 	if not path.startswith('/etc') and not path.startswith('/tftpboot'):
 		try:
 			from OPSI.Backend.BackendManager import BackendManager
@@ -401,7 +421,7 @@ def setRights(path=u'/'):
 			dmod = 0775
 		if dirname in (u'/var/log/opsi', u'/etc/opsi'):
 			gid = adminGroupGid
-		if dirname in (u'/home/opsiproducts',):
+		if dirname in (u'/home/opsiproducts', '/var/lib/opsi/workbench'):
 			uid = -1
 			dmod = 02770
 		if dirname in (depotDir,):
@@ -2102,11 +2122,17 @@ def registerDepot():
 			if not depot.depotWebdavUrl: depot.depotWebdavUrl = u''
 			if not depot.masterDepotId:  depot.masterDepotId = u''
 		else:
+			depotLocalUrl  = u'file:///opt/pcbin/install'
+			depotRemoteUrl = u'smb://%s/opt_pcbin/install' % getSysConfig()['hostname']
+			if (getSysConfig()['distribution'].lower().find('sles') != -1):
+				depotLocalUrl = u'file:///var/lib/opsi/depot'
+				depotRemoteUrl = u'smb://%s/opsi_depot' % getSysConfig()['hostname']
+			
 			depot = OpsiDepotserver(
 					id                  = getSysConfig()['fqdn'],
 					opsiHostKey         = None,
-					depotLocalUrl       = u'file:///opt/pcbin/install',
-					depotRemoteUrl      = u'smb://%s/opt_pcbin/install' % getSysConfig()['hostname'],
+					depotLocalUrl       = depotLocalUrl,
+					depotRemoteUrl      = depotRemoteUrl,
 					depotWebdavUrl      = u'webdavs://%s:4447/depot' % getSysConfig()['fqdn'],
 					repositoryLocalUrl  = u'file:///var/lib/opsi/repository',
 					repositoryRemoteUrl = u'webdavs://%s:4447/repository' % getSysConfig()['fqdn'],
@@ -2309,11 +2335,17 @@ def initializeBackends():
 		depot = backend.host_getObjects(type = 'OpsiDepotserver', id = getSysConfig()['fqdn'])
 		if not depot:
 			logger.notice(u"Creating config server '%s'" % getSysConfig()['fqdn'])
+			depotLocalUrl  = u'file:///opt/pcbin/install'
+			depotRemoteUrl = u'smb://%s/opt_pcbin/install' % getSysConfig()['hostname']
+			if (getSysConfig()['distribution'].lower().find('sles') != -1):
+				depotLocalUrl = u'file:///var/lib/opsi/depot'
+				depotRemoteUrl = u'smb://%s/opsi_depot' % getSysConfig()['hostname']
+			
 			configServer = backend.host_createOpsiConfigserver(
 				id                  = getSysConfig()['fqdn'],
 				opsiHostKey         = None,
-				depotLocalUrl       = u'file:///opt/pcbin/install',
-				depotRemoteUrl      = u'smb://%s/opt_pcbin/install' % getSysConfig()['hostname'],
+				depotLocalUrl       = depotLocalUrl,
+				depotRemoteUrl      = depotRemoteUrl,
 				repositoryLocalUrl  = u'file:///var/lib/opsi/repository',
 				repositoryRemoteUrl = u'webdavs://%s:4447/repository' % getSysConfig()['fqdn'],
 				description         = u'',
