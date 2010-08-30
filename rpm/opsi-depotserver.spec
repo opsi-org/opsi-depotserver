@@ -86,11 +86,9 @@ fi
 
 # ===[ post ]=======================================
 %post
-arguments=""
-#arguments="--auto-configure-dhcpd --auto-configure-samba"
 if [ $1 -eq 1 ]; then
 	# Install
-	/usr/bin/opsi-setup --init-current-config $arguments || true
+	/usr/bin/opsi-setup --init-current-config --auto-configure-dhcpd --auto-configure-samba || true
 	/usr/bin/opsi-setup --set-rights || true
 else
 	# Upgrade
