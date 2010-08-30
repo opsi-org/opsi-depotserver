@@ -23,9 +23,11 @@ Version:        3.99.0
 Release:        1
 Summary:        opsi depotserver
 %define tarname opsi-depotserver
-Source:         %{tarname}-%{version}.tar.bz2
+Source:         opsi-depotserver_3.99.0-1.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
+
+%define toplevel_dir %{name}-%{version}
 
 # ===[ description ]================================
 %description
