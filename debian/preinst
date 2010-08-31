@@ -15,30 +15,21 @@
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
-
-VERBOSE=true
-
 case "$1" in
 	install|upgrade)
-		
-		$VERBOSE && echo -e "\nAdding system users and groups..."
-		
 		# add system group pcpatch and users pcpatch
-		$VERBOSE && echo "  -> Adding group pcpatch"
 		if [ -z "`getent group pcpatch`" ]; then
+			echo "  -> Adding group pcpatch"
 			groupadd -g 992 pcpatch
 		fi
-			
-		$VERBOSE && echo "  -> Adding user pcpatch"
 		if [ -z "`getent passwd pcpatch`" ]; then
+			echo "  -> Adding user pcpatch"
 			useradd -u 992 -g 992 -d /var/lib/opsi -s /bin/bash pcpatch
 		fi
-		
-		$VERBOSE && echo "  -> Adding user opsiconfd"
 		if [ -z "`getent passwd opsiconfd`" ]; then
+			echo "  -> Adding user opsiconfd"
 			useradd -u 993 -g 992 -d /var/lib/opsi -s /bin/bash opsiconfd
 		fi
-		
 	;;
 	
 	abort-upgrade)
