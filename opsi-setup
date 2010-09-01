@@ -205,7 +205,10 @@ def configureSamba():
 		f.close()
 		
 		logger.notice(u"   Reloading samba")
-		execute(u'%s reload' % SMB_INIT)
+		try:
+			execute(u'%s reload' % SMB_INIT)
+		except Exception, e:
+			logger.warning(e)
 		
 	
 def configureDHCPD():
@@ -267,13 +270,16 @@ def configureDHCPD():
 				logger.info(u"         filename already set")
 			else:
 				confChanged = True
+				filename = 'linux/pxelinux.0'
+				if (getSysConfig()['distributor'].lower().find('sles') != -1):
+					filename = 'opsi/pxelinux.0'
 				group.addComponent(
 					DHCPDConf_Parameter(
 						startLine 	= -1,
 						parentBlock 	= group,
 						key 		= 'filename',
-						value 		= 'linux/pxelinux.0' ) )
-				logger.notice(u"         filename set to linux/pxelinux.0")
+						value 		= filename ) )
+				logger.notice(u"         filename set to %s" % filename)
 	
 	if confChanged:
 		logger.notice(u"   Creating backup of %s" % DHCPD_CONF)
@@ -283,7 +289,10 @@ def configureDHCPD():
 		dhcpdConf.generate()
 		
 		logger.notice(u"   Restarting dhcpd")
-		execute(u'%s restart' % DHCPD_INIT)
+		try:
+			execute(u'%s restart' % DHCPD_INIT)
+		except Exception, e:
+			logger.warning(e)
 	
 	logger.notice(u"Configuring sudoers")
 	
@@ -366,7 +375,7 @@ def configureClientUser():
 		if not password:
 			password = blowfishDecrypt(depot.opsiHostKey, backend.user_getCredentials(username = u'pcpatch', hostId = depot.id)['password'])
 	except Exception, e:
-		logger.warning(u"Failed to get client user (pcpatch) password: %s" % e)
+		logger.info(u"Failed to get client user (pcpatch) password: %s" % e)
 		password = randomString(12)
 	if backend:
 		backend.backend_exit()
