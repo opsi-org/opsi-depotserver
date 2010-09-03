@@ -13,7 +13,7 @@ BuildRequires:  pwdutils
 Requires:       pwdutils dhcp-server
 %endif
 %if 0%{?rhel_version} || 0%{?centos_version}
-Requires:       dhcp
+Requires:       dhcp redhat-lsb
 %endif
 Url:            http://www.opsi.org
 License:        GPL v2 or later
