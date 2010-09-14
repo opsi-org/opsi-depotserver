@@ -1208,7 +1208,6 @@ def updateMySQLBackend():
 		logger.notice(u"Updating database table SOFTWARE_CONFIG from opsi 3.4 to 4.0")
 		# SOFTWARE_CONFIG
 		logger.notice(u"Updating table SOFTWARE_CONFIG")
-		logger.notice(u"This may take a while, do not abort!")
 
 		mysql.query(u"alter table SOFTWARE_CONFIG 	change `hostId` `clientId` varchar(255) NOT NULL, \
 				add `name` varchar(100) NOT NULL, \
@@ -1230,7 +1229,8 @@ def updateMySQLBackend():
 				as s on s.windowsSoftwareId = sc.softwareId \
 				set sc.name = s.name, sc.version = s.version, sc.subVersion = s.subVersion, sc.architecture = s.architecture \
 				where s.windowsSoftwareId is not null;")
-
+		
+		mysql.query(u"delete from SOFTWARE_CONFIG where `name` = '';")
 		mysql.query(u"alter table SOFTWARE_CONFIG drop `softwareId`;")
 		
 	if 'LICENSE_CONTRACT' in tables.keys() and not 'type' in tables['LICENSE_CONTRACT']:
