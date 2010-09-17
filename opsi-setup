@@ -1145,7 +1145,7 @@ def updateMySQLBackend():
 					INDEX( `clientId` ),
 					`licenseKey` VARCHAR(100),
 					`notes` VARCHAR(1024)
-				) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+				) ENGINE=InnoDB DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
 				''')
 		
 		mysql.query(u"insert into LICENSE_ON_CLIENT (`softwareLicenseId`, `licensePoolId`, `clientId`, `licenseKey`, `notes`) select `softwareLicenseId`, `licensePoolId`, `hostId`, `licenseKey`, `notes` from LICENSE_USED_BY_HOST where `softwareLicenseId` != ''")
@@ -1281,7 +1281,7 @@ def updateMySQLBackend():
 					`language` varchar(10) NOT NULL,
 					`architecture` varchar(3) NOT NULL,
 					PRIMARY KEY( `name`, `version`, `subVersion`, `language`, `architecture` )
-				) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+				) ENGINE=InnoDB DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
 				''')
 		
 		for res in mysql.getSet(u"SELECT * FROM `WINDOWS_SOFTWARE_ID_TO_LICENSE_POOL`"):
@@ -1997,7 +1997,7 @@ def configureMySQLBackend():
 			logger.notice(u"Creating database '%s'" % config['database'])
 			messageBox.addText(u"Creating database '%s'\n" % config['database'])
 			try:
-				db.query(u'CREATE DATABASE %s DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_bin;' % config['database'])
+				db.query(u'CREATE DATABASE %s DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;' % config['database'])
 			except MySQLdb.ProgrammingError, e:
 				if (e[0] != 1007):
 					# 1007: database exists
