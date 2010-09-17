@@ -1,3 +1,9 @@
+opsi-depotserver (3.99.3-1) testing; urgency=low
+
+  * opsi-setup: Fix collation of mysql database
+
+ -- Jan Schneider <j.schneider@uib.de>  Fri, 17 Sep 2010 12:31:15 +0200
+
 opsi-depotserver (3.99.2-1) testing; urgency=low
 
   * opsi 4.0 rc 2
