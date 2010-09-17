@@ -976,10 +976,11 @@ def updateMySQLBackend():
 		tableName = i.values()[0]
 		logger.debug(u" [ %s ]" % tableName)
 		tables[tableName] = []
+		mysql.query("alter table `%s` convert to charset utf8 collate utf8_general_ci;" % tableName);
 		for j in mysql.getSet(u'SHOW COLUMNS FROM `%s`' % tableName):
 			logger.debug(u"      %s" % j)
 			tables[tableName].append(j['Field'])
-	
+			
 	if 'HOST' in tables.keys() and 'host_id' in tables['HOST']:
 		logger.notice(u"Updating database table HOST from opsi 3.3 to 3.4")
 		# SOFTWARE_CONFIG
@@ -1145,7 +1146,7 @@ def updateMySQLBackend():
 					INDEX( `clientId` ),
 					`licenseKey` VARCHAR(100),
 					`notes` VARCHAR(1024)
-				) ENGINE=InnoDB DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 				''')
 		
 		mysql.query(u"insert into LICENSE_ON_CLIENT (`softwareLicenseId`, `licensePoolId`, `clientId`, `licenseKey`, `notes`) select `softwareLicenseId`, `licensePoolId`, `hostId`, `licenseKey`, `notes` from LICENSE_USED_BY_HOST where `softwareLicenseId` != ''")
@@ -1183,8 +1184,10 @@ def updateMySQLBackend():
 			update =  u"update SOFTWARE set"
 			update += u"  `type`='AuditSoftware'"
 			update += u", `windowsSoftwareId`='%s'"     % res['softwareId'].replace("'", "\\'")
-			update += u", `windowsDisplayName`='%s'"    % res['displayName'].replace("'", "\\'")
-			update += u", `windowsDisplayVersion`='%s'" % res['displayVersion'].replace("'", "\\'")
+			if res['displayName'] is not None:
+				update += u", `windowsDisplayName`='%s'"    % res['displayName'].replace("'", "\\'")
+			if res['displayVersion'] is not None:
+				update += u", `windowsDisplayVersion`='%s'" % res['displayVersion'].replace("'", "\\'")
 			update += u", `architecture`='x86'"
 			update += u", `language`=''"
 			update += u", `name`='%s'" % name
@@ -1281,7 +1284,7 @@ def updateMySQLBackend():
 					`language` varchar(10) NOT NULL,
 					`architecture` varchar(3) NOT NULL,
 					PRIMARY KEY( `name`, `version`, `subVersion`, `language`, `architecture` )
-				) ENGINE=InnoDB DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 				''')
 		
 		for res in mysql.getSet(u"SELECT * FROM `WINDOWS_SOFTWARE_ID_TO_LICENSE_POOL`"):
@@ -1997,7 +2000,7 @@ def configureMySQLBackend():
 			logger.notice(u"Creating database '%s'" % config['database'])
 			messageBox.addText(u"Creating database '%s'\n" % config['database'])
 			try:
-				db.query(u'CREATE DATABASE %s DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;' % config['database'])
+				db.query(u'CREATE DATABASE %s DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_bin;' % config['database'])
 			except MySQLdb.ProgrammingError, e:
 				if (e[0] != 1007):
 					# 1007: database exists
