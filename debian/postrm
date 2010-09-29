@@ -1,7 +1,10 @@
-#! /bin/sh
-# postrm script for opsi-depotserver
-#
-# see: dh_installdeb(1)
+#! /bin/bash -e
+
+# = = = = = = = = = = = = = = = = = = = = = = =
+# =       Copyright (C) 2010 uib GmbH         =
+# =           http://www.uib.de               =
+# =          All rights reserved.             =
+# = = = = = = = = = = = = = = = = = = = = = = =
 
 set -e
 
@@ -22,25 +25,27 @@ set -e
 VERBOSE=true
 
 case "$1" in
-    upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+	upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
 	
 	;;
-    remove)
+	
+	remove)
 	
 	;;
-
-     purge)
-	# delete samba user pcpatch
-        
-	smbpasswd -x pcpatch >/dev/null 2>/dev/null || true
 	
-	db_purge
-	db_stop
-
+	purge)
+		# delete samba user pcpatch
+		
+		smbpasswd -x pcpatch >/dev/null 2>/dev/null || true
+		
+		db_purge
+		db_stop
+		
 	;;
-    *)
-        echo "postrm called with unknown argument \`$1'" >&2
-        exit 1
+	
+	*)
+		echo "postrm called with unknown argument \`$1'" >&2
+		exit 1
 	;;
 
 esac

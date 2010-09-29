@@ -1,3 +1,39 @@
+opsi-depotserver (4.0-1) stable; urgency=low
+
+  * opsi 4.0 stable release
+
+ -- Jan Schneider <j.schneider@uib.de>  Wed, 29 Sep 2010 11:27:47 +0200
+
+opsi-depotserver (3.99.3-1) testing; urgency=low
+
+  * opsi-setup: Fix collation of mysql database
+
+ -- Jan Schneider <j.schneider@uib.de>  Fri, 17 Sep 2010 12:31:15 +0200
+
+opsi-depotserver (3.99.2-1) testing; urgency=low
+
+  * opsi 4.0 rc 2
+
+ -- Jan Schneider <j.schneider@uib.de>  Thu, 16 Sep 2010 10:09:05 +0200
+
+opsi-depotserver (3.99.1-1) testing; urgency=low
+
+  * opsi 4.0 rc 1 
+
+ -- Jan Schneider <j.schneider@uib.de>  Wed, 01 Sep 2010 15:54:23 +0200
+
+opsi-depotserver (3.99.0-1) testing; urgency=low
+
+  * opsi 4.0
+
+ -- Jan Schneider <j.schneider@uib.de>  Fri, 23 Apr 2010 13:43:04 +0200
+
+opsi-depotserver (3.4.99-1) stable; urgency=low
+
+  * First 3.5 Package
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 09 Feb 2010 18:12:50 +0100
+
 opsi-depotserver (3.4-1) stable; urgency=low
 
   * Adapted dependencies to opsi 3.4
