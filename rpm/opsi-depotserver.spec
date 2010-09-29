@@ -7,7 +7,7 @@
 #
 
 Name:           opsi-depotserver
-Requires:       python-opsi opsiconfd opsipxeconfd opsi-utils opsi-linux-bootimage samba sudo wget
+Requires:       python-opsi >= 4.0 opsiconfd >= 4.0 opsipxeconfd >= 4.0 opsi-utils >= 4.0 opsi-linux-bootimage >= 20090927 samba sudo wget
 %if 0%{?suse_version}
 BuildRequires:  pwdutils
 Requires:       pwdutils dhcp-server
