@@ -23,7 +23,11 @@ Version:        4.0
 Release:        4
 Summary:        opsi depotserver
 %define tarname opsi-depotserver
+<<<<<<< .mine
 Source:         opsi-depotserver_4.0-4.tar.gz
+=======
+Source:         opsi-depotserver_4.0-4.tar.gz
+>>>>>>> .r232
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
 
