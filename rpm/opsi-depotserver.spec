@@ -20,14 +20,10 @@ License:        GPL v2 or later
 Group:          Productivity/Networking/Opsi
 AutoReqProv:    on
 Version:        4.0
-Release:        4
+Release:        5
 Summary:        opsi depotserver
 %define tarname opsi-depotserver
-<<<<<<< .mine
-Source:         opsi-depotserver_4.0-4.tar.gz
-=======
-Source:         opsi-depotserver_4.0-4.tar.gz
->>>>>>> .r232
+Source:         opsi-depotserver_4.0-5.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
 
