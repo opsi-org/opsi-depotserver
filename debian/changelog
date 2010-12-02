@@ -1,3 +1,9 @@
+opsi-depotserver (4.0-4) stable; urgency=low
+
+  * Add config clientconfig.depot.protocol
+
+ -- Jan Schneider <j.schneider@uib.de>  Thu, 02 Dec 2010 12:06:03 +0100
+
 opsi-depotserver (4.0-3) stable; urgency=low
 
   * Fix opsi-setup mysql.query-Bug
