@@ -2613,7 +2613,15 @@ def cleanupBackend():
 				productIds.append(product.id)
 	if deleteProducts:
 		backend.product_deleteObjects(deleteProducts)
-	
+
+	logger.notice(u"Cleaning up product on clients")
+        deleteProductOnClients = []
+        for productOnClient in backend.productOnClient_getObjects(installationStatus = 'not_installed', actionRequest = 'none'):
+                logger.info(u"Marking productOnClient %s for deletion" % productOnClient)
+                deleteProductOnClients.append(productOnClient)
+        if deleteProductOnClients:
+                backend.productOnClient_deleteObjects(deleteProductOnClients)
+		
 	logger.notice(u"Cleaning up product properties")
 	productPropertyIdents = []
 	deleteProductProperties = []
