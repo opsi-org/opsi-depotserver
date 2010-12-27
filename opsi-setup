@@ -497,6 +497,7 @@ def setRights(path=u'/'):
 					os.chown(authorizedKeys, clientUserUid, fileAdminGroupGid)
 			
 def update(fromVersion = None):
+	# 3.x => 4.x
 	if os.path.exists(u'/var/lib/opsi/products'):
 		logger.notice(u"Found /var/lib/opsi/products, moving to /var/lib/opsi/repository")
 		if not os.path.exists(u'/var/lib/opsi/repository'):
@@ -2686,8 +2687,8 @@ def main():
 	try:
 		(opts, args) = getopt.getopt(sys.argv[1:], "hl:",
 			['help', 'log-file=', 'init-current-config', 'set-rights', 'auto-configure-samba', 'auto-configure-dhcpd',
-			 'register-depot', 'configure-mysql', 'update-mysql', 'update-ldap', 'update-file', 'edit-config-defaults', 'cleanup-backend'])
-			#, 'update-from='])
+			 'register-depot', 'configure-mysql', 'update-mysql', 'update-ldap', 'update-file', 'edit-config-defaults', 'cleanup-backend',
+			 'update-from='])
 		
 	except Exception, e:
 		usage()
@@ -2725,8 +2726,8 @@ def main():
 			task = 'edit-config-defaults'
 		elif (opt == "--cleanup-backend"):
 			task = 'cleanup-backend'
-		#elif (opt == "--update-from"):
-		#	updateFrom = arg
+		elif (opt == "--update-from"):
+			updateFrom = arg
 		elif (opt == "--auto-configure-samba"):
 			autoConfigureSamba = True
 		elif (opt == "--auto-configure-dhcpd"):
@@ -2746,7 +2747,7 @@ def main():
 	if autoConfigureDhcpd:
 		configureDHCPD()
 	
-	if (task == 'set-rights'):
+	if   (task == 'set-rights'):
 		setRights(path)
 	
 	elif (task == 'init-current-config'):
@@ -2777,6 +2778,9 @@ def main():
 	
 	elif (task == 'cleanup-backend'):
 		cleanupBackend()
+	
+	elif (updateFrom):
+		update(updateFrom)
 	
 	elif not autoConfigureSamba and not autoConfigureDhcpd:
 		usage()
