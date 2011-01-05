@@ -136,6 +136,7 @@ def configureSamba():
 	lines = f.readlines()
 	f.close()
 	newlines = []
+	optPcbinShareFound = False
 	depotShareFound = False
 	configShareFound = False
 	workbenchShareFound = False
@@ -147,6 +148,8 @@ def configureSamba():
 			confChanged = True
 			continue
 		if   (lines[i].lower().strip() == '[opt_pcbin]'):
+			optPcbinShareFound = True
+		elif (lines[i].lower().strip() == '[opsi_depot]'):
 			depotShareFound = True
 		elif (lines[i].lower().strip() == '[opsi_config]'):
 			configShareFound = True
@@ -154,24 +157,38 @@ def configureSamba():
 			workbenchShareFound = True
 		newlines.append(lines[i])
 	
-	if not depotShareFound:
+	if not optPcbinShareFound and (getSysConfig()['distribution'].lower().find('suse linux enterprise server') == -1):
 		logger.notice(u"   Adding share [opt_pcbin]")
 		confChanged = True
-		if (getSysConfig()['distribution'].lower().find('suse linux enterprise server') != -1):
-			newlines.append(u"[opsi_depot]\n")
-		else:
-			newlines.append(u"[opt_pcbin]\n")
+		newlines.append(u"[opt_pcbin]\n")
 		newlines.append(u"   available = yes\n")
 		newlines.append(u"   comment = opsi depot share\n")
-		if (getSysConfig()['distribution'].lower().find('suse linux enterprise server') != -1):
-			newlines.append(u"   path = /var/lib/opsi/depot\n")
-		else:
-			newlines.append(u"   path = /opt/pcbin\n")
+		newlines.append(u"   path = /opt/pcbin\n")
 		newlines.append(u"   oplocks = no\n")
 		newlines.append(u"   level2 oplocks = no\n")
 		newlines.append(u"   writeable = yes\n")
 		newlines.append(u"   invalid users = root\n")
 		newlines.append(u"\n")
+	
+	if not depotShareFound:
+		logger.notice(u"   Adding share [opsi_depot]")
+		confChanged = True
+		newlines.append(u"[opsi_depot]\n")
+		newlines.append(u"   available = yes\n")
+		newlines.append(u"   comment = opsi depot share (ro)\n")
+		newlines.append(u"   path = /var/lib/opsi/depot\n")
+		newlines.append(u"   oplocks = no\n")
+		newlines.append(u"   level2 oplocks = no\n")
+		newlines.append(u"   writeable = no\n")
+		newlines.append(u"   invalid users = root\n")
+		newlines.append(u"\n")
+		link = '/var/lib/opsi/depot'
+		source = '/opt/pcbin/install'
+		if not os.path.exists(link) and os.path.exists(source):
+			try:
+				os.symlink(source, link)
+			except Exception, e:
+				logger.error(u"Failed to create symlink '%s' pointing to '%s': %s" % (link, source, e))
 		
 	if not configShareFound:
 		logger.notice(u"   Adding share [opsi_config]")
