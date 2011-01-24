@@ -2413,9 +2413,19 @@ def initializeBackends():
 	if getSysConfig()['hardwareAddress']:
 		configServer.setHardwareAddress(getSysConfig()['hardwareAddress'])
 	backend.host_updateObjects([configServer])
+	backend.exit()
 	initalizeConfigs()
 	
 def initalizeConfigs():
+	from OPSI.Backend.BackendManager import BackendManager
+	backend = BackendManager(
+		dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
+		backendConfigDir   = u'/etc/opsi/backends',
+		extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
+		depotbackend       = False
+	)
+	backend.backend_createBase()
+	
 	configs = []
 	configIdents = backend.config_getIdents(returnType = 'unicode')
 	if not 'clientconfig.configserver.url' in configIdents:
@@ -2707,7 +2717,7 @@ def usage():
 	print u"   --register-depot           register depot at config server"
 	print u"   --set-rights [path]        set default rights on opsi files (in [path] only)"
 	print u"   --init-current-config      init current backend configuration"
-	#print u"   --update-from=<version>    update from opsi version <version>"
+	print u"   --update-from=<version>    update from opsi version <version>"
 	print u"   --update-mysql             update mysql backend"
 	print u"   --update-ldap              update ldap backend"
 	print u"   --update-file              update file backend"
