@@ -534,6 +534,7 @@ def update(fromVersion = None):
 		depotbackend       = False
 	)
 	backend.backend_createBase()
+	backend.backend_exit()
 	
 	# 4.0 => 4.0.1
 	link = '/var/lib/opsi/depot'
@@ -2413,7 +2414,7 @@ def initializeBackends():
 	if getSysConfig()['hardwareAddress']:
 		configServer.setHardwareAddress(getSysConfig()['hardwareAddress'])
 	backend.host_updateObjects([configServer])
-	backend.exit()
+	backend.backend_exit()
 	initalizeConfigs()
 	
 def initalizeConfigs():
@@ -2534,7 +2535,7 @@ def initalizeConfigs():
 	
 	if configs:
 		backend.config_createObjects(configs)
-
+	backend.backend_exit()
 
 def editConfigDefaults():
 	from OPSI.Backend.BackendManager import BackendManager
