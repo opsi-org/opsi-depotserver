@@ -1,3 +1,11 @@
+opsi-depotserver (4.0.1-1) stable; urgency=low
+
+  * add config software-on-demand.product-group-id
+  * link /var/lib/opsi/depot to /opt/pbin/install
+  * samba share opsi_depot on all dists
+
+ -- Jan Schneider <j.schneider@uib.de>  Mon, 24 Jan 2011 12:26:10 +0100
+
 opsi-depotserver (4.0-5) stable; urgency=low
 
   * fix spec file

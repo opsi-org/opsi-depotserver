@@ -535,6 +535,16 @@ def update(fromVersion = None):
 	)
 	backend.backend_createBase()
 	
+	# 4.0 => 4.0.1
+	link = '/var/lib/opsi/depot'
+	source = '/opt/pcbin/install'
+	if not os.path.exists(link) and os.path.exists(source):
+		try:
+			os.symlink(source, link)
+		except Exception, e:
+			logger.error(u"Failed to create symlink '%s' pointing to '%s': %s" % (link, source, e))
+	
+	initalizeConfigs()
 	
 def updateLDAPBackend():
 	backendConfigFile = u'/etc/opsi/backends/ldap.conf'
@@ -2403,7 +2413,9 @@ def initializeBackends():
 	if getSysConfig()['hardwareAddress']:
 		configServer.setHardwareAddress(getSysConfig()['hardwareAddress'])
 	backend.host_updateObjects([configServer])
+	initalizeConfigs()
 	
+def initalizeConfigs():
 	configs = []
 	configIdents = backend.config_getIdents(returnType = 'unicode')
 	if not 'clientconfig.configserver.url' in configIdents:
@@ -2488,7 +2500,16 @@ def initializeBackends():
 				defaultValues  = [ False ]
 			)
 		)
-	
+	if not 'software-on-demand.product-group-id' in configIdents:
+		configs.append(
+			UnicodeConfig(
+				id             = u'software-on-demand.product-group-id',
+				description    = u'Product group ids containing products which are allowed to be installed on demand',
+				possibleValues = [ u'software-on-demand' ],
+				editable       = False,
+				multiValue     = True
+			)
+		)
 	if not 'product_sort_algorithm' in configIdents:
 		configs.append(
 			UnicodeConfig(

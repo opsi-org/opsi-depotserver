@@ -8,7 +8,7 @@ Standards-Version: 3.6.1
 Package: opsi-depotserver
 Section: opsi
 Architecture: all
-Depends: python-opsi (>=4.0), opsiconfd (>=4.0), opsipxeconfd (>=4.0), opsi-utils (>=4.0), opsi-linux-bootimage (>=20100927), samba, dhcp3-server, sudo, wget, ${depend:opsi}
+Depends: python-opsi (>=4.0.1), opsiconfd (>=4.0.1), opsipxeconfd (>=4.0), opsi-utils (>=4.0), opsi-linux-bootimage (>=20100927), samba, dhcp3-server, sudo, wget, ${depend:opsi}
 Suggests: slapd, mysql-server, p7zip-full, cabextract
 Description: opsi depotserver configuration package
  This package is used to configure an opsi depotserver.
