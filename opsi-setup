@@ -2037,14 +2037,30 @@ def configureMySQLBackend():
 			logger.notice(u"Database '%s' created" % config['database'])
 			messageBox.addText(u"Database '%s' created\n" % config['database'])
 			
-			logger.notice(u"Creating user '%s' and granting all rights on '%s'" % (config['username'], config['database']))
-			messageBox.addText(u"Creating user '%s' and granting all rights on '%s'\n" % (config['username'], config['database']))
-			db.query(u'USE %s;' % config['database'])
-			db.query(u'GRANT ALL ON %s .* TO %s@%s IDENTIFIED BY \'%s\'' \
-					% (config['database'], config['username'], config['address'], config['password']));
-			db.query(u'FLUSH PRIVILEGES;')
-			logger.notice(u"User '%s' created and privileges set" % config['username'])
-			messageBox.addText(u"User '%s' created and privileges set\n" % config['username'])
+			def createUsers(hosts):
+				for host in hosts:
+					if type(host) in (list, tuple):
+						createUsers(host)
+					else:
+						logger.notice(u"Creating user '%s' and granting all rights on '%s'" % (config['username'], config['database']))
+						messageBox.addText(u"Creating user '%s' and granting all rights on '%s'\n" % (config['username'], config['database']))
+						db.query(u'USE %s;' % config['database'])
+						db.query(u'GRANT ALL ON %s .* TO %s@%s IDENTIFIED BY \'%s\'' \
+							% (config['database'], config['username'], host, config['password']));
+						db.query(u'FLUSH PRIVILEGES;')
+						logger.notice(u"User '%s' created and privileges set" % config['username'])
+						messageBox.addText(u"User '%s' created and privileges set\n" % config['username'])
+						
+						
+
+			if config['address'] in (	"localhost", "127.0.0.1",
+							socket.getfqdn(socket.gethostname()),
+							socket.gethostname(),
+							socket.gethostbyname(socket.gethostname())):
+				createUsers((config['address']))
+			else:
+				createUsers((socket.gethostbyaddr(socket.gethostname()),socket.getfqdn(socket.gethostname())))
+				
 			
 			# Disconnect from database
 			db.close()
