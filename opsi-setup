@@ -1333,10 +1333,11 @@ def updateMySQLBackend():
 			res['licenseContractId'] = forceLicenseContractId(res['licenseContractId'])
 			logger.warning(u"Changing license contract id '%s' to '%s'" % (deleteLicenseContractId, res['licenseContractId']))
 			
-			data = {}
-			data['SOFTWARE_LICENSE'] = []
-			data['LICENSE_ON_CLIENT'] = []
-			data['SOFTWARE_LICENSE_TO_LICENSE_POOL'] = []
+			data = {
+				'SOFTWARE_LICENSE': [],
+				'LICENSE_ON_CLIENT': [],
+				'SOFTWARE_LICENSE_TO_LICENSE_POOL': []
+			}
 			for res2 in mysql.getSet(u"SELECT * FROM `SOFTWARE_LICENSE` where licenseContractId = '%s'" % deleteLicenseContractId):
 				res2['licenseContractId'] = res['licenseContractId']
 				data['SOFTWARE_LICENSE'].append(res2)
