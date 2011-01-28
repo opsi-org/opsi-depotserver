@@ -1334,17 +1334,21 @@ def updateMySQLBackend():
 			logger.warning(u"Changing license contract id '%s' to '%s'" % (deleteLicenseContractId, res['licenseContractId']))
 			
 			data = {}
-			for tab in ('SOFTWARE_LICENSE', ):
-				data[tab] = []
-				for res2 in mysql.getSet(u"SELECT * FROM `%s` where licenseContractId = '%s'" % (tab, deleteLicenseContractId)):
-					res2['licenseContractId'] = res['licenseContractId']
-					data[tab].append(res2)
-				mysql.delete(tab, "licenseContractId = '%s'" % deleteLicenseContractId)
-			
+			data['SOFTWARE_LICENSE'] = []
+			data['LICENSE_ON_CLIENT'] = []
+			data['SOFTWARE_LICENSE_TO_LICENSE_POOL'] = []
+			for res2 in mysql.getSet(u"SELECT * FROM `SOFTWARE_LICENSE` where licenseContractId = '%s'" % deleteLicenseContractId):
+				res2['licenseContractId'] = res['licenseContractId']
+				data['SOFTWARE_LICENSE'].append(res2)
+				for tab in ('LICENSE_ON_CLIENT', 'SOFTWARE_LICENSE_TO_LICENSE_POOL'):
+					for res3 in mysql.getSet(u"SELECT * FROM `%s` where softwareLicenseId = '%s'" % (tab, res2['softwareLicenseId'])):
+						data[tab].append(res3)
+						mysql.delete(tab, "softwareLicenseId = '%s'" % softwareLicenseId)
+			mysql.delete('SOFTWARE_LICENSE', "licenseContractId = '%s'" % deleteLicenseContractId)
 			mysql.delete('LICENSE_CONTRACT', "licenseContractId = '%s'" % deleteLicenseContractId)
 			mysql.insert('LICENSE_CONTRACT', res)
-			for (tab, ins) in data.items():
-				for i in ins:
+			for tab in ('SOFTWARE_LICENSE', 'SOFTWARE_LICENSE_TO_LICENSE_POOL', 'LICENSE_ON_CLIENT'):
+				for i in data[tab]:
 					mysql.insert(tab, i)
 			
 	for res in mysql.getSet(u"SELECT * FROM `LICENSE_POOL`"):
