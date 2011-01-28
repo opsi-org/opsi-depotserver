@@ -1344,7 +1344,7 @@ def updateMySQLBackend():
 				for tab in ('LICENSE_ON_CLIENT', 'SOFTWARE_LICENSE_TO_LICENSE_POOL'):
 					for res3 in mysql.getSet(u"SELECT * FROM `%s` where softwareLicenseId = '%s'" % (tab, res2['softwareLicenseId'])):
 						data[tab].append(res3)
-					mysql.delete(tab, "softwareLicenseId = '%s'" % softwareLicenseId)
+					mysql.delete(tab, "softwareLicenseId = '%s'" % res2['softwareLicenseId'])
 			mysql.delete('SOFTWARE_LICENSE', "licenseContractId = '%s'" % deleteLicenseContractId)
 			mysql.delete('LICENSE_CONTRACT', "licenseContractId = '%s'" % deleteLicenseContractId)
 			mysql.insert('LICENSE_CONTRACT', res)
