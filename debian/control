@@ -11,5 +11,6 @@ Architecture: all
 Depends: python-opsi (>=4.0), opsiconfd (>=4.0), opsi-utils (>=4.0), opsi-linux-bootimage (>=20100927), samba, dhcp3-server, sudo, wget, ${depend:opsi}
 Recommends: opsipxeconfd (>=4.0)
 Suggests: slapd, mysql-server, p7zip-full, cabextract
+Replaces: opsi-depot-support
 Description: opsi depotserver configuration package
  This package is used to configure an opsi depotserver.
