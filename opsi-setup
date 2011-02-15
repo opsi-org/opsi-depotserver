@@ -2532,10 +2532,26 @@ def initializeConfigs(configServer= None):
 				defaultValues  = [ False ]
 			)
 		)
-	if not 'software-on-demand.product-group-id' in configIdents:
+	if not 'software-on-demand.active' in configIdents:
+		configs.append(
+			BoolConfig(
+				id             = u'software-on-demand.active',
+				description    = u'Activate software-on-demand',
+				defaultValues  = [ False ]
+			)
+		)
+	if not 'software-on-demand.show-details' in configIdents:
+		configs.append(
+			BoolConfig(
+				id             = u'software-on-demand.show-details',
+				description    = u'Show more details for software-on-demand',
+				defaultValues  = [ False ]
+			)
+		)
+	if not 'software-on-demand.product-group-ids' in configIdents:
 		configs.append(
 			UnicodeConfig(
-				id             = u'software-on-demand.product-group-id',
+				id             = u'software-on-demand.product-group-ids',
 				description    = u'Product group ids containing products which are allowed to be installed on demand',
 				possibleValues = [ u'software-on-demand' ],
 				editable       = False,
