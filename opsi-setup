@@ -2553,6 +2553,8 @@ def initializeConfigs(configServer= None):
 			UnicodeConfig(
 				id             = u'software-on-demand.product-group-ids',
 				description    = u'Product group ids containing products which are allowed to be installed on demand',
+				possibleValues = [ u'software-on-demand' ],
+				defaultValues  = [ u'software-on-demand' ],
 				editable       = True,
 				multiValue     = True
 			)
