@@ -19,11 +19,11 @@ Url:            http://www.opsi.org
 License:        GPL v2 or later
 Group:          Productivity/Networking/Opsi
 AutoReqProv:    on
-Version:        4.0
-Release:        5
+Version:        4.0.0.99
+Release:        1
 Summary:        opsi depotserver
 %define tarname opsi-depotserver
-Source:         opsi-depotserver_4.0-5.tar.gz
+Source:         opsi-depotserver_4.0.0.99-1.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
 
