@@ -526,15 +526,30 @@ def update(fromVersion = None):
 		except Exception, e:
 			logger.error(e)
 	
-	from OPSI.Backend.BackendManager import BackendManager
-	backend = BackendManager(
-		dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
-		backendConfigDir   = u'/etc/opsi/backends',
-		extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
-		depotbackend       = False
-	)
-	backend.backend_createBase()
-	backend.backend_exit()
+	isConfigServer = False
+	try:
+		bdc = BackendDispatchConfigFile(u'/etc/opsi/backendManager/dispatch.conf')
+		dispatchConfig = bdc.parse()
+		for entry in dispatchConfig:
+			(regex, backends) = entry
+			if not re.search(regex, 'backend_createBase'):
+				continue
+			if not 'jsonrpc' in backends:
+				isConfigServer = True
+			break
+	except Exception, e:
+		logger.info(e)
+	
+	if isConfigServer:
+		from OPSI.Backend.BackendManager import BackendManager
+		backend = BackendManager(
+			dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
+			backendConfigDir   = u'/etc/opsi/backends',
+			extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
+			depotbackend       = False
+		)
+		backend.backend_createBase()
+		backend.backend_exit()
 	
 	# 4.0 => 4.0.1
 	link = '/var/lib/opsi/depot'
@@ -545,7 +560,8 @@ def update(fromVersion = None):
 		except Exception, e:
 			logger.error(u"Failed to create symlink '%s' pointing to '%s': %s" % (link, source, e))
 	
-	initializeConfigs()
+	if isConfigServer:
+		initializeConfigs()
 	
 def updateLDAPBackend():
 	backendConfigFile = u'/etc/opsi/backends/ldap.conf'
