@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.1-2) testing; urgency=low
+
+  * Skip backend update on depotserver
+
+ -- Jan Schneider <j.schneider@uib.de>  Wed, 23 Feb 2011 16:08:34 +0100
+
 opsi-depotserver (4.0.1-1) testing; urgency=low
 
   * testing release
