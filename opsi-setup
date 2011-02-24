@@ -2059,18 +2059,15 @@ def configureMySQLBackend():
 			messageBox.addText(u"Database '%s' created\n" % config['database'])
 			
 			def createUsers(hosts):
-				for host in hosts:
-					if type(host) in (list, tuple):
-						createUsers(host)
-					else:
-						logger.notice(u"Creating user '%s' and granting all rights on '%s'" % (config['username'], config['database']))
-						messageBox.addText(u"Creating user '%s' and granting all rights on '%s'\n" % (config['username'], config['database']))
-						db.query(u'USE %s;' % config['database'])
-						db.query(u'GRANT ALL ON %s .* TO %s@%s IDENTIFIED BY \'%s\'' \
-							% (config['database'], config['username'], host, config['password']));
-						db.query(u'FLUSH PRIVILEGES;')
-						logger.notice(u"User '%s' created and privileges set" % config['username'])
-						messageBox.addText(u"User '%s' created and privileges set\n" % config['username'])
+				for host in forceUnicodeList(hosts):
+					logger.notice(u"Creating user '%s' and granting all rights on '%s'" % (config['username'], config['database']))
+					messageBox.addText(u"Creating user '%s' and granting all rights on '%s'\n" % (config['username'], config['database']))
+					db.query(u'USE %s;' % config['database'])
+					db.query(u'GRANT ALL ON %s .* TO %s@%s IDENTIFIED BY \'%s\'' \
+						% (config['database'], config['username'], host, config['password']));
+					db.query(u'FLUSH PRIVILEGES;')
+					logger.notice(u"User '%s' created and privileges set" % config['username'])
+					messageBox.addText(u"User '%s' created and privileges set\n" % config['username'])
 						
 						
 
