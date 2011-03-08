@@ -117,6 +117,7 @@ fi
 %dir /var/lib/opsi/depot
 %else
 %dir /home/opsiproducts
+%dir /opt/pcbin
 %dir /opt/pcbin/install
 %endif
 %dir /var/lib/opsi
