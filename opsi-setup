@@ -165,6 +165,7 @@ def configureSamba():
 		newlines.append(u"   comment = opsi depot share\n")
 		newlines.append(u"   path = /opt/pcbin\n")
 		newlines.append(u"   oplocks = no\n")
+		newlines.append(u"   follow symlinks = yes\n")
 		newlines.append(u"   level2 oplocks = no\n")
 		newlines.append(u"   writeable = yes\n")
 		newlines.append(u"   invalid users = root\n")
@@ -2538,7 +2539,7 @@ def initializeConfigs(configServer= None):
 			)
 		)
 	if not 'license-management.use' in configIdents:
-		configs.append(
+		configs.optappend(
 			BoolConfig(
 				id             = u'license-management.use',
 				description    = u'Activate license management',
