@@ -9,7 +9,7 @@
 Name:           opsi-depotserver
 Requires:       python-opsi >= 4.0.1 opsiconfd >= 4.0.1 opsipxeconfd >= 4.0 opsi-utils >= 4.0 opsi-linux-bootimage >= 20090927 samba sudo wget
 %if 0%{?suse_version}
-BuildRequires:  pwdutils
+BuildRequires:  pwdutils python
 Requires:       pwdutils dhcp-server
 %endif
 %if 0%{?rhel_version} || 0%{?centos_version}
@@ -19,11 +19,11 @@ Url:            http://www.opsi.org
 License:        GPL v2 or later
 Group:          Productivity/Networking/Opsi
 AutoReqProv:    on
-Version:        4.0.0.99
-Release:        1
+Version:        4.0.1
+Release:        2
 Summary:        opsi depotserver
 %define tarname opsi-depotserver
-Source:         opsi-depotserver_4.0.0.99-1.tar.gz
+Source:         opsi-depotserver_4.0.1-2.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
 
