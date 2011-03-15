@@ -26,7 +26,7 @@ logger = Logger()
 logger.setConsoleLevel(LOG_NOTICE)
 logger.setConsoleColor(True)
 
-LOG_FILE         = u'/tmp/opsi-config.log'
+LOG_FILE         = u'/tmp/opsi-setup.log'
 SMB_CONF         = u'/etc/samba/smb.conf'
 SMB_INIT         = u'/etc/init.d/samba'
 DHCPD_CONF       = u'/etc/dhcp3/dhcpd.conf'
@@ -2716,6 +2716,20 @@ def cleanupBackend():
 	if deleteProducts:
 		backend.product_deleteObjects(deleteProducts)
 	
+	logger.notice(u"Cleaning up product on depots")
+	productIdents = []
+	for product in backend.product_getObjects():
+		if not product.getIdent(returnType = 'unicode') in productIdents:
+			productIdents.append(product.getIdent(returnType = 'unicode'))
+	deleteProductOnDepots = []
+	for productOnDepot in backend.productOnDepot_getObjects():
+		productIdent = u"%s;%s;%s" % (productOnDepot.productId, productOnDepot.productVersion, productOnDepot.packageVersion)
+		if not productIdent in productIdents:
+			logger.info(u"Marking product on depot %s with missing product reference for deletion" % productOnDepot)
+			deleteProductOnDepots.append(productOnDepot)
+	if deleteProductOnDepots:
+		backend.productOnDepot_deleteObjects(deleteProductOnDepots)
+	
 	logger.notice(u"Cleaning up product on clients")
 	deleteProductOnClients = []
 	for productOnClient in backend.productOnClient_getObjects(installationStatus = 'not_installed', actionRequest = 'none'):
@@ -2890,7 +2904,7 @@ def main():
 if (__name__ == "__main__"):
 	logger.setLogFormat(u'[%l] [%D] %M (%F|%N)')
 	logger.setLogFile(LOG_FILE)
-	logger.setFileLevel(LOG_DEBUG)
+	logger.setFileLevel(LOG_INFO)
 	exception = None
 	try:
 		main()

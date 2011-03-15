@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.1-3) testing; urgency=low
+
+  * opsi-setup: cleanup product on depots
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 15 Mar 2011 11:13:54 +0100
+
 opsi-depotserver (4.0.1-2) testing; urgency=low
 
   * Skip backend update on depotserver
