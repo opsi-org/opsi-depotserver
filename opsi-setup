@@ -2539,7 +2539,7 @@ def initializeConfigs(configServer= None):
 			)
 		)
 	if not 'license-management.use' in configIdents:
-		configs.optappend(
+		configs.append(
 			BoolConfig(
 				id             = u'license-management.use',
 				description    = u'Activate license management',
