@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.1-5) testing; urgency=low
+
+  * opsi-setup: cleanupBackend(): improve cleanup of product property states
+
+ -- Jan Schneider <j.schneider@uib.de>  Wed, 23 Mar 2011 19:52:58 +0100
+
 opsi-depotserver (4.0.1-4) testing; urgency=low
 
   * setup.py: fix typo

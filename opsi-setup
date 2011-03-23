@@ -2745,9 +2745,14 @@ def cleanupBackend():
 	logger.notice(u"Cleaning up product properties")
 	productPropertyIdents = []
 	deleteProductProperties = []
+	productPropertiesToCleanup = {}
 	for productProperty in backend.productProperty_getObjects():
-		if not productProperty.productId in productIds:
-			logger.info(u"Marking productProperty %s of non existent product '%s' for deletion" % (productProperty, productProperty.productId))
+		productIdent = u"%s;%s;%s" % (productProperty.productId, productProperty.productVersion, productProperty.packageVersion)
+		if not productProperty.editable and productProperty.possibleValues:
+			productPropertyIdent = u"%s;%s" % (productIdent, productProperty.propertyId)
+			productPropertiesToCleanup[productPropertyIdent] = productProperty
+		if not productIdent in productIdents:
+			logger.info(u"Marking productProperty %s of non existent product '%s' for deletion" % (productProperty, productIdent))
 			deleteProductProperties.append(productProperty)
 		else:
 			productPropertyIdent = u'%s;%s' % (productProperty.productId, productProperty.propertyId)
@@ -2765,6 +2770,69 @@ def cleanupBackend():
 			deleteProductPropertyStates.append(productPropertyState)
 	if deleteProductPropertyStates:
 		backend.productPropertyState_deleteObjects(deleteProductPropertyStates)
+	
+	for depot in backend.host_getObjects(type = 'OpsiDepotserver'):
+		objectIds = [ depot.id ]
+		for clientToDepot in backend.configState_getClientToDepotserver(depotIds = depot.id):
+			if not clientToDepot['clientId'] in objectIds:
+				objectIds.append(clientToDepot['clientId'])
+		productOnDepotIdents = {}
+		for productOnDepot in backend.productOnDepot_getObjects(depotId = depot.id):
+			productIdent = u"%s;%s;%s" % (productOnDepot.productId, productOnDepot.productVersion, productOnDepot.packageVersion)
+			productOnDepotIdents[productOnDepot.productId] = productIdent
+		if not productOnDepotIdents:
+			continue
+		deleteProductPropertyStates = []
+		updateProductPropertyStates = []
+		for productPropertyState in backend.productPropertyState_getObjects(
+						objectId   = objectIds,
+						productId  = productOnDepotIdents.keys(),
+						propertyId = []):
+			productIdent = productOnDepotIdents.get(productPropertyState.productId)
+			if not productIdent:
+				continue
+			productPropertyIdent = u"%s;%s" % (productIdent, productPropertyState.propertyId)
+			productProperty = productPropertiesToCleanup.get(productPropertyIdent)
+			if not productProperty:
+				continue
+			changed = False
+			newValues = []
+			removeValues = []
+			changedValues = []
+			for v in productPropertyState.values:
+				if v in productProperty.possibleValues:
+					newValues.append(v)
+					continue
+				if (productProperty.getType() == 'BoolProductProperty') and forceBool(v) in productProperty.possibleValues:
+					newValues.append(forceBool(v))
+					changedValues.append(v)
+					changed = True
+					continue
+				if (productProperty.getType() == 'UnicodeProductProperty'):
+					newValue = None
+					for pv in productProperty.possibleValues:
+						if (forceUnicodeLower(pv) == forceUnicodeLower(v)):
+							newValue = pv
+							break
+					if newValue:
+						newValues.append(newValue)
+						changedValues.append(v)
+						changed = True
+						continue
+				removeValues.append(v)
+				changed = True
+			if changed:
+				if not newValues:
+					logger.info(u"Marking productPropertyState %s for deletion: no value in possible values (%s)" % (productPropertyState, removeValues))
+					deleteProductPropertyStates.append(productPropertyState)
+				else:
+					productPropertyState.setValues(newValues)
+					logger.info(u"Marking productPropertyState %s for update: values not in possible values: %s, values corrected: %s" % (productPropertyState, removeValues, changedValues))
+					updateProductPropertyStates.append(productPropertyState)
+		if deleteProductPropertyStates:
+			backend.productPropertyState_deleteObjects(deleteProductPropertyStates)
+		if updateProductPropertyStates:
+			backend.productPropertyState_updateObjects(updateProductPropertyStates)
 	
 	logger.notice(u"Cleaning up config states")
 	deleteConfigStates = []
