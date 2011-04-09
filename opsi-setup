@@ -525,7 +525,7 @@ def update(fromVersion = None):
 		try:
 			os.rmdir(u'/var/lib/opsi/products')
 		except Exception, e:
-			logger.error(e)
+			logger.warning(e)
 	
 	isConfigServer = False
 	try:
@@ -539,18 +539,21 @@ def update(fromVersion = None):
 				isConfigServer = True
 			break
 	except Exception, e:
-		logger.info(e)
+		logger.warning(e)
 	
 	if isConfigServer:
-		from OPSI.Backend.BackendManager import BackendManager
-		backend = BackendManager(
-			dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
-			backendConfigDir   = u'/etc/opsi/backends',
-			extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
-			depotbackend       = False
-		)
-		backend.backend_createBase()
-		backend.backend_exit()
+		try:
+			from OPSI.Backend.BackendManager import BackendManager
+			backend = BackendManager(
+				dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
+				backendConfigDir   = u'/etc/opsi/backends',
+				extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
+				depotbackend       = False
+			)
+			backend.backend_createBase()
+			backend.backend_exit()
+		except Exception, e:
+			logger.warning(e)
 	
 	# 4.0 => 4.0.1
 	link = '/var/lib/opsi/depot'
@@ -559,7 +562,7 @@ def update(fromVersion = None):
 		try:
 			os.symlink(source, link)
 		except Exception, e:
-			logger.error(u"Failed to create symlink '%s' pointing to '%s': %s" % (link, source, e))
+			logger.warning(u"Failed to create symlink '%s' pointing to '%s': %s" % (link, source, e))
 	
 	if isConfigServer:
 		initializeConfigs()
@@ -2454,9 +2457,9 @@ def initializeBackends():
 		configServer.setHardwareAddress(getSysConfig()['hardwareAddress'])
 	backend.host_updateObjects([configServer])
 	backend.backend_exit()
-	initializeConfigs(configServer=configServer)
+	initializeConfigs(configServer = configServer)
 	
-def initializeConfigs(configServer= None):
+def initializeConfigs(configServer = None):
 	from OPSI.Backend.BackendManager import BackendManager
 	backend = BackendManager(
 		dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',

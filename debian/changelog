@@ -1,3 +1,10 @@
+opsi-depotserver (4.0.1-6) stable; urgency=low
+
+  * opsi-setup: Continue update on error
+  * rpm %post: execute opsi-setup --update-from unknown
+
+ -- Jan Schneider <j.schneider@uib.de>  Sat, 09 Apr 2011 10:54:45 +0200
+
 opsi-depotserver (4.0.1-5) testing; urgency=low
 
   * opsi-setup: cleanupBackend(): improve cleanup of product property states
