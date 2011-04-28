@@ -5,7 +5,7 @@ DIST_DEPENDS ?= ""
 
 ifeq (Ubuntu,$(shell lsb_release -is))
 	DIST_DEPENDS = samba-common-bin
-else (squeeze,$(shell lsb_release -cs))
+else ifeq (squeeze,$(shell lsb_release -cs))
 	DIST_DEPENDS = samba-common-bin
 endif
 
