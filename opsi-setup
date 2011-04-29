@@ -2440,7 +2440,7 @@ def initializeBackends():
 			logger.notice(u"Converting depot server '%s' to config server" % getSysConfig()['fqdn'])
 			configServer = OpsiConfigserver.fromHash(depot[0].toHash())
 			backend.host_createObjects(configServer)
-	
+
 	configServer = backend.host_getObjects(type = 'OpsiConfigserver', id = getSysConfig()['fqdn'])
 	if not configServer:
 		raise Exception(u"Config server '%s' not found" % getSysConfig()['fqdn'])
@@ -2449,7 +2449,9 @@ def initializeBackends():
 		configServer.setIpAddress(getSysConfig()['ipAddress'])
 	if getSysConfig()['hardwareAddress']:
 		configServer.setHardwareAddress(getSysConfig()['hardwareAddress'])
-	backend.host_updateObjects([configServer])
+
+	#make sure the config server is present in all backends or we get reference error later on
+	backend.host_insertObject(configServer)
 	backend.backend_exit()
 	initializeConfigs(configServer = configServer)
 	
