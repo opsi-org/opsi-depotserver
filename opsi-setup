@@ -29,8 +29,8 @@ logger.setConsoleColor(True)
 LOG_FILE         = u'/tmp/opsi-setup.log'
 SMB_CONF         = u'/etc/samba/smb.conf'
 SMB_INIT         = u'/etc/init.d/samba'
-DHCPD_CONF       = u'/etc/dhcp3/dhcpd.conf'
-DHCPD_INIT       = u'/etc/init.d/dhcp3-server'
+DHCPD_CONF       = Posix.locateDHCPDConfig(u'/etc/dhcp3/dhcpd.conf')
+DHCPD_INIT       = Posix.locateDHCPDInit(u'/etc/init.d/dhcp3-server')
 SUDOERS          = u'/etc/sudoers'
 OPSICONFD_USER   = u'opsiconfd'
 ADMIN_GROUP      = u'opsiadmin'
@@ -41,12 +41,6 @@ if os.path.exists(u'/etc/init.d/smbd'):
 	SMB_INIT = u'/etc/init.d/smbd'
 if os.path.exists(u'/etc/init.d/smb'):
 	SMB_INIT = u'/etc/init.d/smb'
-
-if os.path.exists(u'/etc/init.d/dhcpd'):
-	DHCPD_INIT = u'/etc/init.d/dhcpd'
-
-if os.path.exists(u'/etc/dhcpd.conf'):
-	DHCPD_CONF = u'/etc/dhcpd.conf'
 
 sysConfig = {}
 
