@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.1-7) stable; urgency=low
+
+  * Fix path to dhcpd.conf/init for squeeze
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 03 May 2011 11:17:32 +0200
+
 opsi-depotserver (4.0.1-6) stable; urgency=low
 
   * opsi-setup: Continue update on error
