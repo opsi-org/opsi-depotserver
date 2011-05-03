@@ -43,7 +43,7 @@ case "$1" in
 			/usr/bin/opsi-setup --update-from "$2" || true
 			/usr/bin/opsi-setup --set-rights /etc/opsi || true
 			/usr/bin/opsi-setup --set-rights /tftpboot || true
-			/usr/bin/opsi-setup --set-rights /var/lib/opsi || true
+			#/usr/bin/opsi-setup --set-rights /var/lib/opsi || true
 		fi
 	;;
 	

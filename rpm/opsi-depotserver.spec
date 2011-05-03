@@ -93,7 +93,7 @@ else
 	/usr/bin/opsi-setup --update-from unknown || true
 	/usr/bin/opsi-setup --set-rights /etc/opsi || true
 	/usr/bin/opsi-setup --set-rights /tftpboot || true
-	/usr/bin/opsi-setup --set-rights /var/lib/opsi || true
+	#/usr/bin/opsi-setup --set-rights /var/lib/opsi || true
 fi
 
 # ===[ preun ]======================================
