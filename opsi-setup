@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # = = = = = = = = = = = = = = = = = = = = = = =
-# =       Copyright (C) 2010 uib GmbH         =
+# =       Copyright (C) 2011 uib GmbH         =
 # =           http://www.uib.de               =
 # =          All rights reserved.             =
 # = = = = = = = = = = = = = = = = = = = = = = =
@@ -2842,6 +2842,19 @@ def cleanupBackend():
 			deleteConfigStates.append(configState)
 	if deleteConfigStates:
 		backend.configState_deleteObjects(deleteConfigStates)
+	
+	logger.notice(u"Cleaning up audit softwares")
+	idents = []
+	for aso in backend.auditSoftwareOnClient_getHashes():
+		ident = '%(name)s;%(version)s;%(subVersion)s;%(language)s;%(architecture)s' % aso
+		if not ident in idents:
+			idents.append(ident)
+	
+	for aso in backend.auditSoftware_getHashes():
+		ident = '%(name)s;%(version)s;%(subVersion)s;%(language)s;%(architecture)s' % aso
+		if not ident in idents:
+			logger.info(u"Deleting unreferenced audit software '%s'" % ident)
+			backend.auditSoftware_delete(aso['name'], aso['version'], aso['subVersion'], aso['language'], aso['architecture'])
 	
 	
 def usage():
