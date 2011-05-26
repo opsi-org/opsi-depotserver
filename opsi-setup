@@ -1367,9 +1367,9 @@ def updateMySQLBackend():
 					mysql.insert(tab, i)
 			
 	for res in mysql.getSet(u"SELECT * FROM `LICENSE_POOL`"):
-		if (res['licensePoolId'] != forceLicensePoolId(res['licensePoolId'])):
+		if (res['licensePoolId'] != res['licensePoolId'].strip()) or (res['licensePoolId'] != forceLicensePoolId(res['licensePoolId'])):
 			deleteLicensePoolId = res['licensePoolId']
-			res['licensePoolId'] = forceLicensePoolId(res['licensePoolId'])
+			res['licensePoolId'] = forceLicensePoolId(res['licensePoolId'].strip())
 			logger.warning(u"Changing license pool id '%s' to '%s'" % (deleteLicensePoolId, res['licensePoolId']))
 			
 			data = {}
@@ -1387,9 +1387,9 @@ def updateMySQLBackend():
 					mysql.insert(tab, i)
 			
 	for res in mysql.getSet(u"SELECT * FROM `SOFTWARE_LICENSE`"):
-		if (res['softwareLicenseId'] != forceSoftwareLicenseId(res['softwareLicenseId'])):
+		if (res['softwareLicenseId'] != res['softwareLicenseId'].strip()) or (res['softwareLicenseId'] != forceSoftwareLicenseId(res['softwareLicenseId'])):
 			deleteSoftwareLicenseId = res['softwareLicenseId']
-			res['softwareLicenseId'] = forceSoftwareLicenseId(res['softwareLicenseId'])
+			res['softwareLicenseId'] = forceSoftwareLicenseId(res['softwareLicenseId'].strip())
 			logger.warning(u"Changing software license id '%s' to '%s'" % (deleteSoftwareLicenseId, res['softwareLicenseId']))
 			
 			data = {}
@@ -1935,14 +1935,14 @@ def updateFileBackend():
 						continue
 					
 					otg = {
-						'groupId'   :  section, #already forced above
+						'groupId'   : section,
 						'groupType' : 'HostGroup',
 						'objectId'  : forceObjectId(option)
 					}
 					
 					updatedObjectToGroups.append(ObjectToGroup.fromHash(otg))
 				
-				updatedGroups.append(Group.fromHash(g))
+				updatedGroups.append(HostGroup.fromHash(g))
 			except Exception, e:
 				logger.error(u"Exception while creating Group from '%s': %s" % (section, e))
 		
@@ -2738,6 +2738,18 @@ def cleanupBackend():
 	for productOnClient in backend.productOnClient_getObjects(installationStatus = 'not_installed', actionRequest = 'none'):
 		logger.info(u"Marking productOnClient %s for deletion" % productOnClient)
 		deleteProductOnClients.append(productOnClient)
+	if deleteProductOnClients:
+		backend.productOnClient_deleteObjects(deleteProductOnClients)
+	
+	deleteProductOnClients = []
+	productIds = []
+	for product in backend.product_getObjects():
+		if not product.getId() in productIds:
+			productIds.append(product.getId())
+	for productOnClient in backend.productOnClient_getObjects():
+		if not productOnClient.productId in productIds:
+			logger.info(u"Marking productOnClient %s for deletion" % productOnClient)
+			deleteProductOnClients.append(productOnClient)
 	if deleteProductOnClients:
 		backend.productOnClient_deleteObjects(deleteProductOnClients)
 	

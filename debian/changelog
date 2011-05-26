@@ -1,3 +1,11 @@
+opsi-depotserver (4.0.1-8) stable; urgency=low
+
+  * opsi-setup
+     --update-mysql: strip license pool id
+     --update-file: Group => HostGroup
+
+ -- Jan Schneider <j.schneider@uib.de>  Thu, 26 May 2011 14:08:54 +0200
+
 opsi-depotserver (4.0.1-7) stable; urgency=low
 
   * Fix path to dhcpd.conf/init for squeeze
