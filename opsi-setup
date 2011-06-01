@@ -1930,7 +1930,7 @@ def updateFileBackend():
 							parentGroupIdList.append(ini.get(section, option))
 						continue
 					
-					if (ini.get(section, option) != 0):
+					if (ini.get(section, option) == 0):
 						logger.debug2(u"Ignoring objectId '%s' in '%s' (value is 0)" % (option, section))
 						continue
 					
@@ -2199,11 +2199,11 @@ def registerDepot():
 			if not depot.networkAddress:  depot.ipAddress = u'%s/%s' % (getSysConfig()['subnet'], getSysConfig()['netmask'])
 			if not depot.depotWebdavUrl:  depot.depotWebdavUrl = u'webdavs://%s:4447/depot' % getSysConfig()['fqdn']
 		else:
-			depotLocalUrl  = u'file:///opt/pcbin/install'
-			depotRemoteUrl = u'smb://%s/opt_pcbin/install' % getSysConfig()['hostname']
-			if (getSysConfig()['distribution'].lower().find('suse linux enterprise server') != -1):
-				depotLocalUrl = u'file:///var/lib/opsi/depot'
-				depotRemoteUrl = u'smb://%s/opsi_depot' % getSysConfig()['hostname']
+			#depotLocalUrl  = u'file:///opt/pcbin/install'
+			#depotRemoteUrl = u'smb://%s/opt_pcbin/install' % getSysConfig()['hostname']
+			#if (getSysConfig()['distribution'].lower().find('suse linux enterprise server') != -1):
+			depotLocalUrl = u'file:///var/lib/opsi/depot'
+			depotRemoteUrl = u'smb://%s/opsi_depot' % getSysConfig()['hostname']
 			
 			depot = OpsiDepotserver(
 					id                  = getSysConfig()['fqdn'],
@@ -2412,11 +2412,11 @@ def initializeBackends():
 		depot = backend.host_getObjects(type = 'OpsiDepotserver', id = getSysConfig()['fqdn'])
 		if not depot:
 			logger.notice(u"Creating config server '%s'" % getSysConfig()['fqdn'])
-			depotLocalUrl  = u'file:///opt/pcbin/install'
-			depotRemoteUrl = u'smb://%s/opt_pcbin/install' % getSysConfig()['hostname']
-			if (getSysConfig()['distribution'].lower().find('suse linux enterprise server') != -1):
-				depotLocalUrl = u'file:///var/lib/opsi/depot'
-				depotRemoteUrl = u'smb://%s/opsi_depot' % getSysConfig()['hostname']
+			#depotLocalUrl  = u'file:///opt/pcbin/install'
+			#depotRemoteUrl = u'smb://%s/opt_pcbin/install' % getSysConfig()['hostname']
+			#if (getSysConfig()['distribution'].lower().find('suse linux enterprise server') != -1):
+			depotLocalUrl = u'file:///var/lib/opsi/depot'
+			depotRemoteUrl = u'smb://%s/opsi_depot' % getSysConfig()['hostname']
 			
 			configServer = backend.host_createOpsiConfigserver(
 				id                  = getSysConfig()['fqdn'],
