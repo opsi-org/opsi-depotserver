@@ -1,3 +1,17 @@
+opsi-depotserver (4.0.1.1-1) stable; urgency=low
+
+  * opsi-setup: Make /var/lib/opsi/depot and smb://<depotserver>/opsi_depot defaults
+
+ -- Jan Schneider <j.schneider@uib.de>  Wed, 01 Jun 2011 10:59:47 +0200
+
+opsi-depotserver (4.0.1-8) stable; urgency=low
+
+  * opsi-setup
+     --update-mysql: strip license pool id
+     --update-file: Group => HostGroup
+
+ -- Jan Schneider <j.schneider@uib.de>  Thu, 26 May 2011 14:08:54 +0200
+
 opsi-depotserver (4.0.1-7) stable; urgency=low
 
   * Fix path to dhcpd.conf/init for squeeze
