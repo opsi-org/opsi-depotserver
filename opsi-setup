@@ -2057,7 +2057,7 @@ def configureMySQLBackend():
 			messageBox.addText(u"Database '%s' created\n" % config['database'])
 			
 			def createUsers(hosts):
-				for host in forceUnicodeList(hosts):
+				for host in forceUnicodeList(forceUniqueList(flattenSequence(hosts))):
 					logger.notice(u"Creating user '%s' and granting all rights on '%s'" % (config['username'], config['database']))
 					messageBox.addText(u"Creating user '%s' and granting all rights on '%s'\n" % (config['username'], config['database']))
 					db.query(u'USE %s;' % config['database'])
