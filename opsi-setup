@@ -36,7 +36,9 @@ OPSICONFD_USER   = u'opsiconfd'
 ADMIN_GROUP      = u'opsiadmin'
 CLIENT_USER      = u'pcpatch'
 FILE_ADMIN_GROUP = u'pcpatch'
-
+OPSI_GLOBAL_CONF = u'/etc/opsi/global.conf'
+ 
+ 
 if os.path.exists(u'/etc/init.d/smbd'):
 	SMB_INIT = u'/etc/init.d/smbd'
 if os.path.exists(u'/etc/init.d/smb'):
@@ -63,9 +65,9 @@ def getSysConfig():
 		
 	logger.notice(u"Getting current system config")
 	try:
-		sysConfig['fqdn'] = forceHostId(socket.getfqdn())
+		sysConfig['fqdn'] = forceHostId(getfqdn(conf=OPSI_GLOBAL_CONF))
 	except:
-		raise Exception(u"Failed to get fully qualified domain name, got '%s'" % socket.getfqdn())
+		raise Exception(u"Failed to get fully qualified domain name, got '%s'" % getfqdn(conf=OPSI_GLOBAL_CONF))
 	
 	sysConfig['hostname'] = sysConfig['fqdn'].split(u'.')[0]
 	sysConfig['domain'] = u'.'.join(sysConfig['fqdn'].split(u'.')[1:])
@@ -2057,7 +2059,7 @@ def configureMySQLBackend():
 			messageBox.addText(u"Database '%s' created\n" % config['database'])
 			
 			def createUsers(hosts):
-				for host in forceUnicodeList(forceUniqueList(flattenSequence(hosts))):
+				for host in forceUniqueList(flattenSequence(hosts)):
 					logger.notice(u"Creating user '%s' and granting all rights on '%s'" % (config['username'], config['database']))
 					messageBox.addText(u"Creating user '%s' and granting all rights on '%s'\n" % (config['username'], config['database']))
 					db.query(u'USE %s;' % config['database'])
@@ -2070,12 +2072,12 @@ def configureMySQLBackend():
 						
 
 			if config['address'] in (	"localhost", "127.0.0.1",
-							socket.getfqdn(socket.gethostname()),
+							getfqdn(name=socket.gethostname()),
 							socket.gethostname(),
 							socket.gethostbyname(socket.gethostname())):
 				createUsers((config['address']))
 			else:
-				createUsers((socket.gethostbyaddr(socket.gethostname()),socket.getfqdn(socket.gethostname())))
+				createUsers((socket.gethostbyaddr(socket.gethostname()),getfqdn(name=socket.gethostname())))
 				
 			
 			# Disconnect from database
