@@ -562,6 +562,7 @@ def update(fromVersion = None):
 	
 	if isConfigServer:
 		initializeConfigs()
+	configureSamba()
 	
 def updateLDAPBackend():
 	backendConfigFile = u'/etc/opsi/backends/ldap.conf'

@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.1.2-1) stable; urgency=low
+
+  * opsi-setup: call configureSamba() on --update-from
+
+ -- Jan Schneider <j.schneider@uib.de>  Mon, 11 Jul 2011 14:59:50 +0200
+
 opsi-depotserver (4.0.1.1-1) stable; urgency=low
 
   * opsi-setup: Make /var/lib/opsi/depot and smb://<depotserver>/opsi_depot defaults
