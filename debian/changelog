@@ -2,7 +2,7 @@ opsi-depotserver (4.0.1.2-1) stable; urgency=low
 
   * opsi-setup
      - call configureSamba() on --update-from
-     - workaround for --set-rights problem /opt/pcbin/install
+     - workaround for --set-rights problem on /opt/pcbin/install
 
  -- Jan Schneider <j.schneider@uib.de>  Tue, 12 Jul 2011 10:40:53 +0200
 
