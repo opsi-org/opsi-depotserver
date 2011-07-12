@@ -439,6 +439,15 @@ def setRights(path=u'/'):
 		except Exception, e:
 			logger.error(e)
 	
+	if basedir.startswith('/opt/pcbin/install'):
+		found = False
+		for dirname in dirnames:
+			if dirname.startswith('/opt/pcbin/install'):
+				found = True
+				break
+		if not found:
+			dirnames.append('/opt/pcbin/install')
+		
 	for dirname in dirnames:
 		if not dirname.startswith(basedir) and not basedir.startswith(dirname):
 			continue
