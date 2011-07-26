@@ -4,9 +4,9 @@
 DIST_DEPENDS ?= ""
 
 ifeq (Ubuntu,$(shell lsb_release -is))
-	DIST_DEPENDS = samba-common-bin || sernet-samba-common
+	DIST_DEPENDS = samba-common-bin | sernet-samba-common
 else ifeq (squeeze,$(shell lsb_release -cs))
-	DIST_DEPENDS = samba-common-bin || sernet-samba-common
+	DIST_DEPENDS = samba-common-bin | sernet-samba-common
 endif
 
 clean:
