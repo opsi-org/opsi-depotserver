@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.1.5-1) stable; urgency=low
+
+  * --init-current-config: create /var/lib/opsi/depot if missing
+
+ -- Jan Schneider <j.schneider@uib.de>  Mon, 01 Aug 2011 10:24:20 +0200
+
 opsi-depotserver (4.0.1.4-1) stable; urgency=low
 
   * Dependency to samba-common-bin || sernet-samba-common

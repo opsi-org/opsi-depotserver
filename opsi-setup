@@ -2467,6 +2467,14 @@ def initializeBackends():
 	backend.backend_exit()
 	initializeConfigs(configServer = configServer)
 	
+	link = '/var/lib/opsi/depot'
+	source = '/opt/pcbin/install'
+	if not os.path.exists(link) and os.path.exists(source):
+		try:
+			os.symlink(source, link)
+		except Exception, e:
+			logger.warning(u"Failed to create symlink '%s' pointing to '%s': %s" % (link, source, e))
+	
 def initializeConfigs(configServer = None):
 	from OPSI.Backend.BackendManager import BackendManager
 	backend = BackendManager(
