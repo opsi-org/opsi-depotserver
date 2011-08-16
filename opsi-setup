@@ -12,7 +12,7 @@ from OPSI.Object import *
 from OPSI.System import *
 from OPSI.Util.File import *
 from OPSI.Util.File.Opsi import *
-from OPSI.Util import * #findFiles, randomString, blowfishDecrypt, objectToBeautifiedText
+from OPSI.Util import *
 from OPSI.UI import *
 from OPSI.Backend.MySQL import *
 from OPSI.Backend.LDAP import *
@@ -620,7 +620,7 @@ def updateLDAPBackend():
 		logger.info(u"Found config server: %s" % obj.getDn())
 		try:
 			obj.readFromDirectory(ldapSession)
-			hostId = forceHostId(obj.getCn())
+			#hostId = forceHostId(obj.getCn())
 			obj.removeObjectClass('opsiHost')
 			obj.removeObjectClass('opsiDepotserver')
 			obj.removeObjectClass('opsiConfigserver')
@@ -642,7 +642,7 @@ def updateLDAPBackend():
 		logger.info(u"Found depot server: %s" % obj.getDn())
 		try:
 			obj.readFromDirectory(ldapSession)
-			hostId = forceHostId(obj.getCn())
+			#hostId = forceHostId(obj.getCn())
 			obj.removeObjectClass('opsiHost')
 			obj.removeObjectClass('opsiDepotserver')
 			obj.addObjectClass('OpsiHost')
@@ -662,7 +662,7 @@ def updateLDAPBackend():
 		logger.info(u"Found client: %s" % obj.getDn())
 		try:
 			obj.readFromDirectory(ldapSession)
-			hostId = forceHostId(obj.getCn())
+			#hostId = forceHostId(obj.getCn())
 			obj.removeObjectClass('opsiHost')
 			obj.removeObjectClass('opsiClient')
 			obj.addObjectClass('OpsiHost')
@@ -712,7 +712,16 @@ def updateLDAPBackend():
 					multiValue = False
 					if   (key == 'opsiDepotserverReference'):
 						configId = u'clientconfig.depot.id'
-						value = forceHostId(value.split(',')[0].split('=')[1])
+						serverObj = LDAPObject(value)
+						value = None
+						if serverObj.exists(ldapSession):
+							serverObj.readFromDirectory(ldapSession)
+							try:
+								value = forceHostId(serverObj.getAttribute('opsiHostId', default = None, valuesAsList = False))
+							except Exception, e:
+								logger.debug(e)
+						if not value:
+							continue
 					elif (key == 'opsiDepotDrive'):
 						configId = u'clientconfig.depot.drive'
 					elif (key == 'opsiNextBootServiceURL'):
@@ -751,8 +760,17 @@ def updateLDAPBackend():
 			obj.readFromDirectory(ldapSession)
 			for value in obj.getAttribute('uniqueMember', default = [], valuesAsList = True):
 				try:
-					objectId = forceHostId(value.split(',')[0].split('=')[1])
-					objectToGroups.append( ObjectToGroup(groupId = groupId, groupType = 'HostGroup', objectId = objectId) )
+					hostObj = LDAPObject(value)
+					value = None
+					if hostObj.exists(ldapSession):
+						hostObj.readFromDirectory(ldapSession)
+						try:
+							value = forceHostId(hostObj.getAttribute('opsiHostId', default = None, valuesAsList = False))
+						except Exception, e:
+							logger.debug(e)
+					if not value:
+						continue
+					objectToGroups.append( ObjectToGroup(groupId = groupId, groupType = 'HostGroup', objectId = value) )
 				except Exception, e:
 					logger.error(u"Failure while processing group member %s of group %s: %s" % (value, obj.getDn(), e))
 			obj.deleteFromDirectory(ldapSession)
@@ -2071,27 +2089,25 @@ def configureMySQLBackend():
 			logger.notice(u"Database '%s' created" % config['database'])
 			messageBox.addText(u"Database '%s' created\n" % config['database'])
 			
-			def createUsers(hosts):
-				for host in forceUniqueList(flattenSequence(hosts)):
-					logger.notice(u"Creating user '%s' and granting all rights on '%s'" % (config['username'], config['database']))
-					messageBox.addText(u"Creating user '%s' and granting all rights on '%s'\n" % (config['username'], config['database']))
-					db.query(u'USE %s;' % config['database'])
-					db.query(u'GRANT ALL ON %s .* TO %s@%s IDENTIFIED BY \'%s\'' \
-						% (config['database'], config['username'], host, config['password']));
-					db.query(u'FLUSH PRIVILEGES;')
-					logger.notice(u"User '%s' created and privileges set" % config['username'])
-					messageBox.addText(u"User '%s' created and privileges set\n" % config['username'])
-						
-						
-
-			if config['address'] in (	"localhost", "127.0.0.1",
-							getfqdn(name=socket.gethostname()),
-							socket.gethostname(),
-							socket.gethostbyname(socket.gethostname())):
-				createUsers((config['address']))
+			def createUser(host):
+				logger.notice(u"Creating user '%s' and granting all rights on '%s'" % (config['username'], config['database']))
+				messageBox.addText(u"Creating user '%s' and granting all rights on '%s'\n" % (config['username'], config['database']))
+				db.query(u'USE %s;' % config['database'])
+				db.query(u'GRANT ALL ON %s .* TO %s@%s IDENTIFIED BY \'%s\'' \
+					% (config['database'], config['username'], host, config['password']));
+				db.query(u'FLUSH PRIVILEGES;')
+				logger.notice(u"User '%s' created and privileges set" % config['username'])
+				messageBox.addText(u"User '%s' created and privileges set\n" % config['username'])
+			
+			sysconf = getSysConfig()
+			if config['address'] in ("localhost", "127.0.0.1", sysconf['hostname'], sysconf['fqdn']):
+				createUser("localhost")
+				if config['address'] not in ("localhost", "127.0.0.1"):
+					createUser(config['address'])
 			else:
-				createUsers((socket.gethostbyaddr(socket.gethostname()),getfqdn(name=socket.gethostname())))
-				
+				createUser(sysConfig['ipAddress'])
+				createUser(sysConfig['fqdn'])
+				createUser(sysConfig['hostname'])
 			
 			# Disconnect from database
 			db.close()

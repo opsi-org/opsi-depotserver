@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.1.7-1) stable; urgency=low
+
+  * opsi-setup: fix creation of db user
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 16 Aug 2011 10:34:19 +0200
+
 opsi-depotserver (4.0.1.6-1) stable; urgency=low
 
   * opsi-setup: sudoers notty for rhel/centos
