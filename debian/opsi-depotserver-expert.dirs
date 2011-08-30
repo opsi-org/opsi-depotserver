@@ -1,5 +1,3 @@
-home/opsiproducts
-opt/pcbin/install
 usr/bin
 var/lib/opsi/repository
 var/log/opsi/clientconnect
