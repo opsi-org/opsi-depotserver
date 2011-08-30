@@ -13,7 +13,7 @@ Suggests: mysql-server, p7zip-full, cabextract
 Description: opsi depotserver configuration package
  This package is used to configure an opsi depotserver.
 
- Package: opsi-depotserver-expert
+Package: opsi-depotserver-expert
 Section: opsi
 Architecture: all
 Depends: python-opsi (>> 4.0.1.2-1), opsiconfd (>=4.0.1), opsipxeconfd (>=4.0), opsi-utils (>=4.0), opsi-linux-bootimage (>=20100927), ${depend:opsi}
