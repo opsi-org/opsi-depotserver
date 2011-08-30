@@ -1,3 +1,10 @@
+opsi-depotserver (4.0.1.8-1) stable; urgency=low
+
+  * new package opsi-depotserver-expert
+  * dependencies modified
+
+ -- Jan Schneider <j.schneider@uib.de>  Tue, 30 Aug 2011 11:56:00 +0200
+
 opsi-depotserver (4.0.1.7-1) stable; urgency=low
 
   * opsi-setup: fix creation of db user

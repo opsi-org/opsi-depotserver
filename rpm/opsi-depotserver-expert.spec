@@ -1,19 +1,18 @@
 #
 # spec file for package opsi-depotserver
 #
-# Copyright (c) 2010 uib GmbH.
+# Copyright (c) 2011 uib GmbH.
 # This file and all modifications and additions to the pristine
 # package are under the same license as the package itself.
 #
 
 Name:           opsi-depotserver
-Requires:       python-opsi >= 4.0.1 opsiconfd >= 4.0.1 opsi-atftp opsipxeconfd >= 4.0 opsi-utils >= 4.0 opsi-linux-bootimage >= 20090927 samba sudo wget
+Requires:       python-opsi >= 4.0.1 opsiconfd >= 4.0.1 opsi-atftp opsipxeconfd >= 4.0 opsi-utils >= 4.0 opsi-linux-bootimage >= 20090927
 %if 0%{?suse_version}
 BuildRequires:  pwdutils python-opsi
-Requires:       pwdutils dhcp-server
 %endif
 %if 0%{?rhel_version} || 0%{?centos_version}
-Requires:       dhcp redhat-lsb
+Requires:       redhat-lsb
 %endif
 Url:            http://www.opsi.org
 License:        GPL v2 or later
@@ -68,42 +67,15 @@ rm -rf $RPM_BUILD_ROOT
 
 # ===[ pre ]========================================
 %pre
-# add system group pcpatch and users pcpatch
-if [ -z "`getent group pcpatch`" ]; then
-	echo "  -> Adding group pcpatch"
-	groupadd -g 992 pcpatch
-fi
-if [ -z "`getent passwd pcpatch`" ]; then
-	echo "  -> Adding user pcpatch"
-	useradd -u 992 -g 992 -d /opt/pcbin/pcpatch -s /bin/bash pcpatch
-fi
-if [ -z "`getent passwd opsiconfd`" ]; then
-	echo "  -> Adding user opsiconfd"
-	useradd -u 993 -g 992 -d /var/lib/opsi -s /bin/bash opsiconfd
-fi
 
 # ===[ post ]=======================================
 %post
-if [ $1 -eq 1 ]; then
-	# Install
-	/usr/bin/opsi-setup --init-current-config --auto-configure-dhcpd --auto-configure-samba || true
-	/usr/bin/opsi-setup --set-rights || true
-else
-	# Upgrade
-	/usr/bin/opsi-setup --update-from unknown || true
-	/usr/bin/opsi-setup --set-rights /etc/opsi || true
-	/usr/bin/opsi-setup --set-rights /tftpboot || true
-	#/usr/bin/opsi-setup --set-rights /var/lib/opsi || true
-fi
 
 # ===[ preun ]======================================
 %preun
 
 # ===[ postun ]=====================================
 %postun
-if [ $1 -eq 0 ]; then
-	smbpasswd -x pcpatch >/dev/null 2>/dev/null || true
-fi
 
 # ===[ files ]======================================
 %files
