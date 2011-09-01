@@ -1,4 +1,4 @@
-opsi-depotserver (4.0.1.10) stable; urgency=low
+opsi-depotserver (4.0.1.10-1) stable; urgency=low
 
   * opsi-setup
     - fix bug from new param --ip-address
