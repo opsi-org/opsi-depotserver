@@ -1,3 +1,10 @@
+opsi-depotserver (4.0.1.10) stable; urgency=low
+
+  * opsi-setup
+    - fix bug from new param --ip-address
+
+ -- Erol Ueluekmen <e.ueluekmen@uib.de>  Thu, 01 Sep 2011 11:17:09 +0200
+
 opsi-depotserver (4.0.1.9-1) stable; urgency=low
 
   * opsi-setup

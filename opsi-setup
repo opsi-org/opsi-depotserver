@@ -73,7 +73,7 @@ def getSysConfig():
 	
 	sysConfig['hostname'] = sysConfig['fqdn'].split(u'.')[0]
 	sysConfig['domain'] = u'.'.join(sysConfig['fqdn'].split(u'.')[1:])
-	if not sysConfig['ipAddress']:
+	if not sysConfig.has_key('ipAddress'):
 		sysConfig['ipAddress'] = socket.gethostbyname(sysConfig['fqdn'])
 		if sysConfig['ipAddress'].split(u'.')[0] in ('127', '169'):
 			sysConfig['ipAddress'] = None
