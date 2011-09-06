@@ -1,7 +1,7 @@
 opsi-depotserver (4.0.1.11-1) stable; urgency=low
 
   * opsi-setup:
-    - add param --backend-config
+    - add params --backend-config, --update-univention
 
  -- Jan Schneider <j.schneider@uib.de>  Tue, 06 Sep 2011 16:14:50 +0200
 
