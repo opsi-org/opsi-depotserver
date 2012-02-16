@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.1.12-1) stable; urgency=low
+
+  * opsi-setup: fix reading problems with sudoers-file and smb.conf
+
+ -- Erol Ueluekmen <e.ueluekmen@uib.de>  Thu, 16 Feb 2012 00:48:41 +0100
+
 opsi-depotserver (4.0.1.11-1) stable; urgency=low
 
   * opsi-setup:
