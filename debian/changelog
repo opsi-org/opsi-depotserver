@@ -1,4 +1,4 @@
-opsi-depotserver (4.0.1.12-1) stable; urgency=low
+opsi-depotserver (4.0.1.12-1) testing; urgency=low
 
   * opsi-setup: fix reading problems with sudoers-file and smb.conf
 
