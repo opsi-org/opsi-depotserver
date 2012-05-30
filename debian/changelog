@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.2.1-1) stable; urgency=low
+
+  * Featurepack-Release 4.0.2
+
+ -- Erol Ueluekmen <e.ueluekmen@uib.de>  Wed, 30 May 2012 11:23:07 +0200
+
 opsi-depotserver (4.0.1.12-1) testing; urgency=low
 
   * opsi-setup: fix reading problems with sudoers-file and smb.conf
