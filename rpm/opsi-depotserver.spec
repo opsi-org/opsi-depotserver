@@ -69,10 +69,19 @@ rm -rf $RPM_BUILD_ROOT
 
 # ===[ pre ]========================================
 %pre
-# add system group pcpatch and users pcpatch
-if [ -z "`getent group pcpatch`" ]; then
-	echo "  -> Adding group pcpatch"
-	groupadd -g 992 pcpatch
+# add system group fileadmins and users pcpatch
+fileadmingroup=$(grep "fileadmingroup" /etc/opsi/opsi.conf | cut -d "=" -f 2 | sed 's/ //g')
+if [ -z "$fileadmingroup" ]; then
+	fileadmingroup=pcpatch
+fi
+if [ $fileadmingroup != pcpatch -a -z "$(getent group $fileadmingroup)" ]; then
+	echo "  -> Renaming group pcpatch to $fileadmingroup"
+	groupmode -n $fileadmingroup pcpatch
+else
+	if [ -z "$(getent group $fileadmingroup)"  ]; then
+		echo "  -> Adding group $fileadmingroup"
+		groupadd -g 992 $fileadmingroup
+	fi
 fi
 if [ -z "`getent passwd pcpatch`" ]; then
 	echo "  -> Adding user pcpatch"

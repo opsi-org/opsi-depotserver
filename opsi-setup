@@ -40,8 +40,14 @@ OPSICONFD_USER   = u'opsiconfd'
 ADMIN_GROUP      = u'opsiadmin'
 CLIENT_USER      = u'pcpatch'
 FILE_ADMIN_GROUP = u'pcpatch'
+
+OPSI_CONF = u'/etc/opsi/opsi.conf'
 OPSI_GLOBAL_CONF = u'/etc/opsi/global.conf'
- 
+
+try:
+	FILE_ADMIN_GROUP = OpsiConfFile(OPSI_CONF).getOpsiFileAdminGroup()
+except:
+	FILE_ADMIN_GROUP = u'pcpatch'
  
 if os.path.exists(u'/etc/init.d/smbd'):
 	SMB_INIT = u'/etc/init.d/smbd'

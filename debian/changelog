@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.2.2-1) quantal; urgency=low
+
+  * Added opsiFileAdmins handling.
+
+ -- Erol Ueluekmen <e.ueluekmen@uib.de>  Thu, 19 Jul 2012 11:46:20 +0200
+
 opsi-depotserver (4.0.2.1-1) stable; urgency=low
 
   * Featurepack-Release 4.0.2
