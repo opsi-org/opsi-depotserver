@@ -1,4 +1,4 @@
-opsi-depotserver (4.0.2.2-1) quantal; urgency=low
+opsi-depotserver (4.0.2.2-1) testing; urgency=low
 
   * Added opsiFileAdmins handling.
 
