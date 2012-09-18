@@ -1,5 +1,11 @@
 opsi-depotserver (4.0.2.2-1) testing; urgency=low
 
+  * Config-default-creation by first running --init-current-config fixed
+
+ -- Erol Ueluekmen <e.ueluekmen@uib.de>  Tue, 18 Sep 2012 17:42:23 +0200
+
+opsi-depotserver (4.0.2.2-1) testing; urgency=low
+
   * Added opsiFileAdmins handling.
 
  -- Erol Ueluekmen <e.ueluekmen@uib.de>  Thu, 19 Jul 2012 11:46:20 +0200
