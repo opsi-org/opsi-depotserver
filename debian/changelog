@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.2.4-1) testing; urgency=low
+
+  * opsi-setup: added renew-opsiconfd-cert task
+
+ -- Erol Ueluekmen <e.ueluekmen@uib.de>  Mon, 28 Jan 2013 17:34:42 +0100
+
 opsi-depotserver (4.0.2.3-1) stable; urgency=low
 
   * Config-default-creation by first running --init-current-config fixed
