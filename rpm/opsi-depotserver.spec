@@ -11,7 +11,7 @@ Requires:       python-opsi >= 4.0.1 opsiconfd >= 4.0.1 opsi-atftp opsipxeconfd 
 Conflicts:      opsi-depotserver-expert
 %if 0%{?suse_version}
 BuildRequires:  pwdutils python-opsi
-Requires:       pwdutils dhcp-server
+Requires:       pwdutils
 %endif
 %if 0%{?rhel_version} || 0%{?centos_version}
 Requires:       dhcp redhat-lsb

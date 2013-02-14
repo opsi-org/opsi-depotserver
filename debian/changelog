@@ -1,6 +1,7 @@
-opsi-depotserver (4.0.2.4-1) testing; urgency=low
+opsi-depotserver (4.0.3.1-1) testing; urgency=low
 
   * opsi-setup: added renew-opsiconfd-cert task
+  * opsi-setup: added special files in set rights to add execute bit for these files in depot
 
  -- Erol Ueluekmen <e.ueluekmen@uib.de>  Mon, 28 Jan 2013 17:34:42 +0100
 
