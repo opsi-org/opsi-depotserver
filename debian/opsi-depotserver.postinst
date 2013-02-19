@@ -22,8 +22,12 @@
 
 db_get opsi/configure_samba
 CONFIGURE_SAMBA=$RET
-db_get opsi/configure_dhcpd
-CONFIGURE_DHCPD=$RET
+if [ -e "/etc/dhcp/dhcpd.conf" -o -e "/etc/dhcp3/dhcpd.conf" ]; then
+	CONFIGURE_DHCPD="false"
+else
+	db_get opsi/configure_dhcpd
+	CONFIGURE_DHCPD=$RET
+fi
 
 case "$1" in
 	configure)
