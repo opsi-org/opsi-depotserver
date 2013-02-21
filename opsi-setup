@@ -2482,19 +2482,21 @@ def renewOpsiconfdCert():
 		commonName      		= None
 		emailAddress       		= ""
 		key					= None
+		serial				=  0
        		
        		if os.path.exists(OPSICONFD_CERTFILE):
        			data = open(OPSICONFD_CERTFILE).read()
        			cert = crypto.load_certificate(crypto.FILETYPE_PEM, data)
        			key  = crypto.load_privatekey(crypto.FILETYPE_PEM, data)
 
-       			certparams["country"]            = cert.get_subject().C
-       			certparams["state"]              = cert.get_subject().ST
-       			certparams["locality"]           = cert.get_subject().L
-       			certparams["organization"]       = cert.get_subject().O
-       			certparams["organizationalUnit"] = cert.get_subject().OU
-       			certparams["commonName"]         = cert.get_subject().CN
-       			certparams["emailAddress"]       = cert.get_subject().emailAddress
+       			certparams["country"]			= cert.get_subject().C
+       			certparams["state"]			= cert.get_subject().ST
+       			certparams["locality"]			= cert.get_subject().L
+       			certparams["organization"]		= cert.get_subject().O
+       			certparams["organizationalUnit"]	= cert.get_subject().OU
+       			certparams["commonName"]		= cert.get_subject().CN
+       			certparams["emailAddress"]		= cert.get_subject().emailAddress
+       			serial						= cert.get_serial_number()
 		
 		
 		messageBox = None
@@ -2571,7 +2573,7 @@ def renewOpsiconfdCert():
 	
 	logger.notice(u"Generating new Serialnumber")
 	#Todo generating Serial new
-	cert.set_serial_number(1000)
+	cert.set_serial_number(serial + 1)
 	logger.notice(u"Setting new expiration date (%d years)" % expires)
 	cert.gmtime_adj_notBefore(0)
 	cert.gmtime_adj_notAfter(expires*365*24*60*60)
