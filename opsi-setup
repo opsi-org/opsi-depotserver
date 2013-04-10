@@ -2184,13 +2184,10 @@ def configureMySQLBackend():
 		messageBox.hide()
 		
 		ui.showMessage(title = u'Success', text = u"MySQL Backend configuration done", width = 70, height = 4, seconds = 0)
-	except:
-		if ui:
-			ui.exit()
-		logger.setConsoleLevel(consoleLevel)
-	if ui:
+		
+	finally:
 		ui.exit()
-	logger.setConsoleLevel(consoleLevel)
+		logger.setConsoleLevel(consoleLevel)
 	
 
 def registerDepot():
@@ -2393,13 +2390,9 @@ def registerDepot():
 				continue
 			
 			break
-	except:
-		if ui:
-			ui.exit()
-		logger.setConsoleLevel(consoleLevel)
-	if ui:
+	finally:
 		ui.exit()
-	logger.setConsoleLevel(consoleLevel)
+		logger.setConsoleLevel(consoleLevel)
 	
 	logger.notice(u"Creating depot '%s'" % depot.id)
 	jsonrpcBackend.host_createObjects([ depot ])
@@ -2548,16 +2541,10 @@ def renewOpsiconfdCert():
 				
 			break
 			
-	except Exception, e:
+	finally:
 		if ui:
 			ui.exit()
 		logger.setConsoleLevel(consoleLevel)
-		logger.error(e)
-		return
-	
-	if ui:
-		ui.exit()
-	logger.setConsoleLevel(consoleLevel)
 			
 	
 	logger.notice(u"Creating new opsiconfd cert")
@@ -2945,13 +2932,10 @@ def editConfigDefaults():
 				configs[selectedConfig].setDefaultValues(value)
 			
 			backend.config_updateObjects([configs[selectedConfig]])
-	except:
-		if ui:
-			ui.exit()
-		logger.setConsoleLevel(consoleLevel)
-	if ui:
+	
+	finally:
 		ui.exit()
-	logger.setConsoleLevel(consoleLevel)
+		logger.setConsoleLevel(consoleLevel)
 
 def cleanupBackend():
 	from OPSI.Backend.BackendManager import BackendManager
