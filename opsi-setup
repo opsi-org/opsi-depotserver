@@ -3162,7 +3162,7 @@ def usage():
 	print u"   --cleanup-backend             cleanup backend"
 	print u"   --auto-configure-samba        patch smb.conf"
 	print u"   --auto-configure-dhcpd        patch dhcpd.conf"
-	print u"   --renew-opsiconfd-cert        renew opsiconfd-cert"
+	print u"   --renew-opsiconfd-cert        renew opsiconfd-cert (not supported on python < 2.5)"
 	print u""
 	
 def main():
