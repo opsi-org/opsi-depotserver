@@ -1,8 +1,9 @@
 opsi-depotserver (4.0.3.3-1) experimental; urgency=low
 
   * opsi-setup: cleanupBackend fixes now duplicate productProperty default values in mysql-backend
+                new option --patch-sudoers-file
 
- -- Erol Ueluekmen <e.ueluekmen@uib.de>  Tue, 14 May 2013 17:05:07 +0200
+ -- Erol Ueluekmen <e.ueluekmen@uib.de>  Tue, 31 May 2013 17:05:07 +0200
 
 opsi-depotserver (4.0.3.2-1) testing; urgency=low
 

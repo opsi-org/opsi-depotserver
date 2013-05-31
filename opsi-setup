@@ -359,6 +359,45 @@ def configureDHCPD():
 	os.chown(DHCPD_CONF, opsiconfdUid, adminGroupGid)
 	os.chmod(DHCPD_CONF, 0664)
 	
+def patchSudoersFileForOpsi():
+	#get opsifileadmins groupname!!!!
+	entries = [
+		"opsiconfd ALL=NOPASSWD: %s" % "/usr/bin/opsi-setup",
+		"%%%s ALL=NOPASSWD: %s" % (FILE_ADMIN_GROUP, "/usr/bin/opsi-setup"),
+	]
+	#modify = False
+	
+	
+	lines = []
+	for entry in entries:
+		found = False
+		
+		f = codecs.open(SUDOERS, 'r', 'utf-8')
+		for line in f.readlines():
+			if (line.find(entry) != -1):
+				found = True
+			lines.append(line)
+		f.close()
+		
+		if not found:
+			lines.append(entry)
+			modify = True
+		
+	
+	if modify:
+		logger.notice(u"   Creating backup of %s" % SUDOERS)
+		shutil.copy(SUDOERS, SUDOERS + u'.' + time.strftime("%Y-%m-%d_%H:%M"))
+			
+		logger.notice(u"   Adding sudoers entries for opsi")
+		distributor = getSysConfig()['distributor']
+		if (distributor.lower().find('redhat') != -1) or (distributor.lower().find('centos') != -1) or (distributor.lower().find('scientificsl') != -1) or (distributor.lower().find('sme') != -1):
+			lines.append(u"Defaults:opsiconfd !requiretty\n")
+		
+		logger.notice(u"   Writing new %s" % SUDOERS)
+		f = codecs.open(SUDOERS, 'w', 'utf-8')
+		f.writelines(lines)
+		f.close()
+	
 def configureClientUser():
 	logger.notice(u"Configuring client user %s" % CLIENT_USER)
 	
@@ -3210,6 +3249,7 @@ def usage():
 	print u"   --auto-configure-samba        patch smb.conf"
 	print u"   --auto-configure-dhcpd        patch dhcpd.conf"
 	print u"   --renew-opsiconfd-cert        renew opsiconfd-cert (not supported on python < 2.5)"
+	print u"   --patch-sudoers-file		patching sudoers file for tasks in opsiadmin context."
 	print u""
 	
 def main():
@@ -3220,7 +3260,7 @@ def main():
 		(opts, args) = getopt.getopt(sys.argv[1:], "hl:",
 			['help', 'log-file=', 'ip-address=', 'backend-config=', 'init-current-config', 'set-rights', 'auto-configure-samba', 'auto-configure-dhcpd',
 			 'register-depot', 'configure-mysql', 'update-mysql', 'update-ldap', 'update-univention', 'update-file', 'edit-config-defaults', 'cleanup-backend',
-			 'update-from=', 'renew-opsiconfd-cert'])
+			 'update-from=', 'renew-opsiconfd-cert', 'patch-sudoers-file'])
 		
 	except Exception, e:
 		usage()
@@ -3276,6 +3316,8 @@ def main():
 			autoConfigureDhcpd = True
 		elif (opt == "--renew-opsiconfd-cert"):
 			task = "renew-opsiconfd-cert"
+		elif (opt == "--patch-sudoers-file"):
+			task = "patch-sudoers-file"
 	
 	path = u'/'
 	if (len(args) > 0):
@@ -3329,6 +3371,9 @@ def main():
 	
 	elif (task == "renew-opsiconfd-cert"):
 		renewOpsiconfdCert()
+		
+	elif (task == "patch-sudoers-file"):
+		patchSudoersFileForOpsi()
 	
 	elif (updateFrom):
 		update(updateFrom)
