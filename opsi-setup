@@ -407,6 +407,8 @@ def patchSudoersFileForOpsi():
 		if (distributor.lower().find('redhat') != -1) or (distributor.lower().find('centos') != -1) or (distributor.lower().find('scientificsl') != -1) or (distributor.lower().find('sme') != -1):
 			lines.append(u"Defaults:opsiconfd !requiretty\n")
 
+		lines.append('\n')
+
 		logger.notice(u"   Writing new %s" % SUDOERS)
 		f = codecs.open(SUDOERS, 'w', 'utf-8')
 		f.writelines(lines)
