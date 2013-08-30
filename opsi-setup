@@ -2398,40 +2398,40 @@ def renewOpsiconfdCert():
 	try:
 		#loaddefaults
 		certparams = {
-			"country"            	: u"DE",
-       			"state"              	: u"RP",
-       			"locality"           	: u"Mainz",
-       			"organization"         	: u"uib gmbh",
-       			"organizationalUnit" 	: u"",
-       			"commonName"      	: forceHostId(getfqdn(conf=OPSI_GLOBAL_CONF)),
-       			"emailAddress"       	: u"",
-       			"expires"                	: u"2",
-       		}
+			"country": u"DE",
+			"state": u"RP",
+			"locality": u"Mainz",
+			"organization": u"uib gmbh",
+			"organizationalUnit": u"",
+			"commonName": forceHostId(getfqdn(conf=OPSI_GLOBAL_CONF)),
+			"emailAddress": u"",
+			"expires": u"2",
+		}
 
-       		if os.path.exists(OPSICONFD_CERTFILE):
-       			data = open(OPSICONFD_CERTFILE).read()
-       			cert = crypto.load_certificate(crypto.FILETYPE_PEM, data)
+		if os.path.exists(OPSICONFD_CERTFILE):
+			data = open(OPSICONFD_CERTFILE).read()
+			cert = crypto.load_certificate(crypto.FILETYPE_PEM, data)
 
-       			certparams["country"]            = cert.get_subject().C
-       			certparams["state"]              = cert.get_subject().ST
-       			certparams["locality"]           = cert.get_subject().L
-       			certparams["organization"]       = cert.get_subject().O
-       			certparams["organizationalUnit"] = cert.get_subject().OU
-       			certparams["commonName"]         = cert.get_subject().CN
-       			certparams["emailAddress"]       = cert.get_subject().emailAddress
+			certparams["country"] = cert.get_subject().C
+			certparams["state"] = cert.get_subject().ST
+			certparams["locality"] = cert.get_subject().L
+			certparams["organization"] = cert.get_subject().O
+			certparams["organizationalUnit"] = cert.get_subject().OU
+			certparams["commonName"] = cert.get_subject().CN
+			certparams["emailAddress"] = cert.get_subject().emailAddress
 
 
 		messageBox = None
 		while True:
 			values = [
-				{ "name": u"Country",          		"value": certparams["country"] },
-                        	{ "name": u"State",            		"value": certparams["state"] },
-                        	{ "name": u"Locality",         		"value": certparams["locality"] },
-                        	{ "name": u"Organization",     		"value": certparams["organization"] },
-                        	{ "name": u"OrganizationUnit",	"value": certparams["organizationalUnit"] },
-                        	{ "name": u"hostname",         		"value": certparams["commonName"] },
-                        	{ "name": u"Emailaddress",     	"value": certparams["emailAddress"] },
-                        	{ "name": u"Expires (Years)",  		"value": certparams["expires"] },
+				{ "name": u"Country", "value": certparams["country"] },
+				{ "name": u"State", "value": certparams["state"] },
+				{ "name": u"Locality", "value": certparams["locality"] },
+				{ "name": u"Organization", "value": certparams["organization"] },
+				{ "name": u"OrganizationUnit", "value": certparams["organizationalUnit"] },
+				{ "name": u"hostname", "value": certparams["commonName"] },
+				{ "name": u"Emailaddress", "value": certparams["emailAddress"] },
+				{ "name": u"Expires (Years)", "value": certparams["expires"] },
 			]
 			values = ui.getValues(title = u'Renew opsiconfd Certificate', width = 70, height = 15, entries = values)
 
@@ -2440,22 +2440,22 @@ def renewOpsiconfdCert():
 
 			error = None
 
-			country            	= values[0]["value"]
-                	state              		= values[1]["value"]
-                	locality           		= values[2]["value"]
-                	organization       	= values[3]["value"]
-                	organizationalUnit	= values[4]["value"]
-                	commonName      	= values[5]["value"]
-                	emailAddress       	= values[6]["value"]
-
+			country = values[0]["value"]
+			state = values[1]["value"]
+			locality = values[2]["value"]
+			organization = values[3]["value"]
+			organizationalUnit = values[4]["value"]
+			commonName = values[5]["value"]
+			emailAddress = values[6]["value"]
 
 			if not commonName == forceHostId(getfqdn(conf=OPSI_GLOBAL_CONF)):
 				if not error: error = "commonName must be the FQDN from Server"
 
 			try:
 				expires  = forceInt(values[7]["value"])
-			except Exception, e:
-					if not error: error = u'No valid years for expiredate given, must be an integer'
+			except Exception:
+					if not error:
+						error = u'No valid years for expiredate given, must be an integer'
 
 			if error:
 				ui.showError(title = u'Bad value', text = error, width = 50, height = 5)
@@ -2504,24 +2504,25 @@ def renewOpsiconfdCert():
 		crypto.dump_certificate(crypto.FILETYPE_PEM, cert),
 		crypto.dump_privatekey(crypto.FILETYPE_PEM, k))
 	)
-     	open(OPSICONFD_CERTFILE, "wt").write(certcontext)
-     	logger.notice(u"Generating and filling new randomize string")
-     	open("/tmp/opsiconfd.rand", "wt").write(rand.bytes(512))
-     	execute("%s gendh -rand %s 512 >> %s" % (
-     		which("openssl"), "/tmp/opsiconfd.rand", OPSICONFD_CERTFILE))
-     	logger.notice(u"Setting rights")
-     	opsiconfdUid  = pwd.getpwnam(OPSICONFD_USER)[2]
+	open(OPSICONFD_CERTFILE, "wt").write(certcontext)
+	logger.notice(u"Generating and filling new randomize string")
+	open("/tmp/opsiconfd.rand", "wt").write(rand.bytes(512))
+	execute("%s gendh -rand %s 512 >> %s" % (
+			which("openssl"), "/tmp/opsiconfd.rand", OPSICONFD_CERTFILE
+		)
+	)
+	logger.notice(u"Setting rights")
+	opsiconfdUid  = pwd.getpwnam(OPSICONFD_USER)[2]
 	adminGroupGid = grp.getgrnam(ADMIN_GROUP)[2]
-     	os.chown(u'/etc/opsi/passwd', opsiconfdUid, adminGroupGid)
-     	os.chmod(u'/etc/opsi/passwd', 0660)
-     	logger.notice(u"cleanup")
-     	os.remove("/tmp/opsiconfd.rand")
-     	logger.notice(u"Restarting opsi Webservice")
+	os.chown(u'/etc/opsi/passwd', opsiconfdUid, adminGroupGid)
+	os.chmod(u'/etc/opsi/passwd', 0660)
+	logger.notice(u"cleanup")
+	os.remove("/tmp/opsiconfd.rand")
+	logger.notice(u"Restarting opsi Webservice")
 
-     	logger.notice(u"Restarting services")
-     	execute("/etc/init.d/opsiconfd restart")
-     	execute("/etc/init.d/opsipxeconfd restart")
-
+	logger.notice(u"Restarting services")
+	execute("/etc/init.d/opsiconfd restart")
+	execute("/etc/init.d/opsipxeconfd restart")
 
 
 def initializeBackends():
