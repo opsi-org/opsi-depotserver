@@ -379,8 +379,7 @@ def patchSudoersFileForOpsi():
 		"opsiconfd ALL=NOPASSWD: %s" % "/usr/bin/opsi-setup",
 		"%%%s ALL=NOPASSWD: %s" % (FILE_ADMIN_GROUP, "/usr/bin/opsi-setup"),
 	]
-	#modify = False
-
+	modify = False
 
 	lines = []
 	for entry in entries:
@@ -396,7 +395,6 @@ def patchSudoersFileForOpsi():
 		if not found:
 			lines.append(entry)
 			modify = True
-
 
 	if modify:
 		logger.notice(u"   Creating backup of %s" % SUDOERS)
