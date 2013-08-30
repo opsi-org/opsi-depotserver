@@ -25,7 +25,6 @@ if (sys.version_info >= (2,6)):
 else:
 	import simplejson as json
 
-
 from OPSI.Backend.Backend import ExtendedConfigDataBackend
 from OPSI.Backend.File import *
 from OPSI.Backend.JSONRPC import *
@@ -373,6 +372,7 @@ def configureDHCPD():
 	os.chown(DHCPD_CONF, opsiconfdUid, adminGroupGid)
 	os.chmod(DHCPD_CONF, 0664)
 
+
 def patchSudoersFileForOpsi():
 	#get opsifileadmins groupname!!!!
 	entries = [
@@ -413,6 +413,7 @@ def patchSudoersFileForOpsi():
 		f = codecs.open(SUDOERS, 'w', 'utf-8')
 		f.writelines(lines)
 		f.close()
+
 
 def configureClientUser():
 	logger.notice(u"Configuring client user %s" % CLIENT_USER)
@@ -478,6 +479,128 @@ def configureClientUser():
 	execute('opsi-admin -d task setPcpatchPassword "%s"' % password)
 
 
+def setRights(path=u'/'):
+	logger.notice(u"Setting rights")
+	basedir = path
+	if not os.path.isdir(basedir):
+		basedir = os.path.dirname(basedir)
+
+	clientUserUid     = pwd.getpwnam(CLIENT_USER)[2]
+	opsiconfdUid      = pwd.getpwnam(OPSICONFD_USER)[2]
+	adminGroupGid     = grp.getgrnam(ADMIN_GROUP)[2]
+	fileAdminGroupGid = grp.getgrnam(FILE_ADMIN_GROUP)[2]
+
+	depotDir = ''
+	dirnames = [u'/tftpboot/linux', u'/home/opsiproducts', u'/var/log/opsi', u'/etc/opsi', u'/var/lib/opsi']
+	specialfiles = [u'setup.py', u'show_drivers.py', u'create_driver_links.py', u'opsi-deploy-client-agent', u'opsi-deploy-client-agent-old', u'winexe']
+	if (getSysConfig()['distribution'].lower().find('suse linux enterprise server') != -1):
+		dirnames = [u'/var/lib/tftpboot/opsi', u'/var/log/opsi', u'/etc/opsi', u'/var/lib/opsi', u'/var/lib/opsi/workbench']
+	if not path.startswith('/etc') and not path.startswith('/tftpboot'):
+		try:
+			from OPSI.Backend.BackendManager import BackendManager
+			backend = BackendManager(
+				dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
+				backendConfigDir   = u'/etc/opsi/backends',
+				extensionConfigDir = u'/etc/opsi/backendManager/extend.d'
+			)
+			depot = backend.host_getObjects(type = 'OpsiDepotserver', id = getSysConfig()['fqdn'])
+			backend.backend_exit()
+			if depot:
+				depot = depot[0]
+				depotUrl = depot.getDepotLocalUrl()
+				if not depotUrl.startswith('file:///'):
+					raise Exception(u"Bad repository local url '%s'" % depotUrl)
+				depotDir = depotUrl[7:]
+				if os.path.exists(depotDir):
+					logger.info(u"Local depot directory '%s' found" % depotDir)
+					dirnames.append(depotDir)
+		except Exception, e:
+			logger.error(e)
+
+	if basedir.startswith('/opt/pcbin/install'):
+		found = False
+		for dirname in dirnames:
+			if dirname.startswith('/opt/pcbin/install'):
+				found = True
+				break
+		if not found:
+			dirnames.append('/opt/pcbin/install')
+
+	for dirname in dirnames:
+		if not dirname.startswith(basedir) and not basedir.startswith(dirname):
+			continue
+		uid  = opsiconfdUid
+		gid  = fileAdminGroupGid
+		fmod = 0660
+		dmod = 0770
+
+		isProduct = False
+		if dirname not in (u'/var/lib/tftpboot/opsi', u'/tftpboot/linux', u'/var/log/opsi', u'/etc/opsi', u'/var/lib/opsi', u'/var/lib/opsi/workbench'):
+			isProduct = True
+
+		if dirname in (u'/var/lib/tftpboot/opsi', u'/tftpboot/linux'):
+			fmod = 0664
+			dmod = 0775
+		if dirname in (u'/var/log/opsi', u'/etc/opsi'):
+			gid = adminGroupGid
+		if dirname in (u'/home/opsiproducts', '/var/lib/opsi/workbench'):
+			uid = -1
+			dmod = 02770
+		if dirname in (depotDir,):
+			dmod = 02770
+
+		if os.path.isfile(path):
+			logger.debug(u"Setting rights on file '%s'" % path)
+			os.chown(path, uid, gid)
+			if isProduct:
+				os.chmod(path, (os.stat(path)[0] | 0660) & 0770)
+			else:
+				os.chmod(path, fmod)
+			continue
+
+		startPath = dirname
+		if basedir.startswith(dirname):
+			startPath = basedir
+
+		logger.notice(u"Setting rights on directory '%s'" % startPath)
+		os.chown(startPath, uid, gid)
+		os.chmod(startPath, dmod)
+		for f in findFiles(startPath, prefix = startPath, returnLinks = False):
+			os.chown(f, uid, gid)
+			if os.path.isdir(f):
+				logger.debug(u"Setting rights on directory '%s'" % f)
+				os.chmod(f, dmod)
+			elif os.path.isfile(f):
+				logger.debug(u"Setting rights on file '%s'" % f)
+				if isProduct:
+					if os.path.basename(f) in specialfiles:
+						os.chmod(f, 0770)
+					else:
+						os.chmod(f, (os.stat(f)[0] | 0660) & 0770)
+				else:
+					os.chmod(f, fmod)
+
+		if startPath.startswith(u'/var/lib/opsi'):
+			os.chmod(u'/var/lib/opsi', 0750)
+			os.chown(u'/var/lib/opsi', clientUserUid, fileAdminGroupGid)
+			sshDir = u'/var/lib/opsi/.ssh'
+			if os.path.exists(sshDir):
+				os.chown(sshDir, clientUserUid, fileAdminGroupGid)
+				os.chmod(sshDir, 0750)
+				idRsa = os.path.join(sshDir, u'id_rsa')
+				if os.path.exists(idRsa):
+					os.chmod(idRsa, 0640)
+					os.chown(idRsa, clientUserUid, fileAdminGroupGid)
+				idRsaPub = os.path.join(sshDir, u'id_rsa.pub')
+				if os.path.exists(idRsaPub):
+					os.chmod(idRsaPub, 0644)
+					os.chown(idRsaPub, clientUserUid, fileAdminGroupGid)
+				authorizedKeys = os.path.join(sshDir, u'authorized_keys')
+				if os.path.exists(authorizedKeys):
+					os.chmod(authorizedKeys, 0600)
+					os.chown(authorizedKeys, clientUserUid, fileAdminGroupGid)
+
+
 def update(fromVersion = None):
 	# 3.x => 4.x
 	if os.path.exists(u'/var/lib/opsi/products'):
@@ -532,11 +655,12 @@ def update(fromVersion = None):
 		initializeConfigs()
 	configureSamba()
 
+
 def updateUniventionBackend():
 	return updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/univention.conf')
 
-def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 
+def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 	l = {'socket': socket, 'os': os, 'sys': sys, 'module': '', 'config': {}}
 	logger.info(u"Loading backend config '%s'" % backendConfigFile)
 	execfile(backendConfigFile, l)
@@ -951,7 +1075,6 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 			except Exception, e:
 				logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
 
-
 	logger.notice(u"Converting opsiProductProperty")
 	search = LDAPObjectSearch(ldapSession, u'cn=productProperties,%s' % config['opsiBaseDn'], filter = u'(objectClass=opsiProductProperty)')
 	for obj in search.getObjects():
@@ -986,12 +1109,12 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 		except Exception, e:
 			logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
 
-
 	for container in ('generalConfigs', 'networkConfigs', 'productClasses', 'productLicenses', 'productProperties', 'productStates'):
 		ldapObj = LDAPObject(u"cn=%s,%s" % (container, config['opsiBaseDn']))
 		if ldapObj.exists(ldapSession):
 			logger.notice(u"Deleting container: %s" % ldapObj.getDn())
 			ldapObj.deleteFromDirectory(ldapSession, recursive = True)
+
 
 def updateMySQLBackend():
 	backendConfigFile = u'/etc/opsi/backends/mysql.conf'
@@ -1404,7 +1527,6 @@ def updateMySQLBackend():
 	mysqlBackend.backend_exit()
 
 
-
 def updateFileBackend():
 	backendConfigFile = u'/etc/opsi/backends/file.conf'
 
@@ -1448,13 +1570,9 @@ def updateFileBackend():
 		noDepotDir = True
 		logger.warning("Depot directory does not exist: '%s'" % (os.path.join(config["baseDir"], u'depots')))
 
-
-
 	shutil.move(config["baseDir"], backupDir)
 
 	backend.backend_createBase()
-
-
 
 	opsiHostKeys = {}
 	if os.path.isfile(config["hostKeyFile"]):
@@ -1484,7 +1602,6 @@ def updateFileBackend():
 	else:
 		logger.warning(u"Host key file does not exist: '%s'" % (config["hostKeyFile"]))
 
-
 	lockedList = {}
 	if os.path.isfile(os.path.join(backupDepotConfigDir, u'product.locks')):
 		logger.info(u"Getting information on product.locks" % ())
@@ -1501,8 +1618,6 @@ def updateFileBackend():
 			logger.error(u"Could not get all information on product.locks: %s" % (e))
 	else:
 		logger.warning(u"Product locks fils does not exist: '%s'" % (os.path.join(backupDepotConfigDir, u'product.locks')))
-
-
 
 	#needed for configStates
 	updatedConfigs = []
@@ -1543,7 +1658,6 @@ def updateFileBackend():
 			if depotId in opsiHostKeys.keys():
 				oldDepotDict['opsiHostKey'] = opsiHostKeys[depotId]
 
-
 			updatedProductPropertyStates = []
 			try:
 				iniFile = IniFile(filename = oldDepot)
@@ -1577,8 +1691,6 @@ def updateFileBackend():
 
 			backend.host_createObjects([OpsiDepotserver.fromHash(oldDepotDict)])
 
-
-
 			logger.notice(u"Updating products on depot '%s'" % (depotId))
 			productFilenames = []
 
@@ -1598,8 +1710,6 @@ def updateFileBackend():
 						logger.warning(u"Invalid product: '%s' in '%s': %s" % (productId, productPath, e))
 						continue
 
-
-
 			updatedProductDependencies = []
 			for productFilename in productFilenames:
 				packageControlFile = PackageControlFile(filename = productFilename)
@@ -1612,8 +1722,6 @@ def updateFileBackend():
 					continue
 
 				backend.product_createObjects([oldProduct])
-
-
 
 				logger.info(u"Updating ProductProperties in '%s'" % (oldProduct.getId()))
 				for pp in packageControlFile.getProductProperties():
@@ -1635,7 +1743,6 @@ def updateFileBackend():
 							}
 						)
 					)
-
 
 				#logger.notice(u"Updating ProductDependencies in '%s'" % (depotId))
 				#will be updated after all products
@@ -1670,8 +1777,6 @@ def updateFileBackend():
 					backend.productDependency_createObjects([pd])
 				except Exception, e:
 					logger.error(u"Could not create ProductDependency '%s': %s" % (pd.getIdent(), e))
-
-
 
 			logger.notice(u"Updating ProductPropertyStates in '%s'" % (depotId))
 			for pps in updatedProductPropertyStates:
@@ -1727,7 +1832,6 @@ def updateFileBackend():
 		except Exception, e:
 			logger.error(u"Could not create config '%s': %s" % (c.getIdent(), e))
 
-
 	logger.notice(u"Updating clients ...")
 	if not noClientDir:
 		for filename in os.listdir(backupClientConfigDir):
@@ -1759,7 +1863,6 @@ def updateFileBackend():
 
 			if clientId in opsiHostKeys.keys():
 				oldClientDict['opsiHostKey'] = opsiHostKeys[clientId]
-
 
 			updatedProductPropertyStates = []
 			updatedProductOnClients = []
@@ -1897,8 +2000,6 @@ def updateFileBackend():
 	else:
 		logger.error(u"No client folder, skipping clients.")
 
-
-
 	logger.notice(u"Updating Groups ..." % ())
 	updatedGroups = []
 	updatedObjectToGroups = []
@@ -1964,7 +2065,6 @@ def updateFileBackend():
 
 		updatedGroups = switchedGroups
 
-
 		for g in updatedGroups:
 			try:
 				backend.group_createObjects([g])
@@ -1979,11 +2079,8 @@ def updateFileBackend():
 	else:
 		logger.error(u"No groups file, skipping groups.")
 
-
-
 	#TODO: ignore?
 	#AuditSoftwares/AuditSoftwareOnClients/AuditHardwares/AuditHardwareOnHosts
-
 
 
 def configureMySQLBackend():
@@ -2384,8 +2481,8 @@ def registerDepot():
 	execute("/etc/init.d/opsiconfd restart")
 	execute("/etc/init.d/opsipxeconfd restart")
 
-def renewOpsiconfdCert():
 
+def renewOpsiconfdCert():
 	OPSICONFD_CERTFILE = u"/etc/opsi/opsiconfd.pem"
 	consoleLevel = logger.getConsoleLevel()
 	logger.setConsoleLevel(LOG_NONE)
@@ -2632,6 +2729,7 @@ def initializeBackends():
 		except Exception, e:
 			logger.warning(u"Failed to create symlink '%s' pointing to '%s': %s" % (link, source, e))
 
+
 def initializeConfigs(configServer = None):
 	from OPSI.Backend.BackendManager import BackendManager
 	backend = BackendManager(
@@ -2769,6 +2867,7 @@ def initializeConfigs(configServer = None):
 		backend.config_createObjects(configs)
 	backend.backend_exit()
 
+
 def editConfigDefaults():
 	from OPSI.Backend.BackendManager import BackendManager
 	backend = BackendManager(
@@ -2869,6 +2968,7 @@ def editConfigDefaults():
 	finally:
 		ui.exit()
 		logger.setConsoleLevel(consoleLevel)
+
 
 def cleanupBackend():
 	from OPSI.Backend.BackendManager import BackendManager
@@ -3135,8 +3235,6 @@ def cleanupBackend():
 			backend.auditSoftwareOnClient_delete(aso['name'], aso['version'], aso['subVersion'], aso['language'], aso['architecture'], aso['clientId'])
 
 
-
-
 def usage():
 	print u"\nUsage: %s [options]" % os.path.basename(sys.argv[0])
 	print u""
@@ -3163,6 +3261,7 @@ def usage():
 	print u"   --renew-opsiconfd-cert        renew opsiconfd-cert (not supported on python < 2.5)"
 	print u"   --patch-sudoers-file		patching sudoers file for tasks in opsiadmin context."
 	print u""
+
 
 def main():
 	if (os.geteuid() != 0):
@@ -3293,6 +3392,7 @@ def main():
 	elif not autoConfigureSamba and not autoConfigureDhcpd:
 		usage()
 		sys.exit(1)
+
 
 if (__name__ == "__main__"):
 	logger.setLogFormat(u'[%l] [%D] %M (%F|%N)')
