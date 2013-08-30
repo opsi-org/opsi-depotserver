@@ -6,27 +6,41 @@
 # = = = = = = = = = = = = = = = = = = = = = = =
 
 
-from OPSI.Logger import *
-from OPSI.Types import *
-from OPSI.Object import *
-from OPSI.System import *
-from OPSI.Util.File import *
-from OPSI.Util.File.Opsi import *
-from OPSI.Util import *
-from OPSI.UI import *
-from OPSI.Backend.MySQL import *
-from OPSI.Backend.LDAP import *
-from OPSI.Backend.File import *
-from OPSI.Backend.JSONRPC import *
-from OPSI.Backend.Backend import ExtendedConfigDataBackend
-
-import os, sys, socket, re, shutil, getopt, pwd, grp, stat, codecs, time, MySQLdb, ldap
-from OpenSSL import crypto, SSL, rand
+import codecs
+import getopt
+import grp
+import ldap
+import MySQLdb
+import os
+import pwd
+import re
+import shutil
+import socket
+import sys
+import time
+from OpenSSL import crypto, rand
 
 if (sys.version_info >= (2,6)):
 	import json
 else:
 	import simplejson as json
+
+
+from OPSI.Backend.Backend import ExtendedConfigDataBackend
+from OPSI.Backend.File import *
+from OPSI.Backend.JSONRPC import *
+from OPSI.Backend.LDAP import *
+from OPSI.Backend.MySQL import *
+from OPSI.Logger import *
+from OPSI.Object import *
+from OPSI.System import *
+from OPSI.Types import *
+from OPSI.UI import *
+from OPSI.Util.File import *
+from OPSI.Util.File.Opsi import *
+from OPSI.Util import *
+from OPSI.Util.Task.Rights import setRights
+
 
 logger = Logger()
 
@@ -3401,32 +3415,14 @@ if (__name__ == "__main__"):
 	logger.setLogFormat(u'[%l] [%D] %M (%F|%N)')
 	logger.setLogFile(LOG_FILE)
 	logger.setFileLevel(LOG_INFO)
-	exception = None
+
 	try:
 		main()
-	except SystemExit, e:
+	except SystemExit:
 		pass
-
-	except Exception, e:
-		exception = e
-
-	if exception:
+	except Exception as exception:
 		logger.logException(exception)
 		print >> sys.stderr, u"\nERROR: %s\n" % exception
 		sys.exit(1)
+
 	sys.exit(0)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
