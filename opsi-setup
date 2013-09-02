@@ -38,7 +38,6 @@ from OPSI.UI import *
 from OPSI.Util.File import *
 from OPSI.Util.File.Opsi import *
 from OPSI.Util import *
-from OPSI.Util.Task.Rights import setRights
 
 
 logger = Logger()
