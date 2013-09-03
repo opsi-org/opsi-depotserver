@@ -162,8 +162,10 @@ def configureSamba():
 	newlines = []
 	optPcbinShareFound = False
 	depotShareFound = False
+	depotShareRWFound = False
 	configShareFound = False
 	workbenchShareFound = False
+	opsiImagesFound = False
 	confChanged = False
 
 	for i in range(len(lines)):
@@ -175,6 +177,10 @@ def configureSamba():
 			optPcbinShareFound = True
 		elif (lines[i].lower().strip() == '[opsi_depot]'):
 			depotShareFound = True
+		elif (lines[i].lower().strip() == '[opsi_depot_rw]'):			
+			depotShareRWFound
+		elif (lines[i].lower().strip() == '[opsi_images]'):			
+			opsiImagesFound = True
 		elif (lines[i].lower().strip() == '[opsi_config]'):
 			configShareFound = True
 		elif (lines[i].lower().strip() == '[opsi_workbench]'):
@@ -215,6 +221,36 @@ def configureSamba():
 				os.symlink(source, link)
 			except Exception, e:
 				logger.error(u"Failed to create symlink '%s' pointing to '%s': %s" % (link, source, e))
+				
+	if not depotShareRWFound:
+		logger.notice(u"   Adding share [opsi_depot_rw]")
+		confChanged = True
+		newlines.append(u"[opsi_depot_rw]\n")
+		newlines.append(u"   available = yes\n")
+		newlines.append(u"   comment = opsi depot share (rw)\n")
+		newlines.append(u"   path = /var/lib/opsi/depot\n")
+		newlines.append(u"   oplocks = no\n")
+		newlines.append(u"   follow symlinks = yes\n")
+		newlines.append(u"   level2 oplocks = no\n")
+		newlines.append(u"   writeable = yes\n")
+		newlines.append(u"   invalid users = root\n")
+		newlines.append(u"\n")
+	
+	if not opsiImagesFound:
+		logger.notice(u"   Adding share [opsi_images]")
+		confChanged = True
+		newlines.append(u"[opsi_images]\n")
+		newlines.append(u"   available = yes\n")
+		newlines.append(u"   comment = opsi ntfs images share (rw)\n")
+		newlines.append(u"   path = /var/lib/opsi/ntfs-images\n")
+		newlines.append(u"   oplocks = no\n")
+		newlines.append(u"   level2 oplocks = no\n")
+		newlines.append(u"   writeable = yes\n")
+		newlines.append(u"   invalid users = root\n")
+		newlines.append(u"\n")
+		if not os.path.exists("/var/lib/opsi/ntfs-images"):
+			logger.debug(u"Path:  /var/lib/opsi/ntfs-images not found: creating.")
+			os.mkdir("/var/lib/opsi/ntfs-images")
 
 	if not configShareFound:
 		logger.notice(u"   Adding share [opsi_config]")

@@ -1,11 +1,12 @@
-opsi-depotserver (4.0.3.3-1ubuntu5) UNRELEASED; urgency=low
+opsi-depotserver (4.0.3.4-1) experimental; urgency=low
 
   * opsi-setup: Ignoring entries of configed.saved_search in 
                 --edit-config-defaults
   * opsi-setup: Truncating long value entries if they are longer than 60 
                 characters
+  * opsi-setup: added SMB-Shares: opsi_depot_rw and opsi_images
 
- -- Niko Wenselowski <wenselowski@fortytwo.uib.local>  Fri, 23 Aug 2013 15:50:37 +0200
+ -- Erol Ueluekmen <e.ueluekmen@uib.de>  Tue, 03 Sep 2013 12:50:37 +0200
 
 opsi-depotserver (4.0.3.3-1) experimental; urgency=low
 
