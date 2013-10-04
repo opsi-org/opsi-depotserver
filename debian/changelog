@@ -1,8 +1,14 @@
+opsi-depotserver (4.0.4.1-1) UNRELEASED; urgency=low
+
+  * opsi-setup: Making use of new module OPSI.Util.Task.Certificate
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Fri, 04 Oct 2013 11:25:38 +0200
+
 opsi-depotserver (4.0.3.4-1) experimental; urgency=low
 
-  * opsi-setup: Ignoring entries of configed.saved_search in 
+  * opsi-setup: Ignoring entries of configed.saved_search in
                 --edit-config-defaults
-  * opsi-setup: Truncating long value entries if they are longer than 60 
+  * opsi-setup: Truncating long value entries if they are longer than 60
                 characters
   * opsi-setup: added SMB-Shares: opsi_depot_rw and opsi_images
 
@@ -229,7 +235,7 @@ opsi-depotserver (3.99.2-1) testing; urgency=low
 
 opsi-depotserver (3.99.1-1) testing; urgency=low
 
-  * opsi 4.0 rc 1 
+  * opsi 4.0 rc 1
 
  -- Jan Schneider <j.schneider@uib.de>  Wed, 01 Sep 2010 15:54:23 +0200
 
@@ -366,7 +372,7 @@ opsi-depotserver (3.0-1) stable; urgency=low
 opsi-depotserver (2.5-1) stable; urgency=low
 
   * removed net boot image + added dependency to opsi-linux-bootimage deb
-   
+
   * new version of opsibootmanager (reinstmgr)
 	- now supports writing of pipes for clients with unkown hardware address (using hex-ip)
 	- support for reading hardware addresses from ldap by using univention-admin on UCS
@@ -383,35 +389,35 @@ opsi-depotserver (2.4-1) stable; urgency=low
 	- new parameter "askBeforeInst" added to sysconf, section [General]
           if set to "false" the bootimage will install an operating system
 	  without any user interaction
-   
+
   * fif version 0.9.5
         - preparations for opsi 3.0
 	     createProduct()
 	     setProductProperties()
 	     createProductDependency()
 	     setupWhereInstalled()
-	     
+
   * new version of makeproductfile
         - adjustments for new fif
 	- easier realization of customer depending adjustments
-   
+
   * new version of sysbackup
-   
+
   * new version of opsibootmanager (reinsmgr)
         - boot configuration now contains kernel param hn=<hostname>
 	- if mac address of host is not known, reinstmgr uses
-	  ip address of host (hex) as pipe name 
-   
+	  ip address of host (hex) as pipe name
+
   * improved version of delalteprodukte
-   
+
   * some default configuration values changed
-   
+
   -- Jan Schneider <j.schneider@uib.de>  Wed, 22 Feb 2006 00:00:00 +0200
 
 
 opsi-depotserver (2.1-3) stable; urgency=low
 
-  * new version of opsiinst/hupsiinst (mailing) 
+  * new version of opsiinst/hupsiinst (mailing)
 
  -- Jan Schneider <j.schneider@uib.de>  Thu, 26 Jan 2006 00:00:00 +0200
 

@@ -1,10 +1,8 @@
 #!/usr/bin/python
-# = = = = = = = = = = = = = = = = = = = = = = =
-# =       Copyright (C) 2011 uib GmbH         =
-# =           http://www.uib.de               =
-# =          All rights reserved.             =
-# = = = = = = = = = = = = = = = = = = = = = = =
-
+#
+# Copyright (C) 2011-2013 uib GmbH - http://www.uib.de
+# All rights reserved.
+#
 
 import codecs
 import getopt
@@ -18,7 +16,6 @@ import shutil
 import socket
 import sys
 import time
-from OpenSSL import crypto, rand
 
 if (sys.version_info >= (2,6)):
 	import json
@@ -38,6 +35,9 @@ from OPSI.UI import *
 from OPSI.Util.File import *
 from OPSI.Util.File.Opsi import *
 from OPSI.Util import *
+from OPSI.Util.Task.Certificate import (DEFAULT_CERTIFICATE_PARAMETERS,
+	NoCertificateError, UnreadableCertificateError, createCertificate, loadConfigurationFromCertificate,
+	renewCertificate)
 
 
 logger = Logger()
@@ -177,9 +177,9 @@ def configureSamba():
 			optPcbinShareFound = True
 		elif (lines[i].lower().strip() == '[opsi_depot]'):
 			depotShareFound = True
-		elif (lines[i].lower().strip() == '[opsi_depot_rw]'):			
+		elif (lines[i].lower().strip() == '[opsi_depot_rw]'):
 			depotShareRWFound
-		elif (lines[i].lower().strip() == '[opsi_images]'):			
+		elif (lines[i].lower().strip() == '[opsi_images]'):
 			opsiImagesFound = True
 		elif (lines[i].lower().strip() == '[opsi_config]'):
 			configShareFound = True
@@ -221,7 +221,7 @@ def configureSamba():
 				os.symlink(source, link)
 			except Exception, e:
 				logger.error(u"Failed to create symlink '%s' pointing to '%s': %s" % (link, source, e))
-				
+
 	if not depotShareRWFound:
 		logger.notice(u"   Adding share [opsi_depot_rw]")
 		confChanged = True
@@ -235,7 +235,7 @@ def configureSamba():
 		newlines.append(u"   writeable = yes\n")
 		newlines.append(u"   invalid users = root\n")
 		newlines.append(u"\n")
-	
+
 	if not opsiImagesFound:
 		logger.notice(u"   Adding share [opsi_images]")
 		confChanged = True
@@ -2516,44 +2516,37 @@ def registerDepot():
 
 
 def renewOpsiconfdCert():
-	OPSICONFD_CERTFILE = u"/etc/opsi/opsiconfd.pem"
-	consoleLevel = logger.getConsoleLevel()
-	logger.setConsoleLevel(LOG_NONE)
-	ui = UIFactory(type = 'snack')
 	try:
 		which("ucr")
 		logger.notice(u"Don't use recreate method on UCS-Systems")
 		return
-	except:
+	except Exception:
 		pass
 
+	certificateExisted = True
 	try:
-		#loaddefaults
-		certparams = {
-			"country": u"DE",
-			"state": u"RP",
-			"locality": u"Mainz",
-			"organization": u"uib gmbh",
-			"organizationalUnit": u"",
-			"commonName": forceHostId(getfqdn(conf=OPSI_GLOBAL_CONF)),
-			"emailAddress": u"",
-			"expires": u"2",
-		}
+		certparams = loadConfigurationFromCertificate()
+	except UnreadableCertificateError as err:
+		logger.notice(
+			u'Using default values because reading old certificate '
+			u'failed: {0}'.format(err)
+		)
+		certparams = DEFAULT_CERTIFICATE_PARAMETERS
+		certparams["commonName"] = forceHostId(getfqdn(conf=OPSI_GLOBAL_CONF))
+	except NoCertificateError:
+		certificateExisted = False
+		certparams = DEFAULT_CERTIFICATE_PARAMETERS
+		certparams["commonName"] = forceHostId(getfqdn(conf=OPSI_GLOBAL_CONF))
 
-		if os.path.exists(OPSICONFD_CERTFILE):
-			data = open(OPSICONFD_CERTFILE).read()
-			cert = crypto.load_certificate(crypto.FILETYPE_PEM, data)
-
-			certparams["country"] = cert.get_subject().C
-			certparams["state"] = cert.get_subject().ST
-			certparams["locality"] = cert.get_subject().L
-			certparams["organization"] = cert.get_subject().O
-			certparams["organizationalUnit"] = cert.get_subject().OU
-			certparams["commonName"] = cert.get_subject().CN
-			certparams["emailAddress"] = cert.get_subject().emailAddress
+	if 'expires' not in certparams:
+		certparams['expires'] = "2"  # Not included in existing cert
 
 
-		messageBox = None
+	consoleLevel = logger.getConsoleLevel()
+	logger.setConsoleLevel(LOG_NONE)
+	ui = UIFactory(type='snack')
+
+	try:
 		while True:
 			values = [
 				{ "name": u"Country", "value": certparams["country"] },
@@ -2565,32 +2558,33 @@ def renewOpsiconfdCert():
 				{ "name": u"Emailaddress", "value": certparams["emailAddress"] },
 				{ "name": u"Expires (Years)", "value": certparams["expires"] },
 			]
-			values = ui.getValues(title = u'Renew opsiconfd Certificate', width = 70, height = 15, entries = values)
+			values = ui.getValues(title=u'Renew opsiconfd Certificate', width=70, height=15, entries=values)
 
 			if values is None:
 				raise Exception(u"Canceled")
 
 			error = None
 
-			country = values[0]["value"]
-			state = values[1]["value"]
-			locality = values[2]["value"]
-			organization = values[3]["value"]
-			organizationalUnit = values[4]["value"]
-			commonName = values[5]["value"]
-			emailAddress = values[6]["value"]
+			certparams["country"] = values[0]["value"]
+			certparams["state"] = values[1]["value"]
+			certparams["locality"] = values[2]["value"]
+			certparams["organization"] = values[3]["value"]
+			certparams["organizationalUnit"] = values[4]["value"]
+			certparams["commonName"] = values[5]["value"]
+			certparams["emailAddress"] = values[6]["value"]
 
-			if not commonName == forceHostId(getfqdn(conf=OPSI_GLOBAL_CONF)):
-				if not error: error = "commonName must be the FQDN from Server"
+			if error is None:
+				if not certparams["commonName"] == forceHostId(getfqdn(conf=OPSI_GLOBAL_CONF)):
+					error = "commonName must be the FQDN from Server"
 
-			try:
-				expires  = forceInt(values[7]["value"])
-			except Exception:
-					if not error:
-						error = u'No valid years for expiredate given, must be an integer'
+			if error is None:
+				try:
+					certparams["expires"] = forceInt(values[7]["value"])
+				except Exception:
+					error = u'No valid years for expiredate given, must be an integer'
 
 			if error:
-				ui.showError(title = u'Bad value', text = error, width = 50, height = 5)
+				ui.showError(title=u'Bad value', text=error, width=50, height=5)
 				continue
 
 			break
@@ -2598,60 +2592,22 @@ def renewOpsiconfdCert():
 		ui.exit()
 		logger.setConsoleLevel(consoleLevel)
 
-	logger.notice(u"Creating new opsiconfd cert")
-	logger.notice(u"Generating new key pair")
-	k = crypto.PKey()
-	k.generate_key(crypto.TYPE_RSA, 1024)
-
-	logger.notice(u"Generating new self-signed cert")
-	cert = crypto.X509()
-	cert.get_subject().C = country
-	cert.get_subject().ST = state
-	cert.get_subject().L = locality
-	cert.get_subject().O = organization
-	cert.get_subject().OU = organizationalUnit
-	cert.get_subject().CN = commonName
-	cert.get_subject().emailAddress = emailAddress
-
-	logger.notice(u"Generating new Serialnumber")
-	#Todo generating Serial new
-	cert.set_serial_number(1000)
-	logger.notice(u"Setting new expiration date (%d years)" % expires)
-	cert.gmtime_adj_notBefore(0)
-	cert.gmtime_adj_notAfter(expires*365*24*60*60)
-
-	logger.notice(u"Filling certificate with new data")
-	cert.set_issuer(cert.get_subject())
-	cert.set_pubkey(k)
-	cert.set_version(2)
-
-	logger.notice(u"Signing Certificate")
-	cert.sign(k, 'sha1')
-	backupfile = ''.join((OPSICONFD_CERTFILE, ".bak"))
-	logger.notice(u"Backup existing Certifcate to %s" % backupfile)
-	shutil.copy(OPSICONFD_CERTFILE, backupfile)
-
-	logger.notice(u"Overwriting existing Certificate")
-	certcontext = "".join((
-		crypto.dump_certificate(crypto.FILETYPE_PEM, cert),
-		crypto.dump_privatekey(crypto.FILETYPE_PEM, k))
-	)
-	open(OPSICONFD_CERTFILE, "wt").write(certcontext)
-	logger.notice(u"Generating and filling new randomize string")
-	open("/tmp/opsiconfd.rand", "wt").write(rand.bytes(512))
-	execute("%s gendh -rand %s 512 >> %s" % (
-			which("openssl"), "/tmp/opsiconfd.rand", OPSICONFD_CERTFILE
+	if certificateExisted:
+		renewCertificate(
+			yearsUntilExpiration=certparams['expires'],
+			config=certparams
 		)
-	)
+	else:
+		createCertificate(config=certparams)
+
+
 	logger.notice(u"Setting rights")
 	opsiconfdUid  = pwd.getpwnam(OPSICONFD_USER)[2]
 	adminGroupGid = grp.getgrnam(ADMIN_GROUP)[2]
 	os.chown(u'/etc/opsi/passwd', opsiconfdUid, adminGroupGid)
 	os.chmod(u'/etc/opsi/passwd', 0660)
-	logger.notice(u"cleanup")
-	os.remove("/tmp/opsiconfd.rand")
-	logger.notice(u"Restarting opsi Webservice")
 
+	logger.notice(u"Restarting opsi Webservice")
 	logger.notice(u"Restarting services")
 	execute("/etc/init.d/opsiconfd restart")
 	execute("/etc/init.d/opsipxeconfd restart")
