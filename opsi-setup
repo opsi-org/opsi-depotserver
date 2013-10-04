@@ -45,15 +45,15 @@ logger = Logger()
 logger.setConsoleLevel(LOG_NOTICE)
 logger.setConsoleColor(True)
 
-LOG_FILE         = u'/tmp/opsi-setup.log'
-SMB_CONF         = u'/etc/samba/smb.conf'
-SMB_INIT         = u'/etc/init.d/samba'
-DHCPD_CONF       = Posix.locateDHCPDConfig(u'/etc/dhcp3/dhcpd.conf')
-DHCPD_INIT       = Posix.locateDHCPDInit(u'/etc/init.d/dhcp3-server')
-SUDOERS          = u'/etc/sudoers'
-OPSICONFD_USER   = u'opsiconfd'
-ADMIN_GROUP      = u'opsiadmin'
-CLIENT_USER      = u'pcpatch'
+LOG_FILE = u'/tmp/opsi-setup.log'
+SMB_CONF = u'/etc/samba/smb.conf'
+SMB_INIT = u'/etc/init.d/samba'
+DHCPD_CONF = Posix.locateDHCPDConfig(u'/etc/dhcp3/dhcpd.conf')
+DHCPD_INIT = Posix.locateDHCPDInit(u'/etc/init.d/dhcp3-server')
+SUDOERS = u'/etc/sudoers'
+OPSICONFD_USER = u'opsiconfd'
+ADMIN_GROUP = u'opsiadmin'
+CLIENT_USER = u'pcpatch'
 FILE_ADMIN_GROUP = u'pcpatch'
 
 OPSI_CONF = u'/etc/opsi/opsi.conf'
@@ -70,6 +70,7 @@ if os.path.exists(u'/etc/init.d/smb'):
 	SMB_INIT = u'/etc/init.d/smb'
 
 sysConfig = {}
+
 
 def getSysConfig():
 	global sysConfig
@@ -98,7 +99,7 @@ def getSysConfig():
 
 	sysConfig['hostname'] = sysConfig['fqdn'].split(u'.')[0]
 	sysConfig['domain'] = u'.'.join(sysConfig['fqdn'].split(u'.')[1:])
-	if not sysConfig.has_key('ipAddress'):
+	if 'ipAddress' not in sysConfig:
 		sysConfig['ipAddress'] = socket.gethostbyname(sysConfig['fqdn'])
 		if sysConfig['ipAddress'].split(u'.')[0] in ('127', '169'):
 			sysConfig['ipAddress'] = None
@@ -110,7 +111,7 @@ def getSysConfig():
 			if not sysConfig['ipAddress']:
 				sysConfig['ipAddress'] = devconf['ipAddress']
 			if (sysConfig['ipAddress'] == devconf['ipAddress']):
-				sysConfig['netmask']         = devconf['netmask']
+				sysConfig['netmask'] = devconf['netmask']
 				sysConfig['hardwareAddress'] = devconf['hardwareAddress']
 				break
 
@@ -121,11 +122,14 @@ def getSysConfig():
 		sysConfig['netmask'] = u'255.255.255.0'
 
 	sysConfig['broadcast'] = u''
-	sysConfig['subnet']    = u''
+	sysConfig['subnet'] = u''
 	for i in range(4):
-		if sysConfig['broadcast']: sysConfig['broadcast'] += u'.'
-		if sysConfig['subnet']:    sysConfig['subnet']    += u'.'
-		sysConfig['subnet']    += u'%d' % ( int(sysConfig['ipAddress'].split(u'.')[i]) & int(sysConfig['netmask'].split(u'.')[i]) )
+		if sysConfig['broadcast']:
+			sysConfig['broadcast'] += u'.'
+		if sysConfig['subnet']:
+			sysConfig['subnet']    += u'.'
+
+		sysConfig['subnet'] += u'%d' % ( int(sysConfig['ipAddress'].split(u'.')[i]) & int(sysConfig['netmask'].split(u'.')[i]) )
 		sysConfig['broadcast'] += u'%d' % ( int(sysConfig['ipAddress'].split(u'.')[i]) | int(sysConfig['netmask'].split(u'.')[i]) ^ 255 )
 
 	sysConfig['winDomain'] = u''
@@ -173,7 +177,7 @@ def configureSamba():
 			i += 1
 			confChanged = True
 			continue
-		if   (lines[i].lower().strip() == '[opt_pcbin]'):
+		if (lines[i].lower().strip() == '[opt_pcbin]'):
 			optPcbinShareFound = True
 		elif (lines[i].lower().strip() == '[opsi_depot]'):
 			depotShareFound = True
@@ -291,7 +295,7 @@ def configureSamba():
 		logger.notice(u"   Reloading samba")
 		try:
 			execute(u'%s reload' % SMB_INIT)
-		except Exception, e:
+		except Exception as e:
 			logger.warning(e)
 
 
@@ -308,23 +312,25 @@ def configureDHCPD():
 		confChanged = True
 		dhcpdConf.getGlobalBlock().addComponent(
 			DHCPDConf_Parameter(
-				startLine 	= -1,
-				parentBlock 	= dhcpdConf.getGlobalBlock(),
-				key 		= 'use-host-decl-names',
-				value 		= True ) )
+				startLine=-1,
+				parentBlock=dhcpdConf.getGlobalBlock(),
+				key='use-host-decl-names',
+				value=True
+			)
+		)
 
-	subnets = dhcpdConf.getGlobalBlock().getBlocks('subnet', recursive = True)
+	subnets = dhcpdConf.getGlobalBlock().getBlocks('subnet', recursive=True)
 	if not subnets:
 		confChanged = True
 		logger.notice(u"   No subnets found, adding subnet")
 		dhcpdConf.getGlobalBlock().addComponent(
 			DHCPDConf_Block(
-				startLine 	= -1,
-				parentBlock 	= dhcpdConf.getGlobalBlock(),
-				type 		= 'subnet',
-				settings 	= ['subnet', getSysConfig()['subnet'], 'netmask', getSysConfig()['netmask']] ) )
+				startLine=-1,
+				parentBlock=dhcpdConf.getGlobalBlock(),
+				type='subnet',
+				settings=['subnet', getSysConfig()['subnet'], 'netmask', getSysConfig()['netmask']] ) )
 
-	for subnet in dhcpdConf.getGlobalBlock().getBlocks('subnet', recursive = True):
+	for subnet in dhcpdConf.getGlobalBlock().getBlocks('subnet', recursive=True):
 		logger.info(u"   Found subnet %s/%s" % (subnet.settings[1], subnet.settings[3]))
 		groups = subnet.getBlocks('group')
 		if not groups:
@@ -332,10 +338,13 @@ def configureDHCPD():
 			logger.notice(u"      No groups found, adding group")
 			subnet.addComponent(
 				DHCPDConf_Block(
-					startLine 	= -1,
-					parentBlock 	= subnet,
-					type 		= 'group',
-					settings 	= ['group'] ) )
+					startLine=-1,
+					parentBlock=subnet,
+					type= 'group',
+					settings=['group']
+				)
+			)
+
 		for group in subnet.getBlocks('group'):
 			logger.info(u"      Configuring group")
 			params = group.getParameters_hash(inherit = 'global')
@@ -345,10 +354,12 @@ def configureDHCPD():
 				confChanged = True
 				group.addComponent(
 					DHCPDConf_Parameter(
-						startLine 	= -1,
-						parentBlock 	= group,
-						key 		= 'next-server',
-						value 		= getSysConfig()['ipAddress'] ) )
+						startLine=-1,
+						parentBlock=group,
+						key='next-server',
+						value=getSysConfig()['ipAddress']
+					)
+				)
 				logger.notice(u"   next-server set to %s" % getSysConfig()['ipAddress'])
 			if params.get('filename'):
 				logger.info(u"         filename already set")
@@ -359,10 +370,12 @@ def configureDHCPD():
 					filename = 'opsi/pxelinux.0'
 				group.addComponent(
 					DHCPDConf_Parameter(
-						startLine 	= -1,
-						parentBlock 	= group,
-						key 		= 'filename',
-						value 		= filename ) )
+						startLine=-1,
+						parentBlock=group,
+						key='filename',
+						value=filename
+					)
+				)
 				logger.notice(u"         filename set to %s" % filename)
 
 	if confChanged:
@@ -375,7 +388,7 @@ def configureDHCPD():
 		logger.notice(u"   Restarting dhcpd")
 		try:
 			execute(u'%s restart' % DHCPD_INIT)
-		except Exception, e:
+		except Exception as e:
 			logger.warning(e)
 
 	logger.notice(u"Configuring sudoers")
@@ -478,15 +491,15 @@ def configureClientUser():
 	try:
 		from OPSI.Backend.BackendManager import BackendManager
 		backend = BackendManager(
-			dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
-			backendConfigDir   = u'/etc/opsi/backends',
-			extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
-			depotBackend       = True
+			dispatchConfigFile=u'/etc/opsi/backendManager/dispatch.conf',
+			backendConfigDir=u'/etc/opsi/backends',
+			extensionConfigDir=u'/etc/opsi/backendManager/extend.d',
+			depotBackend=True
 		)
-		depot = backend.host_getObjects(type = 'OpsiDepotserver', id = getSysConfig()['fqdn'])[0]
+		depot = backend.host_getObjects(type='OpsiDepotserver', id=getSysConfig()['fqdn'])[0]
 
 		configserverId = None
-		for configserver in backend.host_getObjects(type = 'OpsiConfigserver'):
+		for configserver in backend.host_getObjects(type='OpsiConfigserver'):
 			if (configserver.id == getSysConfig()['fqdn']):
 				configserverId = None
 				break
@@ -495,14 +508,14 @@ def configureClientUser():
 
 		if configserverId:
 			try:
-				jsonrpcBackend = JSONRPCBackend(address = configserverId, username = depot.id, password = depot.opsiHostKey)
-				password = blowfishDecrypt(depot.opsiHostKey, jsonrpcBackend.user_getCredentials(username = u'pcpatch', hostId = depot.id)['password'])
+				jsonrpcBackend = JSONRPCBackend(address=configserverId, username=depot.id, password=depot.opsiHostKey)
+				password = blowfishDecrypt(depot.opsiHostKey, jsonrpcBackend.user_getCredentials(username=u'pcpatch', hostId=depot.id)['password'])
 				jsonrpcBackend.backend_exit()
-			except Exception, e:
+			except Exception as e:
 				logger.info(u"Failed to get client user (pcpatch) password from configserver: %s" % e)
 		if not password:
-			password = blowfishDecrypt(depot.opsiHostKey, backend.user_getCredentials(username = u'pcpatch', hostId = depot.id)['password'])
-	except Exception, e:
+			password = blowfishDecrypt(depot.opsiHostKey, backend.user_getCredentials(username=u'pcpatch', hostId=depot.id)['password'])
+	except Exception as e:
 		logger.info(u"Failed to get client user (pcpatch) password: %s" % e)
 		password = randomString(12)
 	if backend:
@@ -518,9 +531,9 @@ def setRights(path=u'/'):
 	if not os.path.isdir(basedir):
 		basedir = os.path.dirname(basedir)
 
-	clientUserUid     = pwd.getpwnam(CLIENT_USER)[2]
-	opsiconfdUid      = pwd.getpwnam(OPSICONFD_USER)[2]
-	adminGroupGid     = grp.getgrnam(ADMIN_GROUP)[2]
+	clientUserUid = pwd.getpwnam(CLIENT_USER)[2]
+	opsiconfdUid = pwd.getpwnam(OPSICONFD_USER)[2]
+	adminGroupGid = grp.getgrnam(ADMIN_GROUP)[2]
 	fileAdminGroupGid = grp.getgrnam(FILE_ADMIN_GROUP)[2]
 
 	depotDir = ''
@@ -532,11 +545,11 @@ def setRights(path=u'/'):
 		try:
 			from OPSI.Backend.BackendManager import BackendManager
 			backend = BackendManager(
-				dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
-				backendConfigDir   = u'/etc/opsi/backends',
-				extensionConfigDir = u'/etc/opsi/backendManager/extend.d'
+				dispatchConfigFile=u'/etc/opsi/backendManager/dispatch.conf',
+				backendConfigDir=u'/etc/opsi/backends',
+				extensionConfigDir=u'/etc/opsi/backendManager/extend.d'
 			)
-			depot = backend.host_getObjects(type = 'OpsiDepotserver', id = getSysConfig()['fqdn'])
+			depot = backend.host_getObjects(type='OpsiDepotserver', id=getSysConfig()['fqdn'])
 			backend.backend_exit()
 			if depot:
 				depot = depot[0]
@@ -547,7 +560,7 @@ def setRights(path=u'/'):
 				if os.path.exists(depotDir):
 					logger.info(u"Local depot directory '%s' found" % depotDir)
 					dirnames.append(depotDir)
-		except Exception, e:
+		except Exception as e:
 			logger.error(e)
 
 	if basedir.startswith('/opt/pcbin/install'):
@@ -598,7 +611,7 @@ def setRights(path=u'/'):
 		logger.notice(u"Setting rights on directory '%s'" % startPath)
 		os.chown(startPath, uid, gid)
 		os.chmod(startPath, dmod)
-		for f in findFiles(startPath, prefix = startPath, returnLinks = False):
+		for f in findFiles(startPath, prefix=startPath, returnLinks=False):
 			os.chown(f, uid, gid)
 			if os.path.isdir(f):
 				logger.debug(u"Setting rights on directory '%s'" % f)
@@ -634,7 +647,7 @@ def setRights(path=u'/'):
 					os.chown(authorizedKeys, clientUserUid, fileAdminGroupGid)
 
 
-def update(fromVersion = None):
+def update(fromVersion=None):
 	# 3.x => 4.x
 	if os.path.exists(u'/var/lib/opsi/products'):
 		logger.notice(u"Found /var/lib/opsi/products, moving to /var/lib/opsi/repository")
@@ -665,14 +678,14 @@ def update(fromVersion = None):
 		try:
 			from OPSI.Backend.BackendManager import BackendManager
 			backend = BackendManager(
-				dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
-				backendConfigDir   = u'/etc/opsi/backends',
-				extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
-				depotbackend       = False
+				dispatchConfigFile=u'/etc/opsi/backendManager/dispatch.conf',
+				backendConfigDir=u'/etc/opsi/backends',
+				extensionConfigDir=u'/etc/opsi/backendManager/extend.d',
+				depotbackend=False
 			)
 			backend.backend_createBase()
 			backend.backend_exit()
-		except Exception, e:
+		except Exception as e:
 			logger.warning(e)
 
 	# 4.0 => 4.0.1
@@ -690,10 +703,10 @@ def update(fromVersion = None):
 
 
 def updateUniventionBackend():
-	return updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/univention.conf')
+	return updateLDAPBackend(backendConfigFile=u'/etc/opsi/backends/univention.conf')
 
 
-def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
+def updateLDAPBackend(backendConfigFile=u'/etc/opsi/backends/ldap.conf'):
 	l = {'socket': socket, 'os': os, 'sys': sys, 'module': '', 'config': {}}
 	logger.info(u"Loading backend config '%s'" % backendConfigFile)
 	execfile(backendConfigFile, l)
@@ -705,7 +718,7 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 	logger.notice(u"Creating ldap backend instance")
 	backend = ExtendedConfigDataBackend(LDAPBackend(**config))
 
-	ldapSession = LDAPSession(address = config['address'], username = config['username'], password = config['password'])
+	ldapSession = LDAPSession(address=config['address'], username=config['username'], password=config['password'])
 	ldapSession.connect()
 
 	logger.notice(u"Testing ldap schema")
@@ -726,12 +739,12 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 		ldapObj = LDAPObject(u"cn=%s,%s" % (container, config['opsiBaseDn']))
 		if ldapObj.exists(ldapSession):
 			logger.notice(u"Deleting container: %s" % ldapObj.getDn())
-			ldapObj.deleteFromDirectory(ldapSession, recursive = True)
+			ldapObj.deleteFromDirectory(ldapSession, recursive=True)
 
 	backend.backend_createBase()
 
 	logger.notice(u"Converting opsiHost")
-	search = LDAPObjectSearch(ldapSession, baseDn, filter = u'(objectClass=opsiConfigserver)')
+	search = LDAPObjectSearch(ldapSession, baseDn, filter=u'(objectClass=opsiConfigserver)')
 	for obj in search.getObjects():
 		logger.info(u"Found config server: %s" % obj.getDn())
 		try:
@@ -743,9 +756,9 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 			obj.addObjectClass('OpsiHost')
 			obj.addObjectClass('OpsiDepotserver')
 			obj.addObjectClass('OpsiConfigserver')
-			url = obj.getAttribute('opsiRepositoryLocalUrl', default = "", valuesAsList = False).replace(u'/products', u'/repository')
+			url = obj.getAttribute('opsiRepositoryLocalUrl', default="", valuesAsList=False).replace(u'/products', u'/repository')
 			obj.setAttribute('opsiRepositoryLocalUrl', [url])
-			url = obj.getAttribute('opsiRepositoryRemoteUrl', default = "", valuesAsList = False).replace(u'/products', u'/repository')
+			url = obj.getAttribute('opsiRepositoryRemoteUrl', default="", valuesAsList=False).replace(u'/products', u'/repository')
 			obj.setAttribute('opsiRepositoryRemoteUrl', [url])
 			obj.setAttribute('opsiIsMasterDepot', ['TRUE'])
 			obj.writeToDirectory(ldapSession)
@@ -753,7 +766,7 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 			obj.deleteFromDirectory(ldapSession)
 			logger.error(e)
 
-	search = LDAPObjectSearch(ldapSession, baseDn, filter = u'(objectClass=opsiDepotserver)')
+	search = LDAPObjectSearch(ldapSession, baseDn, filter=u'(objectClass=opsiDepotserver)')
 	for obj in search.getObjects():
 		logger.info(u"Found depot server: %s" % obj.getDn())
 		try:
@@ -763,9 +776,9 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 			obj.removeObjectClass('opsiDepotserver')
 			obj.addObjectClass('OpsiHost')
 			obj.addObjectClass('OpsiDepotserver')
-			url = obj.getAttribute('opsiRepositoryLocalUrl', default = "", valuesAsList = False).replace(u'/products', u'/repository')
+			url = obj.getAttribute('opsiRepositoryLocalUrl', default="", valuesAsList=False).replace(u'/products', u'/repository')
 			obj.setAttribute('opsiRepositoryLocalUrl', [url])
-			url = obj.getAttribute('opsiRepositoryRemoteUrl', default = "", valuesAsList = False).replace(u'/products', u'/repository')
+			url = obj.getAttribute('opsiRepositoryRemoteUrl', default="", valuesAsList=False).replace(u'/products', u'/repository')
 			obj.setAttribute('opsiRepositoryRemoteUrl', [url])
 			obj.setAttribute('opsiIsMasterDepot', ['TRUE'])
 			obj.writeToDirectory(ldapSession)
@@ -773,7 +786,7 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 			obj.deleteFromDirectory(ldapSession)
 			logger.error(e)
 
-	search = LDAPObjectSearch(ldapSession, baseDn, filter = u'(objectClass=opsiClient)')
+	search = LDAPObjectSearch(ldapSession, baseDn, filter=u'(objectClass=opsiClient)')
 	for obj in search.getObjects():
 		logger.info(u"Found client: %s" % obj.getDn())
 		try:
@@ -788,53 +801,53 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 			obj.deleteFromDirectory(ldapSession)
 			logger.error(e)
 
-	serverIds = backend.host_getIdents(returnType = 'unicode', type = u'OpsiConfigserver')
-	depotIds  = backend.host_getIdents(returnType = 'unicode', type = u'OpsiDepotserver')
-	clientIds = backend.host_getIdents(returnType = 'unicode', type = u'OpsiClient')
+	serverIds = backend.host_getIdents(returnType='unicode', type=u'OpsiConfigserver')
+	depotIds  = backend.host_getIdents(returnType='unicode', type=u'OpsiDepotserver')
+	clientIds = backend.host_getIdents(returnType='unicode', type=u'OpsiClient')
 
 	logger.notice(u"Converting opsiGeneralConfig")
-	search = LDAPObjectSearch(ldapSession, config['opsiBaseDn'], filter = u'(objectClass=opsiGeneralConfig)')
+	search = LDAPObjectSearch(ldapSession, config['opsiBaseDn'], filter=u'(objectClass=opsiGeneralConfig)')
 	for obj in search.getObjects():
 		try:
 			obj.readFromDirectory(ldapSession)
 			logger.info(u"Found general config: %s" % obj.getDn())
 			hostId = forceHostId(obj.getCn())
-			for opsiKeyValuePair in obj.getAttribute('opsiKeyValuePair', default = [], valuesAsList = True):
+			for opsiKeyValuePair in obj.getAttribute('opsiKeyValuePair', default=[], valuesAsList=True):
 				try:
 					logger.info(u"Converting general config: %s" % opsiKeyValuePair)
 					(configId, value) = opsiKeyValuePair.split(u'=', 1)
-					if   hostId in serverIds:
-						backend.config_createObjects( UnicodeConfig(id = configId, defaultValues = [ value ]) )
+					if hostId in serverIds:
+						backend.config_createObjects(UnicodeConfig(id=configId, defaultValues=[value]))
 					elif hostId in clientIds:
-						backend.config_createObjects( UnicodeConfig(id = configId) )
-						backend.configState_createObjects( ConfigState(configId = configId, objectId = hostId, values = [ value ] ) )
-				except Exception, e:
+						backend.config_createObjects(UnicodeConfig(id=configId))
+						backend.configState_createObjects(ConfigState(configId=configId, objectId=hostId, values=[value]))
+				except Exception as e:
 					logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
-		except Exception, e:
+		except Exception as e:
 			logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
 
 	logger.notice(u"Converting opsiNetworkConfig")
-	search = LDAPObjectSearch(ldapSession, config['opsiBaseDn'], filter = u'(objectClass=opsiNetworkConfig)')
+	search = LDAPObjectSearch(ldapSession, config['opsiBaseDn'], filter=u'(objectClass=opsiNetworkConfig)')
 	for obj in search.getObjects():
 		try:
 			obj.readFromDirectory(ldapSession)
 			logger.info(u"Found network config: %s" % obj.getDn())
 			hostId = forceHostId(obj.getCn())
-			for (key, value) in obj.getAttributeDict(valuesAsList = False).items():
+			for (key, value) in obj.getAttributeDict(valuesAsList=False).items():
 				try:
 					if not value:
 						continue
 					configId = None
 					multiValue = False
-					if   (key == 'opsiDepotserverReference'):
+					if (key == 'opsiDepotserverReference'):
 						configId = u'clientconfig.depot.id'
 						serverObj = LDAPObject(value)
 						value = None
 						if serverObj.exists(ldapSession):
 							serverObj.readFromDirectory(ldapSession)
 							try:
-								value = forceHostId(serverObj.getAttribute('opsiHostId', default = None, valuesAsList = False))
-							except Exception, e:
+								value = forceHostId(serverObj.getAttribute('opsiHostId', default=None, valuesAsList=False))
+							except Exception as e:
 								logger.debug(e)
 						if not value:
 							continue
@@ -853,49 +866,49 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 
 					logger.info(u"Converting network config %s" % key)
 
-					if   hostId in serverIds:
-						backend.config_createObjects( UnicodeConfig(id = configId, defaultValues = [ value ], multiValue = multiValue) )
+					if hostId in serverIds:
+						backend.config_createObjects(UnicodeConfig(id=configId, defaultValues=[value], multiValue=multiValue))
 					elif hostId in clientIds:
-						backend.config_createObjects( UnicodeConfig(id = configId, multiValue = multiValue) )
-						backend.configState_createObjects( ConfigState(configId = configId, objectId = hostId, values = [ value ] ) )
-				except Exception, e:
+						backend.config_createObjects(UnicodeConfig(id=configId, multiValue=multiValue))
+						backend.configState_createObjects(ConfigState(configId=configId, objectId=hostId, values=[value]))
+				except Exception as e:
 					logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
-		except Exception, e:
+		except Exception as e:
 			logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
 
 	logger.notice(u"Converting opsiGroup")
 
-	def convertGroupObject(obj, parentGroupId = None):
+	def convertGroupObject(obj, parentGroupId=None):
 		try:
 			groupId = forceGroupId(obj.getCn())
 
-			search = LDAPObjectSearch(ldapSession, obj.getDn(), scope = ldap.SCOPE_ONELEVEL, filter = u'(objectClass=opsiGroup)')
+			search = LDAPObjectSearch(ldapSession, obj.getDn(), scope=ldap.SCOPE_ONELEVEL, filter=u'(objectClass=opsiGroup)')
 			for obj2 in search.getObjects():
-				convertGroupObject(obj2, parentGroupId = groupId)
+				convertGroupObject(obj2, parentGroupId=groupId)
 			objectToGroups = []
 			obj.readFromDirectory(ldapSession)
-			for value in obj.getAttribute('uniqueMember', default = [], valuesAsList = True):
+			for value in obj.getAttribute('uniqueMember', default=[], valuesAsList=True):
 				try:
 					hostObj = LDAPObject(value)
 					value = None
 					if hostObj.exists(ldapSession):
 						hostObj.readFromDirectory(ldapSession)
 						try:
-							value = forceHostId(hostObj.getAttribute('opsiHostId', default = None, valuesAsList = False))
-						except Exception, e:
+							value = forceHostId(hostObj.getAttribute('opsiHostId', default=None, valuesAsList=False))
+						except Exception as e:
 							logger.debug(e)
 					if not value:
 						continue
-					objectToGroups.append( ObjectToGroup(groupId = groupId, groupType = 'HostGroup', objectId = value) )
-				except Exception, e:
+					objectToGroups.append(ObjectToGroup(groupId=groupId, groupType='HostGroup', objectId=value))
+				except Exception as e:
 					logger.error(u"Failure while processing group member %s of group %s: %s" % (value, obj.getDn(), e))
 			obj.deleteFromDirectory(ldapSession)
-			backend.group_createObjects( HostGroup(id = groupId, parentGroupId = parentGroupId) )
+			backend.group_createObjects( HostGroup(id=groupId, parentGroupId=parentGroupId) )
 			backend.objectToGroup_createObjects(objectToGroups)
-		except Exception, e:
+		except Exception as e:
 			logger.error(u"Failure while processing group %s: %s" % (obj.getDn(), e))
 
-	search = LDAPObjectSearch(ldapSession, "cn=groups,%s" % config['opsiBaseDn'], scope = ldap.SCOPE_ONELEVEL, filter = u'(objectClass=opsiGroup)')
+	search = LDAPObjectSearch(ldapSession, "cn=groups,%s" % config['opsiBaseDn'], scope=ldap.SCOPE_ONELEVEL, filter=u'(objectClass=opsiGroup)')
 	for obj in search.getObjects():
 		convertGroupObject(obj)
 
@@ -904,7 +917,7 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 	deleteDns = []
 	for objectClass in ('opsiLocalBootProduct', 'opsiNetBootProduct'):
 		logger.notice(u"Converting %s" % objectClass)
-		search = LDAPObjectSearch(ldapSession, config['opsiBaseDn'], filter = u'(objectClass=%s)' % objectClass)
+		search = LDAPObjectSearch(ldapSession, config['opsiBaseDn'], filter=u'(objectClass=%s)' % objectClass)
 		for obj in search.getObjects():
 			try:
 				obj.readFromDirectory(ldapSession)
@@ -920,20 +933,20 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 					Class = NetbootProduct
 
 				product = Class(
-					id                 = obj.getCn(),
-					productVersion     = obj.getAttribute('opsiProductVersion',         default = None, valuesAsList = False),
-					packageVersion     = obj.getAttribute('opsiPackageVersion',         default = None, valuesAsList = False),
-					name               = obj.getAttribute('opsiProductName',            default = None, valuesAsList = False),
-					licenseRequired    = obj.getAttribute('opsiProductLicenseRequired', default = None, valuesAsList = False),
-					setupScript        = obj.getAttribute('opsiSetupScript',            default = None, valuesAsList = False),
-					uninstallScript    = obj.getAttribute('opsiUninstallScript',        default = None, valuesAsList = False),
-					updateScript       = obj.getAttribute('opsiUpdateScript',           default = None, valuesAsList = False),
-					alwaysScript       = obj.getAttribute('opsiAlwaysScript',           default = None, valuesAsList = False),
-					onceScript         = obj.getAttribute('opsiOnceScript',             default = None, valuesAsList = False),
-					priority           = obj.getAttribute('opsiProductPriority',        default = None, valuesAsList = False),
-					description        = obj.getAttribute('description',                default = None, valuesAsList = False),
-					advice             = obj.getAttribute('opsiProductAdvice',          default = None, valuesAsList = False),
-					windowsSoftwareIds = obj.getAttribute('opsiWindowsSoftwareId',      default = None, valuesAsList = True)
+					id= obj.getCn(),
+					productVersion=obj.getAttribute('opsiProductVersion', default=None, valuesAsList=False),
+					packageVersion=obj.getAttribute('opsiPackageVersion', default=None, valuesAsList=False),
+					name=obj.getAttribute('opsiProductName', default=None, valuesAsList=False),
+					licenseRequired=obj.getAttribute('opsiProductLicenseRequired', default=None, valuesAsList=False),
+					setupScript=obj.getAttribute('opsiSetupScript', default=None, valuesAsList=False),
+					uninstallScript=obj.getAttribute('opsiUninstallScript', default=None, valuesAsList=False),
+					updateScript=obj.getAttribute('opsiUpdateScript', default=None, valuesAsList=False),
+					alwaysScript=obj.getAttribute('opsiAlwaysScript', default=None, valuesAsList=False),
+					onceScript=obj.getAttribute('opsiOnceScript', default=None, valuesAsList=False),
+					priority=obj.getAttribute('opsiProductPriority', default=None, valuesAsList=False),
+					description=obj.getAttribute('description', default=None, valuesAsList=False),
+					advice=obj.getAttribute('opsiProductAdvice', default=None, valuesAsList=False),
+					windowsSoftwareIds=obj.getAttribute('opsiWindowsSoftwareId', default=None, valuesAsList=True)
 				)
 				if (objectClass == 'opsiNetBootProduct'):
 					if not product.id in netbootProductIds:
@@ -947,20 +960,20 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 
 				backend.productOnDepot_createObjects(
 					ProductOnDepot(
-						productId      = product.getId(),
-						productType    = product.getType(),
-						productVersion = product.getProductVersion(),
-						packageVersion = product.getPackageVersion(),
-						depotId        = depotId,
-						locked         = obj.getAttribute('opsiProductIsLocked', default = False, valuesAsList = False)
+						productId=product.getId(),
+						productType=product.getType(),
+						productVersion=product.getProductVersion(),
+						packageVersion=product.getPackageVersion(),
+						depotId=depotId,
+						locked=obj.getAttribute('opsiProductIsLocked', default=False, valuesAsList=False)
 					)
 				)
-			except Exception, e:
+			except Exception as e:
 				logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
 
 
 	logger.notice(u"Converting opsiProductPropertyDefinition")
-	search = LDAPObjectSearch(ldapSession, config['opsiBaseDn'], filter = u'(objectClass=opsiProductPropertyDefinition)')
+	search = LDAPObjectSearch(ldapSession, config['opsiBaseDn'], filter=u'(objectClass=opsiProductPropertyDefinition)')
 	for obj in search.getObjects():
 		try:
 			obj.readFromDirectory(ldapSession)
@@ -971,84 +984,81 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 			productId = forceProductId( obj.getDn().split(',')[2].split('=')[1] )
 			depotId   = forceHostId( obj.getDn().split(',')[3].split('=')[1] )
 
-			productOnDepot = backend.productOnDepot_getObjects(productId = productId, depotId = depotId)
+			productOnDepot = backend.productOnDepot_getObjects(productId=productId, depotId=depotId)
 			if not productOnDepot:
 				raise Exception(u"Product '%s' not found on depot '%s'" % (productId, depotId))
 			productOnDepot = productOnDepot[0]
 
-			defaultValues  = obj.getAttribute('opsiProductPropertyDefaultValue',  default = None, valuesAsList = True)
-			possibleValues = obj.getAttribute('opsiProductPropertyPossibleValue', default = None, valuesAsList = True)
+			defaultValues  = obj.getAttribute('opsiProductPropertyDefaultValue',  default=None, valuesAsList=True)
+			possibleValues = obj.getAttribute('opsiProductPropertyPossibleValue', default=None, valuesAsList=True)
 			backend.productProperty_createObjects(
 				UnicodeProductProperty(
-					productId       = productOnDepot.productId,
-					productVersion  = productOnDepot.productVersion,
-					packageVersion  = productOnDepot.packageVersion,
-					propertyId      = obj.getCn().replace(' ', '_'),
-					description     = obj.getAttribute('description', default = None, valuesAsList = False),
-					possibleValues  = possibleValues,
-					defaultValues   = defaultValues,
-					editable        = bool(possibleValues),
+					productId=productOnDepot.productId,
+					productVersion=productOnDepot.productVersion,
+					packageVersion=productOnDepot.packageVersion,
+					propertyId=obj.getCn().replace(' ', '_'),
+					description=obj.getAttribute('description', default=None, valuesAsList=False),
+					possibleValues=possibleValues,
+					defaultValues=defaultValues,
+					editable= bool(possibleValues),
 				)
 			)
 			if defaultValues:
 				backend.productPropertyState_createObjects(
 					ProductPropertyState(
-						productId   = productOnDepot.productId,
-						propertyId  = obj.getCn().replace(' ', '_'),
-						objectId    = depotId,
-						values      = defaultValues
+						productId=productOnDepot.productId,
+						propertyId=obj.getCn().replace(' ', '_'),
+						objectId=depotId,
+						values=defaultValues
 					)
 				)
-		except Exception, e:
+		except Exception as e:
 			logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
 
 	logger.notice(u"Converting opsiProductDependency")
-	search = LDAPObjectSearch(ldapSession, config['opsiBaseDn'], filter = u'(objectClass=opsiProductDependency)')
+	search = LDAPObjectSearch(ldapSession, config['opsiBaseDn'], filter=u'(objectClass=opsiProductDependency)')
 	for obj in search.getObjects():
 		try:
 			obj.readFromDirectory(ldapSession)
 			logger.info(u"Found product dependency: %s" % obj.getDn())
 
 			#cn=javavm,cn=setup,cn=productDependencies,cn=ooffice3,cn=exp-srv-005.uib.local,cn=products,cn=opsi,dc=uib,dc=local
-			requiredProductId = forceProductId(     obj.getDn().split(',')[0].split('=')[1] )
-			action            = forceActionRequest( obj.getDn().split(',')[1].split('=')[1] )
-			productId         = forceProductId(     obj.getDn().split(',')[3].split('=')[1] )
-			depotId           = forceHostId(        obj.getDn().split(',')[4].split('=')[1] )
+			requiredProductId = forceProductId(obj.getDn().split(',')[0].split('=')[1])
+			action = forceActionRequest(obj.getDn().split(',')[1].split('=')[1])
+			productId = forceProductId(obj.getDn().split(',')[3].split('=')[1])
+			depotId = forceHostId(obj.getDn().split(',')[4].split('=')[1])
 
-			productOnDepot = backend.productOnDepot_getObjects(productId = productId, depotId = depotId)
+			productOnDepot = backend.productOnDepot_getObjects(productId=productId, depotId=depotId)
 			if not productOnDepot:
 				raise Exception(u"Product '%s' not found on depot '%s'" % (productId, depotId))
 			productOnDepot = productOnDepot[0]
 
 			backend.productDependency_createObjects(
 				ProductDependency(
-					productId                  = productOnDepot.productId,
-					productVersion             = productOnDepot.productVersion,
-					packageVersion             = productOnDepot.packageVersion,
-					productAction              = action,
-					requiredProductId          = requiredProductId,
-					requiredAction             = obj.getAttribute('opsiActionRequired',             default = None, valuesAsList = False),
-					requiredInstallationStatus = obj.getAttribute('opsiInstallationStatusRequired', default = None, valuesAsList = False),
-					requirementType            = obj.getAttribute('opsiRequirementType',            default = None, valuesAsList = False)
+					productId=productOnDepot.productId,
+					productVersion=productOnDepot.productVersion,
+					packageVersion=productOnDepot.packageVersion,
+					productAction=action,
+					requiredProductId=requiredProductId,
+					requiredAction=obj.getAttribute('opsiActionRequired', default=None, valuesAsList=False),
+					requiredInstallationStatus=obj.getAttribute('opsiInstallationStatusRequired', default=None, valuesAsList=False),
+					requirementType=obj.getAttribute('opsiRequirementType', default=None, valuesAsList=False)
 				)
 			)
-		except Exception, e:
+		except Exception as e:
 			logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
-
 
 	for deleteDn in deleteDns:
 		try:
 			logger.notice(u"Deleting %s" % deleteDn)
-			LDAPObject(deleteDn).deleteFromDirectory(ldapSession, recursive = True)
+			LDAPObject(deleteDn).deleteFromDirectory(ldapSession, recursive=True)
 		except Exception, e:
 			logger.error(e)
 
-
-
 	logger.notice(u"Converting opsiProductState")
-	contSearch = LDAPObjectSearch(ldapSession, "cn=productStates,%s" % config['opsiBaseDn'], scope = ldap.SCOPE_ONELEVEL, filter = u'(objectClass=organizationalRole)')
+	contSearch = LDAPObjectSearch(ldapSession, "cn=productStates,%s" % config['opsiBaseDn'], scope=ldap.SCOPE_ONELEVEL, filter=u'(objectClass=organizationalRole)')
 	for contObj in contSearch.getObjects():
-		search = LDAPObjectSearch(ldapSession, contObj.getDn(), filter = u'(objectClass=opsiProductState)')
+		search = LDAPObjectSearch(ldapSession, contObj.getDn(), filter=u'(objectClass=opsiProductState)')
 		for obj in search.getObjects():
 			try:
 				obj.readFromDirectory(ldapSession)
@@ -1058,10 +1068,10 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 				if obj.getCn() in netbootProductIds:
 					productType = 'NetbootProduct'
 
-				actionRequest       = obj.getAttribute('opsiProductActionRequestForced', default = None, valuesAsList = False)
-				installationStatus  = obj.getAttribute('opsiProductInstallationStatus', default = None, valuesAsList = False)
-				actionProgress      = obj.getAttribute('opsiProductActionProgress', default = None, valuesAsList = False)
-				actionResult        = None
+				actionRequest = obj.getAttribute('opsiProductActionRequestForced', default=None, valuesAsList=False)
+				installationStatus = obj.getAttribute('opsiProductInstallationStatus', default=None, valuesAsList=False)
+				actionProgress = obj.getAttribute('opsiProductActionProgress', default=None, valuesAsList=False)
+				actionResult = None
 				targetConfiguration = None
 
 				if installationStatus in ('failed',):
@@ -1094,22 +1104,22 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 
 				backend.productOnClient_insertObject(
 					ProductOnClient(
-						productId           = obj.getCn(),
-						productType         = productType,
-						productVersion      = obj.getAttribute('opsiProductVersion', default = None, valuesAsList = False),
-						packageVersion      = obj.getAttribute('opsiPackageVersion', default = None, valuesAsList = False),
-						clientId            = clientId,
-						installationStatus  = installationStatus,
-						targetConfiguration = targetConfiguration,
-						actionRequest       = actionRequest,
-						actionProgress      = actionProgress
+						productId=obj.getCn(),
+						productType=productType,
+						productVersion=obj.getAttribute('opsiProductVersion', default=None, valuesAsList=False),
+						packageVersion=obj.getAttribute('opsiPackageVersion', default=None, valuesAsList=False),
+						clientId=clientId,
+						installationStatus=installationStatus,
+						targetConfiguration=targetConfiguration,
+						actionRequest=actionRequest,
+						actionProgress=actionProgress
 					)
 				)
-			except Exception, e:
+			except Exception as e:
 				logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
 
 	logger.notice(u"Converting opsiProductProperty")
-	search = LDAPObjectSearch(ldapSession, u'cn=productProperties,%s' % config['opsiBaseDn'], filter = u'(objectClass=opsiProductProperty)')
+	search = LDAPObjectSearch(ldapSession, u'cn=productProperties,%s' % config['opsiBaseDn'], filter=u'(objectClass=opsiProductProperty)')
 	for obj in search.getObjects():
 		try:
 			obj.readFromDirectory(ldapSession)
@@ -1119,10 +1129,10 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 			if not clientId in clientIds:
 				continue
 
-			productId = obj.getAttribute('opsiProductReference', valuesAsList = False).split(',')[0].split('=')[1]
+			productId = obj.getAttribute('opsiProductReference', valuesAsList=False).split(',')[0].split('=')[1]
 
 			productPropertyStates = []
-			for opsiKeyValuePair in obj.getAttribute('opsiKeyValuePair', default = [], valuesAsList = True):
+			for opsiKeyValuePair in obj.getAttribute('opsiKeyValuePair', default=[], valuesAsList=True):
 				try:
 					logger.info(u"Converting product property: %s" % opsiKeyValuePair)
 					(propertyId, value) = opsiKeyValuePair.split(u'=', 1)
@@ -1130,23 +1140,23 @@ def updateLDAPBackend(backendConfigFile = u'/etc/opsi/backends/ldap.conf'):
 						continue
 					productPropertyStates.append(
 						ProductPropertyState(
-							productId   = productId,
-							propertyId  = propertyId.replace(' ', '_'),
-							objectId    = clientId,
-							values      = [ value ]
+							productId=productId,
+							propertyId=propertyId.replace(' ', '_'),
+							objectId=clientId,
+							values=[value]
 						)
 					)
-				except Exception, e:
+				except Exception as e:
 					logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
 			backend.productPropertyState_createObjects(productPropertyStates)
-		except Exception, e:
+		except Exception as e:
 			logger.error(u"Failure while processing %s: %s" % (obj.getDn(), e))
 
 	for container in ('generalConfigs', 'networkConfigs', 'productClasses', 'productLicenses', 'productProperties', 'productStates'):
 		ldapObj = LDAPObject(u"cn=%s,%s" % (container, config['opsiBaseDn']))
 		if ldapObj.exists(ldapSession):
 			logger.notice(u"Deleting container: %s" % ldapObj.getDn())
-			ldapObj.deleteFromDirectory(ldapSession, recursive = True)
+			ldapObj.deleteFromDirectory(ldapSession, recursive=True)
 
 
 def updateMySQLBackend():
@@ -1639,7 +1649,7 @@ def updateFileBackend():
 	if os.path.isfile(os.path.join(backupDepotConfigDir, u'product.locks')):
 		logger.info(u"Getting information on product.locks" % ())
 		try:
-			iniFile = IniFile(filename = os.path.join(backupDepotConfigDir, u'product.locks'), ignoreCase = False)
+			iniFile = IniFile(filename=os.path.join(backupDepotConfigDir, u'product.locks'), ignoreCase=False)
 			ini = iniFile.parse()
 
 			for proId in ini.sections():
@@ -1672,20 +1682,20 @@ def updateFileBackend():
 			logger.notice(u"Updating depot '%s'" % depotId)
 
 			oldDepotDict = {
-				'id':                  depotId,
-				'opsiHostKey':         None,
-				'depotLocalUrl':       None,
-				'depotRemoteUrl':      None,
-				'repositoryLocalUrl':  None,
+				'id': depotId,
+				'opsiHostKey': None,
+				'depotLocalUrl': None,
+				'depotRemoteUrl': None,
+				'repositoryLocalUrl': None,
 				'repositoryRemoteUrl': None,
-				'description':         None,
-				'notes':               None,
-				'hardwareAddress':     None,
-				'ipAddress':           None,
-				'inventoryNumber':     None,
-				'networkAddress':      None,
-				'maxBandwidth':        None,
-				'isMasterDepot':       True
+				'description': None,
+				'notes': None,
+				'hardwareAddress': None,
+				'ipAddress': None,
+				'inventoryNumber': None,
+				'networkAddress': None,
+				'maxBandwidth': None,
+				'isMasterDepot': True
 			}
 
 			if depotId in opsiHostKeys.keys():
@@ -1693,31 +1703,31 @@ def updateFileBackend():
 
 			updatedProductPropertyStates = []
 			try:
-				iniFile = IniFile(filename = oldDepot)
+				iniFile = IniFile(filename=oldDepot)
 				ini = iniFile.parse()
 
 				if ini.has_option('depotshare', 'localurl'):
-					oldDepotDict['depotLocalUrl']       = ini.get('depotshare', 'localurl')
+					oldDepotDict['depotLocalUrl'] = ini.get('depotshare', 'localurl')
 				if ini.has_option('depotshare', 'remoteurl'):
-					oldDepotDict['depotRemoteUrl']      = ini.get('depotshare', 'remoteurl')
+					oldDepotDict['depotRemoteUrl'] = ini.get('depotshare', 'remoteurl')
 				if ini.has_option('repository', 'localurl'):
-					oldDepotDict['repositoryLocalUrl']  = ini.get('repository', 'localurl').replace(u'/products', u'/repository')
+					oldDepotDict['repositoryLocalUrl'] = ini.get('repository', 'localurl').replace(u'/products', u'/repository')
 				if ini.has_option('repository', 'remoteurl'):
 					oldDepotDict['repositoryRemoteUrl'] = ini.get('repository', 'remoteurl').replace(u'/products', u'/repository')
 				if ini.has_option('repository', 'maxbandwidth'):
-					oldDepotDict['maxBandwidth']        = ini.get('repository', 'maxbandwidth')
+					oldDepotDict['maxBandwidth'] = ini.get('repository', 'maxbandwidth')
 				if ini.has_option('depotserver', 'description'):
-					oldDepotDict['description']         = ini.get('depotserver', 'description')
+					oldDepotDict['description'] = ini.get('depotserver', 'description')
 				if ini.has_option('depotserver', 'notes'):
-					oldDepotDict['notes']               = ini.get('depotserver', 'notes')
+					oldDepotDict['notes'] = ini.get('depotserver', 'notes')
 				if ini.has_option('depotserver', 'network'):
-					oldDepotDict['networkAddress']      = ini.get('depotserver', 'network')
+					oldDepotDict['networkAddress'] = ini.get('depotserver', 'network')
 				if ini.has_option('depotserver', 'hardwareaddress'):
-					oldDepotDict['hardwareAddress']     = ini.get('depotserver', 'hardwareaddress')
+					oldDepotDict['hardwareAddress'] = ini.get('depotserver', 'hardwareaddress')
 				if ini.has_option('depotserver', 'ipaddress'):
-					oldDepotDict['ipAddress']           = ini.get('depotserver', 'ipaddress')
+					oldDepotDict['ipAddress'] = ini.get('depotserver', 'ipaddress')
 				if ini.has_option('depotserver', 'inventorynumber'):
-					oldDepotDict['inventoryNumber']     = ini.get('depotserver', 'inventorynumber')
+					oldDepotDict['inventoryNumber'] = ini.get('depotserver', 'inventorynumber')
 
 			except Exception, e:
 				logger.warning(u"Could not get all information on depot: %s" % (e))
@@ -1739,18 +1749,18 @@ def updateFileBackend():
 							logger.debug2(u"Ignoring '%s'" % (productFilename))
 							continue
 						productFilenames.append(productFilename)
-					except Exception, e:
+					except Exception as e:
 						logger.warning(u"Invalid product: '%s' in '%s': %s" % (productId, productPath, e))
 						continue
 
 			updatedProductDependencies = []
 			for productFilename in productFilenames:
-				packageControlFile = PackageControlFile(filename = productFilename)
+				packageControlFile = PackageControlFile(filename=productFilename)
 				oldProduct = None
 
 				try:
 					oldProduct = packageControlFile.getProduct()
-				except Exception, e:
+				except Exception as e:
 					logger.error(u"Invalid product '%s': %s" % (productFilename, e))
 					continue
 
@@ -1763,16 +1773,16 @@ def updateFileBackend():
 						if pp.getPossibleValues():
 							pp.setEditable(False)
 						backend.productProperty_createObjects([pp])
-					except Exception, e:
+					except Exception as e:
 						logger.error(u"Could not create ProductProperty '%s': %s" % (pp.getIdent(), e))
 
 					updatedProductPropertyStates.append(
 						ProductPropertyState.fromHash(
 							{
-							'productId':  pp.getProductId(),
-							'propertyId': pp.getPropertyId().replace(u' ', u'_'),
-							'objectId':   depotId,
-							'values':     pp.getDefaultValues()
+								'productId': pp.getProductId(),
+								'propertyId': pp.getPropertyId().replace(u' ', u'_'),
+								'objectId': depotId,
+								'values': pp.getDefaultValues()
 							}
 						)
 					)
@@ -1795,12 +1805,12 @@ def updateFileBackend():
 
 				backend.productOnDepot_createObjects([
 						ProductOnDepot.fromHash({
-							'productId':      oldProduct.getId(),
-							'productType':    oldProduct.getType(),
+							'productId': oldProduct.getId(),
+							'productType': oldProduct.getType(),
 							'productVersion': oldProduct.getProductVersion(),
 							'packageVersion': oldProduct.getPackageVersion(),
-							'depotId':        depotId,
-							'locked':         locked
+							'depotId': depotId,
+							'locked': locked
 						})
 				])
 
@@ -1808,21 +1818,21 @@ def updateFileBackend():
 			for pd in updatedProductDependencies:
 				try:
 					backend.productDependency_createObjects([pd])
-				except Exception, e:
+				except Exception as e:
 					logger.error(u"Could not create ProductDependency '%s': %s" % (pd.getIdent(), e))
 
 			logger.notice(u"Updating ProductPropertyStates in '%s'" % (depotId))
 			for pps in updatedProductPropertyStates:
 				try:
 					backend.productPropertyState_createObjects([pps])
-				except Exception, e:
+				except Exception as e:
 					logger.error(u"Could not create ProductPropertyState '%s': %s" % (pps.getIdent(), e))
 	else:
 		logger.info(u"No depot folder, skipping depots.")
 
 	logger.notice(u"Updating Configs ..." % ())
 	try:
-		iniFile = IniFile(filename = os.path.join(backupDir, u'global.ini'), ignoreCase = False)
+		iniFile = IniFile(filename=os.path.join(backupDir, u'global.ini'), ignoreCase=False)
 		ini = iniFile.parse()
 
 		for section in ini.sections():
@@ -1855,14 +1865,14 @@ def updateFileBackend():
 					logger.error(u"Error in option '%s' in section '%s': '%s'" % (option, section, e))
 					continue
 
-				updatedConfigs.append(UnicodeConfig(id = configId, defaultValues = [value], multiValue = multiValue))
-	except Exception, e:
+				updatedConfigs.append(UnicodeConfig(id=configId, defaultValues=[value], multiValue=multiValue))
+	except Exception as e:
 		logger.error(u"Failed to update config '%s': '%s'" % (os.path.join(backupDir, u'global.ini'), e))
 
 	for c in updatedConfigs:
 		try:
 			backend.config_createObjects([c])
-		except Exception, e:
+		except Exception as e:
 			logger.error(u"Could not create config '%s': %s" % (c.getIdent(), e))
 
 	logger.notice(u"Updating clients ...")
@@ -1883,15 +1893,15 @@ def updateFileBackend():
 			logger.notice(u"Updating client '%s'" % clientId)
 
 			oldClientDict = {
-				'id':              clientId,
-				'opsiHostKey':     None,
-				'description':     None,
-				'notes':           None,
+				'id': clientId,
+				'opsiHostKey': None,
+				'description': None,
+				'notes': None,
 				'hardwareAddress': None,
-				'ipAddress':       None,
+				'ipAddress': None,
 				'inventoryNumber': None,
-				'created':         None,
-				'lastSeen':        None
+				'created': None,
+				'lastSeen': None
 			}
 
 			if clientId in opsiHostKeys.keys():
@@ -1900,23 +1910,23 @@ def updateFileBackend():
 			updatedProductPropertyStates = []
 			updatedProductOnClients = []
 			try:
-				iniFile = IniFile(filename = oldClient)
+				iniFile = IniFile(filename=oldClient)
 				ini = iniFile.parse()
 
 				if ini.has_option('info', 'description'):
-					oldClientDict['description']     = ini.get('info', 'description')
+					oldClientDict['description'] = ini.get('info', 'description')
 				if ini.has_option('info', 'notes'):
-					oldClientDict['notes']           = ini.get('info', 'notes')
+					oldClientDict['notes'] = ini.get('info', 'notes')
 				if ini.has_option('info', 'macaddress'):
 					oldClientDict['hardwareAddress'] = ini.get('info', 'macaddress')
 				if ini.has_option('info', 'ipaddress'):
-					oldClientDict['ipAddress']       = ini.get('info', 'ipaddress')
+					oldClientDict['ipAddress'] = ini.get('info', 'ipaddress')
 				if ini.has_option('info', 'inventorynumber'):
 					oldClientDict['inventoryNumber'] = ini.get('info', 'inventorynumber')
 				if ini.has_option('info', 'created'):
-					oldClientDict['created']         = ini.get('info', 'created')
+					oldClientDict['created'] = ini.get('info', 'created')
 				if ini.has_option('info', 'lastSeen'):
-					oldClientDict['lastSeen']        = ini.get('info', 'lastSeen')
+					oldClientDict['lastSeen'] = ini.get('info', 'lastSeen')
 
 				for section in ini.sections():
 					if (section.lower().endswith(u'-install')):
@@ -1932,28 +1942,28 @@ def updateFileBackend():
 										}
 										)
 									)
-							except Exception, e:
+							except Exception as e:
 								logger.error(u"Exception while creating ProductPropertyState from '%s': %s" % (section, e))
 
 					elif (section.lower().endswith(u'_product_states')):
 						for productId in ini.options(section):
 							try:
 								poc = {
-									'productId':           productId,
-									'productType':         section[:-15],
-									'clientId':            clientId,
-									'installationStatus':  u'not_installed',
-									'actionRequest':       u'none',
-									'actionProgress':      None,
+									'productId': productId,
+									'productType': section[:-15],
+									'clientId': clientId,
+									'installationStatus': u'not_installed',
+									'actionRequest': u'none',
+									'actionProgress': None,
 									'targetConfiguration': None,
-									'productVersion':      None,
-									'packageVersion':      None,
-									'modificationTime':    None
+									'productVersion': None,
+									'packageVersion': None,
+									'modificationTime': None
 								}
 
 								try:
 									(poc['installationStatus'], poc['actionRequest']) = ini.get(section, productId).split(u':')
-								except Exception, e:
+								except Exception as e:
 									logger.error(u"Failed to get state from '%s': %s" % (ini.get(section, productId), e))
 
 								if poc['installationStatus'] not in (u'installed', u'not_installed'):
@@ -2002,9 +2012,9 @@ def updateFileBackend():
 								logger.error(u"%s" % (e))
 								continue
 
-							updatedConfigStates.append(ConfigState(configId = configId, objectId = clientId, values = [value]))
+							updatedConfigStates.append(ConfigState(configId=configId, objectId=clientId, values=[value]))
 
-			except Exception, e:
+			except Exceptionas e:
 				logger.warning(u"Could not get all information on client: %s" % e)
 
 			backend.host_createObjects([OpsiClient.fromHash(oldClientDict)])
@@ -2038,16 +2048,16 @@ def updateFileBackend():
 	updatedObjectToGroups = []
 	backupClientGroupsFile = os.path.join(backupDir, u'clientgroups.ini')
 	if os.path.isfile(backupClientGroupsFile):
-		iniFile = IniFile(filename = backupClientGroupsFile)
+		iniFile = IniFile(filename=backupClientGroupsFile)
 		ini = iniFile.parse()
 
 		parentGroupIdList= []
 		for section in ini.sections():
 			try:
 				g = {
-					'id':            forceGroupId(section),
-					'description':   None,
-					'notes':         None,
+					'id': forceGroupId(section),
+					'description': None,
+					'notes': None,
 					'parentGroupId': None
 				}
 
@@ -2063,15 +2073,15 @@ def updateFileBackend():
 						continue
 
 					otg = {
-						'groupId'   : section,
+						'groupId' : section,
 						'groupType' : 'HostGroup',
-						'objectId'  : forceObjectId(option)
+						'objectId' : forceObjectId(option)
 					}
 
 					updatedObjectToGroups.append(ObjectToGroup.fromHash(otg))
 
 				updatedGroups.append(HostGroup.fromHash(g))
-			except Exception, e:
+			except Exception as e:
 				logger.error(u"Exception while creating Group from '%s': %s" % (section, e))
 
 		#switching groups with parentGroupId after parentGroup
@@ -2101,13 +2111,13 @@ def updateFileBackend():
 		for g in updatedGroups:
 			try:
 				backend.group_createObjects([g])
-			except Exception, e:
+			except Exception as e:
 				logger.error(u"Could not create Group '%s': %s" % (g.getIdent(), e))
 
 		for otg in updatedObjectToGroups:
 			try:
 				backend.objectToGroup_createObjects([otg])
-			except Exception, e:
+			except Exception as e:
 				logger.error(u"Could not create ObjectToGroup '%s': %s" % (otg.getIdent(), e))
 	else:
 		logger.error(u"No groups file, skipping groups.")
@@ -2135,36 +2145,36 @@ def configureMySQLBackend():
 		messageBox = None
 		while True:
 			values = [
-				{ "name": u"Database host",             "value": config['address'] },
-				{ "name": u"Database admin user",       "value": dbAdminUser },
-				{ "name": u"Database admin password",   "value": dbAdminPass, "password": True },
-				{ "name": u"Opsi database name",        "value": config['database'] },
-				{ "name": u"Opsi database user",        "value": config['username'] },
-				{ "name": u"Opsi database password",    "value": config['password'], "password": True }
+				{ "name": u"Database host", "value": config['address'] },
+				{ "name": u"Database admin user", "value": dbAdminUser },
+				{ "name": u"Database admin password", "value": dbAdminPass, "password": True },
+				{ "name": u"Opsi database name", "value": config['database'] },
+				{ "name": u"Opsi database user", "value": config['username'] },
+				{ "name": u"Opsi database password", "value": config['password'], "password": True }
 			]
-			values = ui.getValues(title = u'MysQL config', width = 70, height = 15, entries = values)
+			values = ui.getValues(title=u'MysQL config', width=70, height=15, entries=values)
 			if values is None:
 				raise Exception(u"Canceled")
 
-			config['address']  = values[0]["value"]
-			dbAdminUser        = values[1]["value"]
-			dbAdminPass        = values[2]["value"]
+			config['address'] = values[0]["value"]
+			dbAdminUser = values[1]["value"]
+			dbAdminPass = values[2]["value"]
 			config['database'] = values[3]["value"]
 			config['username'] = values[4]["value"]
 			config['password'] = values[5]["value"]
 
-			messageBox = ui.createMessageBox(width = 70, height = 20, title = u'MysQL config', text = u'')
+			messageBox = ui.createMessageBox(width=70, height=20, title=u'MysQL config', text=u'')
 			# Connect to database host
 			logger.notice(u"Connecting to host '%s' as user '%s'" % (config['address'], dbAdminUser))
 			messageBox.addText(u"Connecting to host '%s' as user '%s'\n" % (config['address'], dbAdminUser))
 
 			try:
-				db = MySQLdb.connect(host = config['address'], user = dbAdminUser, passwd = dbAdminPass)
+				db = MySQLdb.connect(host=config['address'], user=dbAdminUser, passwd=dbAdminPass)
 			except Exception, e:
 				messageBox.hide()
 				logger.error(u"Failed to connect to host '%s' as user '%s': %s" % (config['address'], dbAdminUser, e))
-				ui.showError(text = u"Failed to connect to host '%s' as user '%s': %s" % (config['address'], dbAdminUser, e),
-						title = u'Failed to connect', width = 70, height = 6, seconds = 0)
+				ui.showError(text=u"Failed to connect to host '%s' as user '%s': %s" % (config['address'], dbAdminUser, e),
+						title=u'Failed to connect', width=70, height=6, seconds=)
 				continue
 			logger.notice(u"Successfully connected to host '%s' as user '%s'" % (config['address'], dbAdminUser))
 			messageBox.addText(u"Successfully connected to host '%s' as user '%s'\n" % (config['address'], dbAdminUser))
@@ -2174,7 +2184,7 @@ def configureMySQLBackend():
 			messageBox.addText(u"Creating database '%s'\n" % config['database'])
 			try:
 				db.query(u'CREATE DATABASE %s DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_bin;' % config['database'])
-			except MySQLdb.ProgrammingError, e:
+			except MySQLdb.ProgrammingError as e:
 				if (e[0] != 1007):
 					# 1007: database exists
 					raise
@@ -2211,11 +2221,11 @@ def configureMySQLBackend():
 			try:
 				db = MySQLdb.connect(host = config['address'], user = config['username'], passwd = config['password'], db = config['database'])
 				db.close()
-			except Exception, e:
+			except Exception as e:
 				messageBox.hide()
 				logger.error(u"Failed to connect to host '%s' as user '%s': %s" % (config['address'], config['username'], e))
-				ui.showError(text = u"Failed to connect to host '%s' as user '%s': %s" % (config['address'], config['username'], e),
-						title = u'Connection failed', width = 70, height = 6, seconds = 0)
+				ui.showError(text=u"Failed to connect to host '%s' as user '%s': %s" % (config['address'], config['username'], e),
+						title=u'Connection failed', width=70, height=6, seconds=0)
 				continue
 
 			logger.notice(u"Successfully connected to host '%s' as user '%s'" % (config['address'], config['username']))
@@ -2249,8 +2259,7 @@ def configureMySQLBackend():
 		time.sleep(2)
 		messageBox.hide()
 
-		ui.showMessage(title = u'Success', text = u"MySQL Backend configuration done", width = 70, height = 4, seconds = 0)
-
+		ui.showMessage(title=u'Success', text=u"MySQL Backend configuration done", width=70, height=4, seconds=0)
 	finally:
 		ui.exit()
 		logger.setConsoleLevel(consoleLevel)
@@ -2268,7 +2277,6 @@ def registerDepot():
 	config.update(backendConfig)
 	logger.info(u"Current jsonrpc backend config: %s" % config)
 
-
 	jsonrpcBackend = None
 	depot = None
 
@@ -2281,47 +2289,53 @@ def registerDepot():
 		messageBox = None
 		while True:
 			values = [
-				{ "name": u"Config server",             "value": config['address'] },
-				{ "name": u"Opsi admin user",           "value": adminUser },
-				{ "name": u"Opsi admin password",       "value": adminPass, "password": True }
+				{ "name": u"Config server", "value": config['address'] },
+				{ "name": u"Opsi admin user", "value": adminUser },
+				{ "name": u"Opsi admin password", "value": adminPass, "password": True }
 			]
-			values = ui.getValues(title = u'Config server connection', width = 70, height = 10, entries = values)
+			values = ui.getValues(title=u'Config server connection', width=70, height=10, entries=values)
 			if values is None:
 				raise Exception(u"Canceled")
 
-			config['address']  = values[0]["value"]
-			adminUser          = values[1]["value"]
-			adminPass          = values[2]["value"]
+			config['address'] = values[0]["value"]
+			adminUser = values[1]["value"]
+			adminPass = values[2]["value"]
 
-			messageBox = ui.createMessageBox(width = 70, height = 20, title = u'Register depot', text = u'')
+			messageBox = ui.createMessageBox(width=70, height=20, title=u'Register depot', text=u'')
 			# Connect to config server
 			logger.notice(u"Connecting to config server '%s' as user '%s'" % (config['address'], adminUser))
 			messageBox.addText(u"Connecting to config server '%s' as user '%s'\n" % (config['address'], adminUser))
 
 			try:
-				jsonrpcBackend = JSONRPCBackend(address = config['address'], username = adminUser, password = adminPass)
+				jsonrpcBackend = JSONRPCBackend(address=config['address'], username=adminUser, password=adminPass)
 				if not jsonrpcBackend.accessControl_userIsAdmin():
 					raise Exception(u"User '%s' is not an admin user" % adminUser)
 			except Exception, e:
 				messageBox.hide()
 				logger.error(u"Failed to connect to config server '%s' as user '%s': %s" % (config['address'], adminUser, e))
-				ui.showError(text = u"Failed to connect to config server '%s' as user '%s': %s" % (config['address'], adminUser, e),
-						title = u'Failed to connect', width = 70, height = 6, seconds = 0)
+				ui.showError(text=u"Failed to connect to config server '%s' as user '%s': %s" % (config['address'], adminUser, e),
+						title=u'Failed to connect', width=70, height=6, seconds=0)
 				continue
 			logger.notice(u"Successfully connected to config server '%s' as user '%s'" % (config['address'], adminUser))
 			messageBox.addText(u"Successfully connected to config server '%s' as user '%s'\n" % (config['address'], adminUser))
 			break
 
-		depots = jsonrpcBackend.host_getObjects(id = getSysConfig()['fqdn'])
+		depots = jsonrpcBackend.host_getObjects(id=getSysConfig()['fqdn'])
 		if depots:
 			# Already exists
 			depot = depots[0]
-			if not depot.depotWebdavUrl:  depot.depotWebdavUrl = u''
-			if not depot.masterDepotId:   depot.masterDepotId = u''
-			if not depot.hardwareAddress: depot.hardwareAddress = getSysConfig()['hardwareAddress'] or u''
-			if not depot.ipAddress:       depot.ipAddress = getSysConfig()['ipAddress'] or u''
-			if not depot.networkAddress:  depot.ipAddress = u'%s/%s' % (getSysConfig()['subnet'], getSysConfig()['netmask'])
-			if not depot.depotWebdavUrl:  depot.depotWebdavUrl = u'webdavs://%s:4447/depot' % getSysConfig()['fqdn']
+			if not depot.depotWebdavUrl:
+				depot.depotWebdavUrl = u''
+			if not depot.masterDepotId:
+				depot.masterDepotId = u''
+			if not depot.hardwareAddress:
+				depot.hardwareAddress = getSysConfig()['hardwareAddress'] or u''
+			if not depot.ipAddress:
+				depot.ipAddress = getSysConfig()['ipAddress'] or u''
+			if not depot.networkAddress:
+				depot.ipAddress = u'%s/%s' % (getSysConfig()['subnet'], getSysConfig()['netmask'])
+			if not depot.depotWebdavUrl:
+				depot.depotWebdavUrl = u'webdavs://%s:4447/depot' % getSysConfig()['fqdn']
 		else:
 			#depotLocalUrl  = u'file:///opt/pcbin/install'
 			#depotRemoteUrl = u'smb://%s/opt_pcbin/install' % getSysConfig()['hostname']
@@ -2330,22 +2344,22 @@ def registerDepot():
 			depotRemoteUrl = u'smb://%s/opsi_depot' % getSysConfig()['hostname']
 
 			depot = OpsiDepotserver(
-					id                  = getSysConfig()['fqdn'],
-					opsiHostKey         = None,
-					depotLocalUrl       = depotLocalUrl,
-					depotRemoteUrl      = depotRemoteUrl,
-					depotWebdavUrl      = u'webdavs://%s:4447/depot' % getSysConfig()['fqdn'],
-					repositoryLocalUrl  = u'file:///var/lib/opsi/repository',
-					repositoryRemoteUrl = u'webdavs://%s:4447/repository' % getSysConfig()['fqdn'],
-					description         = u'',
-					notes               = u'',
-					hardwareAddress     = getSysConfig()['hardwareAddress'] or u'',
-					ipAddress           = getSysConfig()['ipAddress'] or u'',
-					inventoryNumber     = u'',
-					networkAddress      = u'%s/%s' % (getSysConfig()['subnet'], getSysConfig()['netmask']),
-					maxBandwidth        = 0,
-					isMasterDepot       = True,
-					masterDepotId       = None,
+					id=getSysConfig()['fqdn'],
+					opsiHostKey=None,
+					depotLocalUrl=depotLocalUrl,
+					depotRemoteUrl=depotRemoteUrl,
+					depotWebdavUrl=u'webdavs://%s:4447/depot' % getSysConfig()['fqdn'],
+					repositoryLocalUrl=u'file:///var/lib/opsi/repository',
+					repositoryRemoteUrl=u'webdavs://%s:4447/repository' % getSysConfig()['fqdn'],
+					description=u'',
+					notes=u'',
+					hardwareAddress=getSysConfig()['hardwareAddress'] or u'',
+					ipAddress=getSysConfig()['ipAddress'] or u'',
+					inventoryNumber=u'',
+					networkAddress=u'%s/%s' % (getSysConfig()['subnet'], getSysConfig()['netmask']),
+					maxBandwidth=0,
+					isMasterDepot=True,
+					masterDepotId=None,
 			)
 		while True:
 			if (depot.maxBandwidth < 0):
@@ -2354,23 +2368,23 @@ def registerDepot():
 				depot.maxBandwidth = int(depot.maxBandwidth/1000)
 
 			values = [
-				{ "name": u"Description",                 "value": depot.description          },
-				{ "name": u"Inventory number",            "value": depot.inventoryNumber      },
-				{ "name": u"Notes",                       "value": depot.notes                },
-				{ "name": u"Ip address",                  "value": depot.ipAddress            },
-				{ "name": u"Hardware address",            "value": depot.hardwareAddress      },
-				{ "name": u"Network address",             "value": depot.networkAddress       },
-				{ "name": u"Maximum bandwidth (kbyte/s)", "value": depot.maxBandwidth         },
-				{ "name": u"Local depot url",             "value": depot.depotLocalUrl        },
-				{ "name": u"Remote depot url",            "value": depot.depotRemoteUrl       },
-				{ "name": u"Depot webdav url",            "value": depot.depotWebdavUrl       },
-				{ "name": u"Local repository url",        "value": depot.repositoryLocalUrl   },
-				{ "name": u"Remote repository url",       "value": depot.repositoryRemoteUrl  },
-				{ "name": u"Is master depot",             "value": depot.isMasterDepot        },
-				{ "name": u"Master depot id",             "value": depot.masterDepotId or u'' },
+				{"name": u"Description", "value": depot.description},
+				{"name": u"Inventory number", "value": depot.inventoryNumber},
+				{"name": u"Notes", "value": depot.notes},
+				{"name": u"Ip address", "value": depot.ipAddress},
+				{"name": u"Hardware address", "value": depot.hardwareAddress},
+				{"name": u"Network address", "value": depot.networkAddress},
+				{"name": u"Maximum bandwidth (kbyte/s)", "value": depot.maxBandwidth         },
+				{"name": u"Local depot url", "value": depot.depotLocalUrl},
+				{"name": u"Remote depot url", "value": depot.depotRemoteUrl},
+				{"name": u"Depot webdav url", "value": depot.depotWebdavUrl},
+				{"name": u"Local repository url", "value": depot.repositoryLocalUrl},
+				{"name": u"Remote repository url", "value": depot.repositoryRemoteUrl},
+				{"name": u"Is master depot", "value": depot.isMasterDepot},
+				{"name": u"Master depot id", "value": depot.masterDepotId or u'' },
 
 			]
-			values = ui.getValues(title = u'Depot server settings', width = 70, height = 16, entries = values)
+			values = ui.getValues(title=u'Depot server settings', width=70, height=16, entries=values)
 			if values is None:
 				raise Exception(u"Canceled")
 
@@ -2452,7 +2466,7 @@ def registerDepot():
 				if not error: error = u'Master depot id invalid'
 
 			if error:
-				ui.showError(title = u'Bad value', text = error, width = 50, height = 5)
+				ui.showError(title=u'Bad value', text=error, width=50, height=5)
 				continue
 
 			break
@@ -2474,7 +2488,7 @@ def registerDepot():
 
 	logger.notice(u"Testing connection to config server as user '%s'" % config['username'])
 	try:
-		jsonrpcBackend = JSONRPCBackend(address = config['address'], username = config['username'], password = config['password'])
+		jsonrpcBackend = JSONRPCBackend(address=config['address'], username=config['username'], password=config['password'])
 	except Exception, e:
 		raise Exception(u"Failed to connect to config server as user '%s': %s" % (config['username'], e))
 	logger.notice(u"Successfully connected to config server as user '%s'" % config['username'])
@@ -2617,24 +2631,24 @@ def initializeBackends():
 	if not os.path.exists(u'/etc/opsi/passwd'):
 		f = codecs.open(u'/etc/opsi/passwd', 'w', 'utf-8')
 		f.close()
-		opsiconfdUid  = pwd.getpwnam(OPSICONFD_USER)[2]
+		opsiconfdUid = pwd.getpwnam(OPSICONFD_USER)[2]
 		adminGroupGid = grp.getgrnam(ADMIN_GROUP)[2]
 		os.chown(u'/etc/opsi/passwd', opsiconfdUid, adminGroupGid)
 		os.chmod(u'/etc/opsi/passwd', 0660)
 
 	from OPSI.Backend.BackendManager import BackendManager
 	backend = BackendManager(
-		dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
-		backendConfigDir   = u'/etc/opsi/backends',
-		extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
-		depotbackend       = False
+		dispatchConfigFile=u'/etc/opsi/backendManager/dispatch.conf',
+		backendConfigDir=u'/etc/opsi/backends',
+		extensionConfigDir=u'/etc/opsi/backendManager/extend.d',
+		depotbackend=False
 	)
 	backend.backend_createBase()
 
 	logger.notice(u"Try to find a Configserver.")
-	configServer = backend.host_getObjects(type = 'OpsiConfigserver')
-	if not configServer and not backend.host_getIdents(type = 'OpsiConfigserver', id = getSysConfig()['fqdn']):
-		depot = backend.host_getObjects(type = 'OpsiDepotserver', id = getSysConfig()['fqdn'])
+	configServer = backend.host_getObjects(type='OpsiConfigserver')
+	if not configServer and not backend.host_getIdents(type='OpsiConfigserver', id=getSysConfig()['fqdn']):
+		depot = backend.host_getObjects(type='OpsiDepotserver', id=getSysConfig()['fqdn'])
 		if not depot:
 			logger.notice(u"Creating config server '%s'" % getSysConfig()['fqdn'])
 			#depotLocalUrl  = u'file:///opt/pcbin/install'
@@ -2644,30 +2658,30 @@ def initializeBackends():
 			depotRemoteUrl = u'smb://%s/opsi_depot' % getSysConfig()['hostname']
 
 			backend.host_createOpsiConfigserver(
-				id                  = getSysConfig()['fqdn'],
-				opsiHostKey         = None,
-				depotLocalUrl       = depotLocalUrl,
-				depotRemoteUrl      = depotRemoteUrl,
-				depotWebdavUrl      = u'webdavs://%s:4447/depot' % getSysConfig()['fqdn'],
-				repositoryLocalUrl  = u'file:///var/lib/opsi/repository',
-				repositoryRemoteUrl = u'webdavs://%s:4447/repository' % getSysConfig()['fqdn'],
-				description         = None,
-				notes               = None,
-				hardwareAddress     = getSysConfig()['hardwareAddress'],
-				ipAddress           = getSysConfig()['ipAddress'],
-				inventoryNumber     = None,
-				networkAddress      = u'%s/%s' % (getSysConfig()['subnet'], getSysConfig()['netmask']),
-				maxBandwidth        = 0,
-				isMasterDepot       = True,
-				masterDepotId       = None,
+				id=getSysConfig()['fqdn'],
+				opsiHostKey=None,
+				depotLocalUrl=depotLocalUrl,
+				depotRemoteUrl=depotRemoteUrl,
+				depotWebdavUrl=u'webdavs://%s:4447/depot' % getSysConfig()['fqdn'],
+				repositoryLocalUrl=u'file:///var/lib/opsi/repository',
+				repositoryRemoteUrl=u'webdavs://%s:4447/repository' % getSysConfig()['fqdn'],
+				description=None,
+				notes=None,
+				hardwareAddress=getSysConfig()['hardwareAddress'],
+				ipAddress=getSysConfig()['ipAddress'],
+				inventoryNumber=None,
+				networkAddress=u'%s/%s' % (getSysConfig()['subnet'], getSysConfig()['netmask']),
+				maxBandwidth=0,
+				isMasterDepot=True,
+				masterDepotId=None,
 			)
-			configServer = backend.host_getObjects(type = 'OpsiConfigserver', id = getSysConfig()['fqdn'])
+			configServer = backend.host_getObjects(type='OpsiConfigserver', id=getSysConfig()['fqdn'])
 		else:
 			logger.notice(u"Converting depot server '%s' to config server" % getSysConfig()['fqdn'])
 			configServer = OpsiConfigserver.fromHash(depot[0].toHash())
 			backend.host_createObjects(configServer)
 	else:
-		depot = backend.host_getObjects(type = 'OpsiDepotserver', id = getSysConfig()['fqdn'])
+		depot = backend.host_getObjects(type='OpsiDepotserver', id=getSysConfig()['fqdn'])
 		if not depot:
 			logger.notice(u"Creating depot server '%s'" % getSysConfig()['fqdn'])
 			#depotLocalUrl  = u'file:///opt/pcbin/install'
@@ -2677,26 +2691,26 @@ def initializeBackends():
 			depotRemoteUrl = u'smb://%s/opsi_depot' % getSysConfig()['hostname']
 
 			depotServer = backend.host_createOpsiDepotserver(
-				id                  = getSysConfig()['fqdn'],
-				opsiHostKey         = None,
-				depotLocalUrl       = depotLocalUrl,
-				depotRemoteUrl      = depotRemoteUrl,
-				depotWebdavUrl      = u'webdavs://%s:4447/depot' % getSysConfig()['fqdn'],
-				repositoryLocalUrl  = u'file:///var/lib/opsi/repository',
-				repositoryRemoteUrl = u'webdavs://%s:4447/repository' % getSysConfig()['fqdn'],
-				description         = None,
-				notes               = None,
-				hardwareAddress     = getSysConfig()['hardwareAddress'],
-				ipAddress           = getSysConfig()['ipAddress'],
-				inventoryNumber     = None,
-				networkAddress      = u'%s/%s' % (getSysConfig()['subnet'], getSysConfig()['netmask']),
-				maxBandwidth        = 0,
-				isMasterDepot       = True,
-				masterDepotId       = None,
+				id=getSysConfig()['fqdn'],
+				opsiHostKey=None,
+				depotLocalUrl=depotLocalUrl,
+				depotRemoteUrl=depotRemoteUrl,
+				depotWebdavUrl=u'webdavs://%s:4447/depot' % getSysConfig()['fqdn'],
+				repositoryLocalUrl=u'file:///var/lib/opsi/repository',
+				repositoryRemoteUrl=u'webdavs://%s:4447/repository' % getSysConfig()['fqdn'],
+				description=None,
+				notes=None,
+				hardwareAddress=getSysConfig()['hardwareAddress'],
+				ipAddress=getSysConfig()['ipAddress'],
+				inventoryNumber=None,
+				networkAddress=u'%s/%s' % (getSysConfig()['subnet'], getSysConfig()['netmask']),
+				maxBandwidth=0,
+				isMasterDepot=True,
+				masterDepotId=None,
 			)
 	if configServer:
 		if configServer[0].id == getSysConfig()['fqdn']:
-			configServer = backend.host_getObjects(type = 'OpsiConfigserver')
+			configServer = backend.host_getObjects(type='OpsiConfigserver')
 			if not configServer:
 				raise Exception(u"Config server '%s' not found" % getSysConfig()['fqdn'])
 			configServer = configServer[0]
@@ -2719,13 +2733,13 @@ def initializeBackends():
 			logger.warning(u"Failed to create symlink '%s' pointing to '%s': %s" % (link, source, e))
 
 
-def initializeConfigs(configServer = None):
+def initializeConfigs(configServer=None):
 	from OPSI.Backend.BackendManager import BackendManager
 	backend = BackendManager(
-		dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
-		backendConfigDir   = u'/etc/opsi/backends',
-		extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
-		depotbackend       = False
+		dispatchConfigFile=u'/etc/opsi/backendManager/dispatch.conf',
+		backendConfigDir=u'/etc/opsi/backends',
+		extensionConfigDir=u'/etc/opsi/backendManager/extend.d',
+		depotbackend=False
 	)
 	backend.backend_createBase()
 
@@ -2734,121 +2748,121 @@ def initializeConfigs(configServer = None):
 	if not 'clientconfig.configserver.url' in configIdents and configServer:
 		configs.append(
 			UnicodeConfig(
-				id             = u'clientconfig.configserver.url',
-				description    = u'URL(s) of opsi config service(s) to use',
-				possibleValues = [ u'https://%s:4447/rpc' % configServer.getIpAddress() ],
-				defaultValues  = [ u'https://%s:4447/rpc' % configServer.getIpAddress() ],
-				editable       = True,
-				multiValue     = True
+				id=u'clientconfig.configserver.url',
+				description=u'URL(s) of opsi config service(s) to use',
+				possibleValues=[u'https://%s:4447/rpc' % configServer.getIpAddress()],
+				defaultValues=[u'https://%s:4447/rpc' % configServer.getIpAddress()],
+				editable=True,
+				multiValue=True
 			)
 		)
 	if not 'clientconfig.depot.id' in configIdents and configServer:
 		configs.append(
 			UnicodeConfig(
-				id             = u'clientconfig.depot.id',
-				description    = u'ID of the opsi depot to use',
-				possibleValues = [ configServer.getId() ],
-				defaultValues  = [ configServer.getId() ],
-				editable       = True,
-				multiValue     = False
+				id=u'clientconfig.depot.id',
+				description=u'ID of the opsi depot to use',
+				possibleValues=[configServer.getId()],
+				defaultValues=[configServer.getId()],
+				editable=True,
+				multiValue=False
 			)
 		)
 	if not 'clientconfig.depot.dynamic' in configIdents:
 		configs.append(
 			BoolConfig(
-				id             = u'clientconfig.depot.dynamic',
-				description    = u'Use dynamic depot selection',
-				defaultValues  = [ False ]
+				id=u'clientconfig.depot.dynamic',
+				description=u'Use dynamic depot selection',
+				defaultValues=[False]
 			)
 		)
 	if not 'clientconfig.depot.drive' in configIdents:
 		configs.append(
 			UnicodeConfig(
-				id             = u'clientconfig.depot.drive',
-				description    = u'Drive letter for depot share',
-				possibleValues = [ u'c:', u'd:', u'e:', u'f:', u'g:', u'h:', u'i:', u'j:', u'k:', u'l:', u'm:', u'n:', u'o:', u'p:', u'q:', u'r:', u's:', u't:', u'u:', u'v:', u'w:', u'x:', u'y:', u'z:' ],
-				defaultValues  = [ u'p:' ],
-				editable       = False,
-				multiValue     = False
+				id=u'clientconfig.depot.drive',
+				description=u'Drive letter for depot share',
+				possibleValues=[u'c:', u'd:', u'e:', u'f:', u'g:', u'h:', u'i:', u'j:', u'k:', u'l:', u'm:', u'n:', u'o:', u'p:', u'q:', u'r:', u's:', u't:', u'u:', u'v:', u'w:', u'x:', u'y:', u'z:'],
+				defaultValues=[u'p:'],
+				editable=False,
+				multiValue=False
 			)
 		)
 	if not 'clientconfig.depot.protocol' in configIdents:
 		configs.append(
 			UnicodeConfig(
-				id             = u'clientconfig.depot.protocol',
-				description    = u'Protocol for file transfer',
-				possibleValues = [ 'cifs', 'webdav' ],
-				defaultValues  = [ 'cifs' ],
-				editable       = False,
-				multiValue     = False
+				id=u'clientconfig.depot.protocol',
+				description=u'Protocol for file transfer',
+				possibleValues=['cifs', 'webdav'],
+				defaultValues=['cifs'],
+				editable=False,
+				multiValue=False
 			)
 		)
 	if not 'clientconfig.windows.domain' in configIdents:
 		configs.append(
 			UnicodeConfig(
-				id             = u'clientconfig.windows.domain',
-				description    = u'Windows domain',
-				possibleValues = [],
-				defaultValues  = [ getSysConfig()['winDomain'] ],
-				editable       = True,
-				multiValue     = False
+				id=u'clientconfig.windows.domain',
+				description=u'Windows domain',
+				possibleValues=[],
+				defaultValues=[getSysConfig()['winDomain']],
+				editable=True,
+				multiValue=False
 			)
 		)
 	if not 'opsi-linux-bootimage.append' in configIdents:
 		configs.append(
 			UnicodeConfig(
-				id             = u'opsi-linux-bootimage.append',
-				description    = u'Extra options to append to kernel command line',
-				possibleValues = [ u'acpi=off', u'irqpoll', u'noapic', 'pci=nomsi', 'vga=normal', 'reboot=b' ],
-				defaultValues  = [ u'' ],
-				editable       = True,
-				multiValue     = True
+				id=u'opsi-linux-bootimage.append',
+				description=u'Extra options to append to kernel command line',
+				possibleValues=[u'acpi=off', u'irqpoll', u'noapic', 'pci=nomsi', 'vga=normal', 'reboot=b'],
+				defaultValues=[u''],
+				editable=True,
+				multiValue=True
 			)
 		)
 	if not 'license-management.use' in configIdents:
 		configs.append(
 			BoolConfig(
-				id             = u'license-management.use',
-				description    = u'Activate license management',
-				defaultValues  = [ False ]
+				id=u'license-management.use',
+				description=u'Activate license management',
+				defaultValues=[False]
 			)
 		)
 	if not 'software-on-demand.active' in configIdents:
 		configs.append(
 			BoolConfig(
-				id             = u'software-on-demand.active',
-				description    = u'Activate software-on-demand',
-				defaultValues  = [ False ]
+				id=u'software-on-demand.active',
+				description=u'Activate software-on-demand',
+				defaultValues=[False]
 			)
 		)
 	if not 'software-on-demand.show-details' in configIdents:
 		configs.append(
 			BoolConfig(
-				id             = u'software-on-demand.show-details',
-				description    = u'Show more details for software-on-demand',
-				defaultValues  = [ False ]
+				id=u'software-on-demand.show-details',
+				description=u'Show more details for software-on-demand',
+				defaultValues=[False]
 			)
 		)
 	if not 'software-on-demand.product-group-ids' in configIdents:
 		configs.append(
 			UnicodeConfig(
-				id             = u'software-on-demand.product-group-ids',
-				description    = u'Product group ids containing products which are allowed to be installed on demand',
-				possibleValues = [ u'software-on-demand' ],
-				defaultValues  = [ u'software-on-demand' ],
-				editable       = True,
-				multiValue     = True
+				id=u'software-on-demand.product-group-ids',
+				description=u'Product group ids containing products which are allowed to be installed on demand',
+				possibleValues=[u'software-on-demand'],
+				defaultValues=[u'software-on-demand'],
+				editable=True,
+				multiValue=True
 			)
 		)
 	if not 'product_sort_algorithm' in configIdents:
 		configs.append(
 			UnicodeConfig(
-				id             = u'product_sort_algorithm',
-				description    = u'Product sorting algorithm',
-				possibleValues = [ u'algorithm1', u'algorithm2' ],
-				defaultValues  = [ u'algorithm1' ],
-				editable       = False,
-				multiValue     = False
+				id=u'product_sort_algorithm',
+				description=u'Product sorting algorithm',
+				possibleValues=[u'algorithm1', u'algorithm2'],
+				defaultValues=[u'algorithm1' ],
+				editable=False,
+				multiValue=False
 			)
 		)
 
@@ -2860,16 +2874,16 @@ def initializeConfigs(configServer = None):
 def editConfigDefaults():
 	from OPSI.Backend.BackendManager import BackendManager
 	backend = BackendManager(
-		dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
-		backendConfigDir   = u'/etc/opsi/backends',
-		extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
-		depotbackend       = False
+		dispatchConfigFile=u'/etc/opsi/backendManager/dispatch.conf',
+		backendConfigDir=u'/etc/opsi/backends',
+		extensionConfigDir=u'/etc/opsi/backendManager/extend.d',
+		depotbackend=False
 	)
 	configs = backend.config_getObjects()
 
 	consoleLevel = logger.getConsoleLevel()
 	logger.setConsoleLevel(LOG_NONE)
-	ui = UIFactory(type = 'snack')
+	ui = UIFactory(type='snack')
 	try:
 		while True:
 			entries = []
@@ -2895,11 +2909,11 @@ def editConfigDefaults():
 				entries.append(
 					{
 						"id": config.id,
-						"name": format % ( type, config.id, values )
+						"name": format % (type, config.id, values)
 					}
 				)
 
-			selection = ui.getSelection(entries, radio = True, width=100, height=10, title=u'Please select config value to change', okLabel='OK', cancelLabel='Cancel')
+			selection = ui.getSelection(entries, radio=True, width=100, heigt=10, title=u'Please select config value to change', okLabel='OK', cancelLabel='Cancel')
 
 			if not selection:
 				return
@@ -2927,7 +2941,7 @@ def editConfigDefaults():
 				radio = not configs[selectedConfig].multiValue
 				if configs[selectedConfig].editable:
 					entries.append({'name': '<other value>', 'value': '<other value>', 'selected': False})
-				selection = ui.getSelection(entries, radio = radio, width = 65, height = 10, title = title, text = text, cancelLabel = cancelLabel)
+				selection = ui.getSelection(entries, radio=radio, width=65, height=10, title=title, text=text, cancelLabel=cancelLabel)
 
 				if selection is None:
 					continue
@@ -2942,7 +2956,7 @@ def editConfigDefaults():
 				default = u''
 				if configs[selectedConfig].defaultValues:
 					default = configs[selectedConfig].defaultValues[0]
-				value = ui.getValue(width = 65, height = 13, title = title, default = default, password = False, text = text, cancelLabel = cancelLabel)
+				value = ui.getValue(width=65, height=13, title=title, default=default, password=False, text=text, cancelLabel=cancelLabel)
 				if value is None:
 					continue
 
@@ -2962,10 +2976,10 @@ def editConfigDefaults():
 def cleanupBackend():
 	from OPSI.Backend.BackendManager import BackendManager
 	backend = BackendManager(
-		dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf',
-		backendConfigDir   = u'/etc/opsi/backends',
-		extensionConfigDir = u'/etc/opsi/backendManager/extend.d',
-		depotbackend       = False
+		dispatchConfigFile=u'/etc/opsi/backendManager/dispatch.conf',
+		backendConfigDir=u'/etc/opsi/backends',
+		extensionConfigDir=u'/etc/opsi/backendManager/extend.d',
+		depotbackend=False
 	)
 
 	logger.notice(u"Parsing dispatch.conf")
@@ -3011,7 +3025,7 @@ def cleanupBackend():
 				for ID in deleteIds:
 					logger.notice(u"Deleting PropertyValue id: %s" % ID)
 					mysql.execute("DELETE FROM `PRODUCT_PROPERTY_VALUE` where `product_property_id` = '%s'" % ID )
-	except Exception, e:
+	except Exception as e:
 		logger.warning(e)
 
 	logger.notice(u"Cleaning up groups")
@@ -3038,7 +3052,7 @@ def cleanupBackend():
 			productIdents.append(productIdent)
 	deleteProducts = []
 	for product in backend.product_getObjects():
-		if not product.getIdent(returnType = 'unicode') in productIdents:
+		if not product.getIdent(returnType='unicode') in productIdents:
 			logger.info(u"Marking unreferenced product %s for deletion" % product)
 			deleteProducts.append(product)
 		else:
@@ -3050,11 +3064,11 @@ def cleanupBackend():
 	logger.notice(u"Cleaning up product on depots")
 	productIdents = []
 	depotIds = []
-	for depot in backend.host_getObjects(type=["OpsiConfigserver","OpsiDepotserver"]):
+	for depot in backend.host_getObjects(type=["OpsiConfigserver", "OpsiDepotserver"]):
 		depotIds.append(depot.id)
 	for product in backend.product_getObjects():
-		if not product.getIdent(returnType = 'unicode') in productIdents:
-			productIdents.append(product.getIdent(returnType = 'unicode'))
+		if not product.getIdent(returnType='unicode') in productIdents:
+			productIdents.append(product.getIdent(returnType='unicode'))
 	deleteProductOnDepots = []
 	for productOnDepot in backend.productOnDepot_getObjects():
 		productIdent = u"%s;%s;%s" % (productOnDepot.productId, productOnDepot.productVersion, productOnDepot.packageVersion)
@@ -3124,13 +3138,13 @@ def cleanupBackend():
 	if deleteProductPropertyStates:
 		backend.productPropertyState_deleteObjects(deleteProductPropertyStates)
 
-	for depot in backend.host_getObjects(type = 'OpsiDepotserver'):
+	for depot in backend.host_getObjects(type='OpsiDepotserver'):
 		objectIds = [ depot.id ]
-		for clientToDepot in backend.configState_getClientToDepotserver(depotIds = depot.id):
+		for clientToDepot in backend.configState_getClientToDepotserver(depotIds=depot.id):
 			if not clientToDepot['clientId'] in objectIds:
 				objectIds.append(clientToDepot['clientId'])
 		productOnDepotIdents = {}
-		for productOnDepot in backend.productOnDepot_getObjects(depotId = depot.id):
+		for productOnDepot in backend.productOnDepot_getObjects(depotId=depot.id):
 			productIdent = u"%s;%s;%s" % (productOnDepot.productId, productOnDepot.productVersion, productOnDepot.packageVersion)
 			productOnDepotIdents[productOnDepot.productId] = productIdent
 		if not productOnDepotIdents:
@@ -3138,9 +3152,9 @@ def cleanupBackend():
 		deleteProductPropertyStates = []
 		updateProductPropertyStates = []
 		for productPropertyState in backend.productPropertyState_getObjects(
-						objectId   = objectIds,
-						productId  = productOnDepotIdents.keys(),
-						propertyId = []):
+				objectId=objectIds,
+				productId=productOnDepotIdents.keys(),
+				propertyId=[]):
 			productIdent = productOnDepotIdents.get(productPropertyState.productId)
 			if not productIdent:
 				continue
@@ -3333,7 +3347,7 @@ def main():
 	if autoConfigureDhcpd:
 		configureDHCPD()
 
-	if   (task == 'set-rights'):
+	if (task == 'set-rights'):
 		setRights(path)
 
 	elif (task == 'init-current-config'):
