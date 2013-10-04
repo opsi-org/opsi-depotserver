@@ -2174,7 +2174,7 @@ def configureMySQLBackend():
 				messageBox.hide()
 				logger.error(u"Failed to connect to host '%s' as user '%s': %s" % (config['address'], dbAdminUser, e))
 				ui.showError(text=u"Failed to connect to host '%s' as user '%s': %s" % (config['address'], dbAdminUser, e),
-						title=u'Failed to connect', width=70, height=6, seconds=)
+						title=u'Failed to connect', width=70, height=6, seconds=0)
 				continue
 			logger.notice(u"Successfully connected to host '%s' as user '%s'" % (config['address'], dbAdminUser))
 			messageBox.addText(u"Successfully connected to host '%s' as user '%s'\n" % (config['address'], dbAdminUser))
