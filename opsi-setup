@@ -17,7 +17,7 @@ import socket
 import sys
 import time
 
-if (sys.version_info >= (2,6)):
+if (sys.version_info >= (2, 6)):
 	import json
 else:
 	import simplejson as json
@@ -1178,7 +1178,7 @@ def updateMySQLBackend():
 		tableName = i.values()[0]
 		logger.debug(u" [ %s ]" % tableName)
 		tables[tableName] = []
-		mysql.execute("alter table `%s` convert to charset utf8 collate utf8_general_ci;" % tableName);
+		mysql.execute("alter table `%s` convert to charset utf8 collate utf8_general_ci;" % tableName)
 		for j in mysql.getSet(u'SHOW COLUMNS FROM `%s`' % tableName):
 			logger.debug(u"      %s" % j)
 			tables[tableName].append(j['Field'])
@@ -2196,7 +2196,7 @@ def configureMySQLBackend():
 				messageBox.addText(u"Creating user '%s' and granting all rights on '%s'\n" % (config['username'], config['database']))
 				db.query(u'USE %s;' % config['database'])
 				db.query(u'GRANT ALL ON %s .* TO %s@%s IDENTIFIED BY \'%s\'' \
-					% (config['database'], config['username'], host, config['password']));
+					% (config['database'], config['username'], host, config['password']))
 				db.query(u'FLUSH PRIVILEGES;')
 				logger.notice(u"User '%s' created and privileges set" % config['username'])
 				messageBox.addText(u"User '%s' created and privileges set\n" % config['username'])
