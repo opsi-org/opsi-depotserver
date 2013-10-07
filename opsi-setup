@@ -424,8 +424,8 @@ def configureDHCPD():
 def patchSudoersFileForOpsi():
 	#get opsifileadmins groupname!!!!
 	entries = [
-		"opsiconfd ALL=NOPASSWD: %s" % "/usr/bin/opsi-setup",
-		"%%%s ALL=NOPASSWD: %s" % (FILE_ADMIN_GROUP, "/usr/bin/opsi-setup"),
+		"opsiconfd ALL=NOPASSWD: %s" % "/usr/bin/opsi-set-rights",
+		"%%%s ALL=NOPASSWD: %s" % (FILE_ADMIN_GROUP, "/usr/bin/opsi-set-rights"),
 	]
 	modify = False
 
