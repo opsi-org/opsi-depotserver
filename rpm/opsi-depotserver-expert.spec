@@ -60,6 +60,7 @@ mkdir -p $RPM_BUILD_ROOT/var/log/opsi/bootimage
 mkdir -p $RPM_BUILD_ROOT/var/log/opsi/instlog
 mkdir -p $RPM_BUILD_ROOT/usr/bin
 install -m 0755 opsi-setup $RPM_BUILD_ROOT/usr/bin/opsi-setup
+install -m 0755 opsi-set-rights $RPM_BUILD_ROOT/usr/bin/opsi-set-rights
 
 # ===[ clean ]======================================
 %clean
@@ -84,6 +85,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 /usr/bin/opsi-setup
+/usr/bin/opsi-set-rights
 
 # directories
 %if 0%{?sles_version}

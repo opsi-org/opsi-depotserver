@@ -1,8 +1,9 @@
-opsi-depotserver (4.0.4.1-1) UNRELEASED; urgency=low
+opsi-depotserver (4.0.4.1-1) experimental; urgency=low
 
   * opsi-setup: Making use of new module OPSI.Util.Task.Certificate
+  * opsi-set-rights: new wrapper script added for opsi-setup --set-rights
 
- -- Niko Wenselowski <n.wenselowski@uib.de>  Fri, 04 Oct 2013 11:25:38 +0200
+ -- Erol Ueluekmen <e.ueluekmen@uib.de>  Mon, 07 Oct 2013 08:25:38 +0200
 
 opsi-depotserver (4.0.3.4-1) experimental; urgency=low
 
