@@ -12,3 +12,10 @@ Description: Do you want me to edit your dhcpd config?
  I can try to add the needed options to your dhcp server config 
  but if your config get messed up you have been warned!!!
 
+Template: opsi/configure_sudoers
+Type: boolean
+Default: false
+Description: Do you want me to edit your sudoers config?
+ I can try to add the needed options to your sudoers file 
+ but if your config get messed up you have been warned!!!
+

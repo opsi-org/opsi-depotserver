@@ -28,6 +28,12 @@ else
 	db_get opsi/configure_dhcpd
 	CONFIGURE_DHCPD=$RET
 fi
+if [ -e "/etc/sudoers" ]; then
+	CONFIGURE_SUDO="false"
+else
+	db_get opsi/configure_sudoers
+	CONFIGURE_SUDO=$RET
+fi
 
 case "$1" in
 	configure)
@@ -40,6 +46,11 @@ case "$1" in
 		if [ "$CONFIGURE_SAMBA" = "true" ]; then
 			arguments="${arguments} --auto-configure-samba"
 		fi
+		
+		if [ "$CONFIGURE_SUDO" = "true" ]; then
+			arguments="${arguments} --patch-sudoers-file"
+		fi
+		
 		if [ "$2" = "" ]; then
 			/usr/bin/opsi-setup --init-current-config $arguments || true
 			/usr/bin/opsi-setup --set-rights || true

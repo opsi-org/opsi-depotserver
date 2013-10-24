@@ -53,7 +53,7 @@ mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/workbench
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/depot
 %else
 mkdir -p $RPM_BUILD_ROOT/home/opsiproducts
-mkdir -p $RPM_BUILD_ROOT/opt/pcbin/install
+#mkdir -p $RPM_BUILD_ROOT/opt/pcbin/install
 %endif
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/repository
 mkdir -p $RPM_BUILD_ROOT/var/log/opsi/clientconnect
@@ -130,11 +130,10 @@ fi
 %dir /var/lib/opsi/depot
 %else
 %dir /home/opsiproducts
-%dir /opt/pcbin
-%dir /opt/pcbin/install
 %endif
 %dir /var/lib/opsi
 %dir /var/lib/opsi/repository
+%dir /var/lib/opsi/ntfs-images
 %dir /var/log/opsi
 %dir /var/log/opsi/clientconnect
 %dir /var/log/opsi/bootimage

@@ -1,7 +1,7 @@
 home/opsiproducts
-opt/pcbin/install
 usr/bin
 var/lib/opsi/repository
+var/lib/opsi/ntfs-images
 var/log/opsi/clientconnect
 var/log/opsi/bootimage
 var/log/opsi/instlog

@@ -71,7 +71,6 @@ if os.path.exists(u'/etc/init.d/smb'):
 
 sysConfig = {}
 
-
 def getSysConfig():
 	global sysConfig
 	if sysConfig:
@@ -191,19 +190,8 @@ def configureSamba():
 			workbenchShareFound = True
 		newlines.append(lines[i])
 
-	if not optPcbinShareFound and (getSysConfig()['distribution'].lower().find('suse linux enterprise server') == -1):
-		logger.notice(u"   Adding share [opt_pcbin]")
-		confChanged = True
-		newlines.append(u"[opt_pcbin]\n")
-		newlines.append(u"   available = yes\n")
-		newlines.append(u"   comment = opsi depot share\n")
-		newlines.append(u"   path = /opt/pcbin\n")
-		newlines.append(u"   oplocks = no\n")
-		newlines.append(u"   follow symlinks = yes\n")
-		newlines.append(u"   level2 oplocks = no\n")
-		newlines.append(u"   writeable = yes\n")
-		newlines.append(u"   invalid users = root\n")
-		newlines.append(u"\n")
+	if optPcbinShareFound:
+		logger.warning(u"Share opt_pcbin configuration found in '%s'. You should use opsi_depot_rw instead, if you need a writeable depot-Share." % SMB_CONF)
 
 	if not depotShareFound:
 		logger.notice(u"   Adding share [opsi_depot]")
@@ -218,13 +206,15 @@ def configureSamba():
 		newlines.append(u"   writeable = no\n")
 		newlines.append(u"   invalid users = root\n")
 		newlines.append(u"\n")
-		link = '/var/lib/opsi/depot'
-		source = '/opt/pcbin/install'
-		if not os.path.exists(link) and os.path.exists(source):
+		
+		depotDir = '/var/lib/opsi/depot'
+		if not os.path.exists(depotDir):
 			try:
-				os.symlink(source, link)
+				os.mkdir(depotDir)
+				if os.path.exists("/opt/pcbin/install"):
+					logger.warning(u"You have an old depot configuration. Using /opt/pcbin/install is depracted, please youse /var/lib/opsi/depot instead.")
 			except Exception, e:
-				logger.error(u"Failed to create symlink '%s' pointing to '%s': %s" % (link, source, e))
+				logger.warning(u"Failed to create depot directory '%s': %s" % (depotDir, e))
 
 	if not depotShareRWFound:
 		logger.notice(u"   Adding share [opsi_depot_rw]")
@@ -689,6 +679,7 @@ def update(fromVersion=None):
 			logger.warning(e)
 
 	# 4.0 => 4.0.1
+	"""
 	link = '/var/lib/opsi/depot'
 	source = '/opt/pcbin/install'
 	if not os.path.exists(link) and os.path.exists(source):
@@ -696,6 +687,18 @@ def update(fromVersion=None):
 			os.symlink(source, link)
 		except Exception, e:
 			logger.warning(u"Failed to create symlink '%s' pointing to '%s': %s" % (link, source, e))
+	"""
+	
+	# 4.0.2 => 4.0.3
+	depotDir = '/var/lib/opsi/depot'
+	if not os.path.exists(depotDir):
+		try:
+			os.mkdir(depotDir)
+			if os.path.exists("/opt/pcbin/install"):
+				logger.warning(u"You have an old depot configuration. Using /opt/pcbin/install is depracted, please youse /var/lib/opsi/depot instead.")
+		except Exception, e:
+			logger.warning(u"Failed to create depot directory '%s': %s" % (depotDir, e))
+
 
 	if isConfigServer:
 		initializeConfigs()
@@ -2724,13 +2727,14 @@ def initializeBackends():
 	backend.backend_exit()
 	initializeConfigs(configServer = configServer)
 
-	link = '/var/lib/opsi/depot'
-	source = '/opt/pcbin/install'
-	if not os.path.exists(link) and os.path.exists(source):
+	depotDir = '/var/lib/opsi/depot'
+	if not os.path.exists(depotDir):
 		try:
-			os.symlink(source, link)
+			os.mkdir(depotDir)
+			if os.path.exists("/opt/pcbin/install"):
+				logger.warning(u"You have an old depot configuration. Using /opt/pcbin/install is depracted, please youse /var/lib/opsi/depot instead.")
 		except Exception, e:
-			logger.warning(u"Failed to create symlink '%s' pointing to '%s': %s" % (link, source, e))
+			logger.warning(u"Failed to create depot directory '%s': %s" % (depotDir, e))
 
 
 def initializeConfigs(configServer=None):
@@ -2860,7 +2864,7 @@ def initializeConfigs(configServer=None):
 				id=u'product_sort_algorithm',
 				description=u'Product sorting algorithm',
 				possibleValues=[u'algorithm1', u'algorithm2'],
-				defaultValues=[u'algorithm1' ],
+				defaultValues=[u'algorithm1'],
 				editable=False,
 				multiValue=False
 			)
@@ -3262,7 +3266,7 @@ def usage():
 	print u"   --auto-configure-samba        patch smb.conf"
 	print u"   --auto-configure-dhcpd        patch dhcpd.conf"
 	print u"   --renew-opsiconfd-cert        renew opsiconfd-cert (not supported on python < 2.5)"
-	print u"   --patch-sudoers-file		patching sudoers file for tasks in opsiadmin context."
+	print u"   --patch-sudoers-file	          patching sudoers file for tasks in opsiadmin context."
 	print u""
 
 
@@ -3401,7 +3405,7 @@ if (__name__ == "__main__"):
 	logger.setLogFormat(u'[%l] [%D] %M (%F|%N)')
 	logger.setLogFile(LOG_FILE)
 	logger.setFileLevel(LOG_INFO)
-
+	exception = None
 	try:
 		main()
 	except SystemExit:
