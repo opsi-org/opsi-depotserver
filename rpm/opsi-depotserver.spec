@@ -50,11 +50,11 @@ opsi depotserver
 %install
 %if 0%{?sles_version}
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/workbench
-mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/depot
 %else
 mkdir -p $RPM_BUILD_ROOT/home/opsiproducts
-#mkdir -p $RPM_BUILD_ROOT/opt/pcbin/install
 %endif
+mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/ntfs-images
+mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/depot
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/repository
 mkdir -p $RPM_BUILD_ROOT/var/log/opsi/clientconnect
 mkdir -p $RPM_BUILD_ROOT/var/log/opsi/bootimage
