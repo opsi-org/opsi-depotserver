@@ -1294,7 +1294,7 @@ def updateMySQLBackend():
 			if not 'vendorId' in tables[key]:
 				continue
 
-			logger.notice(u"Updating database table %s from opsi 3.4 to 4.0" % key)
+			logger.notice(u"Updating database table %s" % key)
 			for vendorId in ('NDIS', 'SSTP', 'AGIL', 'L2TP', 'PPTP', 'PPPO', 'PTIM'):
 				mysql.execute(u"update %s set `vendorId`=NULL where `vendorId`='%s';" % (key, vendorId))
 
