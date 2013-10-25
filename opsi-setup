@@ -689,7 +689,7 @@ def update(fromVersion=None):
 			logger.warning(u"Failed to create symlink '%s' pointing to '%s': %s" % (link, source, e))
 	"""
 	
-	# 4.0.2 => 4.0.3
+	# 4.0.3 => 4.0.4
 	depotDir = '/var/lib/opsi/depot'
 	if not os.path.exists(depotDir):
 		try:
@@ -1567,6 +1567,20 @@ def updateMySQLBackend():
 			for tab in ('SOFTWARE_LICENSE_TO_LICENSE_POOL', 'LICENSE_ON_CLIENT'):
 				for i in data[tab]:
 					mysql.insert(tab, i)
+	
+	#Increase productId Fields on existing database:
+	
+	logger.notice(u"Updating productId Columns")
+	for line in mysql.getSet(u"SHOW TABLES;"):
+		tableName = line.values()[0]
+		logger.debug(u" [ %s ]" % tableName)
+		for column in mysql.getSet(u'SHOW COLUMNS FROM `%s`;' % tableName):
+			fieldName = column['Field']
+			fieldType = column['Type']
+			if "productid" in fieldName.lower() and fieldType != "varchar(255)":
+				logger.debug("ALTER TABLE for Table: '%s' and Column: '%s" % (tableName, fieldName))
+				mysql.execute(u"alter table %s MODIFY COLUMN `%s` VARCHAR(255);" % (tableName, fieldName))
+	
 
 	mysqlBackend = MySQLBackend(**config)
 	mysqlBackend.backend_createBase()
