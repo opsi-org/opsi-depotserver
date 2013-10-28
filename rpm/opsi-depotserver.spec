@@ -104,12 +104,14 @@ else
 	/usr/bin/opsi-setup --update-from unknown || true
 	/usr/bin/opsi-setup --set-rights /etc/opsi || true
 	/usr/bin/opsi-setup --set-rights /tftpboot || true
-	mysqlstate=$(/bin/ps -ef | grep -e "^mysql" | grep mysqld)
-	mysqlbackend=$(grep -e "^backend_" /etc/opsi/backendManager/dispatch.conf | grep mysql)
-	if [ "mysqlstate" != "" -a "mysqlbackend" != "" ]; then
-		/usr/bin/opsi-setup --update-mysql
+	if [ -e "/etc/init.d/mysqld"]; then
+		mysqlstate=$(/etc/init.d/mysqld status | grep "start/running")
+		mysqlbackend=$(grep -e "^backend_" /etc/opsi/backendManager/dispatch.conf | grep mysql)
+		if [ "mysqlstate" != "" -a "mysqlbackend" != "" ]; then
+			/usr/bin/opsi-setup --update-mysql			
+		fi
+		
 	fi
-	#/usr/bin/opsi-setup --set-rights /var/lib/opsi || true
 fi
 
 # ===[ preun ]======================================
