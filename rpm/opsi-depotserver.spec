@@ -104,7 +104,7 @@ else
 	/usr/bin/opsi-setup --update-from unknown || true
 	/usr/bin/opsi-setup --set-rights /etc/opsi || true
 	/usr/bin/opsi-setup --set-rights /tftpboot || true
-	if [ -e "/etc/init.d/mysqld"]; then
+	if [ -e "/etc/init.d/mysqld" ]; then
 		mysqlstate=$(/etc/init.d/mysqld status | grep "start/running")
 		mysqlbackend=$(grep -e "^backend_" /etc/opsi/backendManager/dispatch.conf | grep mysql)
 		if [ "mysqlstate" != "" -a "mysqlbackend" != "" ]; then

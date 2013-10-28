@@ -28,7 +28,7 @@ else
 	db_get opsi/configure_dhcpd
 	CONFIGURE_DHCPD=$RET
 fi
-if [ -e "/etc/sudoers" ]; then
+if [ ! -e "/etc/sudoers" ]; then
 	CONFIGURE_SUDO="false"
 else
 	db_get opsi/configure_sudoers
@@ -58,10 +58,11 @@ case "$1" in
 			/usr/bin/opsi-setup --update-from "$2" || true
 			/usr/bin/opsi-setup --set-rights /etc/opsi || true
 			/usr/bin/opsi-setup --set-rights /tftpboot || true
-			mysqlstate=$(ps -ef | grep -e "^mysql" | grep mysqld)
-			mysqlbackend=$(grep -e "^backend_" /etc/opsi/backendManager/dispatch.conf | grep mysql)
-			if [ "mysqlstate" != "" -a "mysqlbackend" != "" ]; then
-				/usr/bin/opsi-setup --update-mysql
+			if [ -e "/etc/init.d/mysql" ];then
+				mysqlstate=$(/etc/init.d/mysql status | grep "start/running")
+				if [ "$mysqlstate" != "" -a "$mysqlbackend" != "" ]; then
+					/usr/bin/opsi-setup --update-mysql
+				fi
 			fi
 			#/usr/bin/opsi-setup --set-rights /var/lib/opsi || true
 		fi

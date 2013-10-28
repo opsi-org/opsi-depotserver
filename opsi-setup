@@ -71,22 +71,37 @@ if os.path.exists(u'/etc/init.d/smb'):
 
 sysConfig = {}
 
+def getDistributor():
+	distributor = ''
+	try:
+		f = os.popen('lsb_release -i 2>/dev/null')
+		distributor = f.read().split(':')[1].strip()
+		f.close()
+	except:
+		pass
+	return distributor
+
+def getDistribution():
+	distribution = ''
+	try:
+		f = os.popen('lsb_release -d 2>/dev/null')
+		distribution = f.read().split(':')[1].strip()
+		f.close()
+	except:
+		pass
+	return distribution
+	
+
 def getSysConfig():
 	global sysConfig
 	if sysConfig:
 		return sysConfig
 
-	sysConfig['distributor'] = u'unknown'
-	sysConfig['distribution'] = u'unknown'
-	try:
-		f = os.popen('lsb_release -i 2>/dev/null')
-		sysConfig['distributor'] = f.read().split(':')[1].strip()
-		f.close()
-		f = os.popen('lsb_release -d 2>/dev/null')
-		sysConfig['distribution'] = f.read().split(':')[1].strip()
-		f.close()
-	except Exception, e:
-		logger.warning(u"Failed to get distributor/distribution: %s" % e)
+	sysConfig['distributor'] = getDistributor()
+	sysConfig['distribution'] = getDistribution()
+	
+	if not sysConfig['distributor'] or not sysConfig['distribution']:
+		logger.warning(u"Failed to get distributor/distribution")
 
 	logger.notice(u"Getting current system config")
 	if ipAddress:
@@ -525,11 +540,13 @@ def setRights(path=u'/'):
 	opsiconfdUid = pwd.getpwnam(OPSICONFD_USER)[2]
 	adminGroupGid = grp.getgrnam(ADMIN_GROUP)[2]
 	fileAdminGroupGid = grp.getgrnam(FILE_ADMIN_GROUP)[2]
+	
+	distribution = getDistribution()
 
 	depotDir = ''
 	dirnames = [u'/tftpboot/linux', u'/home/opsiproducts', u'/var/log/opsi', u'/etc/opsi', u'/var/lib/opsi']
 	specialfiles = [u'setup.py', u'show_drivers.py', u'create_driver_links.py', u'opsi-deploy-client-agent', u'opsi-deploy-client-agent-old', u'winexe']
-	if (getSysConfig()['distribution'].lower().find('suse linux enterprise server') != -1):
+	if (distribution.lower().find('suse linux enterprise server') != -1):
 		dirnames = [u'/var/lib/tftpboot/opsi', u'/var/log/opsi', u'/etc/opsi', u'/var/lib/opsi', u'/var/lib/opsi/workbench']
 	if not path.startswith('/etc') and not path.startswith('/tftpboot'):
 		try:
@@ -3280,7 +3297,7 @@ def usage():
 	print u"   --auto-configure-samba        patch smb.conf"
 	print u"   --auto-configure-dhcpd        patch dhcpd.conf"
 	print u"   --renew-opsiconfd-cert        renew opsiconfd-cert (not supported on python < 2.5)"
-	print u"   --patch-sudoers-file	          patching sudoers file for tasks in opsiadmin context."
+	print u"   --patch-sudoers-file	         patching sudoers file for tasks in opsiadmin context."
 	print u""
 
 
