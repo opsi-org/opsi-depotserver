@@ -14,7 +14,7 @@ BuildRequires:  pwdutils python-opsi
 Requires:       pwdutils
 %endif
 %if 0%{?rhel_version} || 0%{?centos_version}
-Requires:       dhcp redhat-lsb
+Requires:       redhat-lsb
 %endif
 Url:            http://www.opsi.org
 License:        GPL v2 or later
