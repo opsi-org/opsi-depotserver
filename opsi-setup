@@ -196,7 +196,7 @@ def configureSamba():
 		elif (lines[i].lower().strip() == '[opsi_depot]'):
 			depotShareFound = True
 		elif (lines[i].lower().strip() == '[opsi_depot_rw]'):
-			depotShareRWFound
+			depotShareRWFound = True
 		elif (lines[i].lower().strip() == '[opsi_images]'):
 			opsiImagesFound = True
 		elif (lines[i].lower().strip() == '[opsi_config]'):
