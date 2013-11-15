@@ -36,8 +36,8 @@ from OPSI.Util.File import *
 from OPSI.Util.File.Opsi import *
 from OPSI.Util import *
 from OPSI.Util.Task.Certificate import (DEFAULT_CERTIFICATE_PARAMETERS,
-	NoCertificateError, UnreadableCertificateError, createCertificate, loadConfigurationFromCertificate,
-	renewCertificate)
+	NoCertificateError, UnreadableCertificateError, createCertificate,
+	loadConfigurationFromCertificate, renewCertificate)
 
 
 logger = Logger()
