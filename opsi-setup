@@ -71,6 +71,7 @@ if os.path.exists(u'/etc/init.d/smb'):
 
 sysConfig = {}
 
+
 def getDistributor():
 	distributor = ''
 	try:
@@ -81,6 +82,7 @@ def getDistributor():
 		pass
 	return distributor
 
+
 def getDistribution():
 	distribution = ''
 	try:
@@ -90,7 +92,7 @@ def getDistribution():
 	except:
 		pass
 	return distribution
-	
+
 
 def getSysConfig():
 	global sysConfig
@@ -99,7 +101,7 @@ def getSysConfig():
 
 	sysConfig['distributor'] = getDistributor()
 	sysConfig['distribution'] = getDistribution()
-	
+
 	if not sysConfig['distributor'] or not sysConfig['distribution']:
 		logger.warning(u"Failed to get distributor/distribution")
 
@@ -221,7 +223,7 @@ def configureSamba():
 		newlines.append(u"   writeable = no\n")
 		newlines.append(u"   invalid users = root\n")
 		newlines.append(u"\n")
-		
+
 		depotDir = '/var/lib/opsi/depot'
 		if not os.path.exists(depotDir):
 			try:
@@ -540,7 +542,7 @@ def setRights(path=u'/'):
 	opsiconfdUid = pwd.getpwnam(OPSICONFD_USER)[2]
 	adminGroupGid = grp.getgrnam(ADMIN_GROUP)[2]
 	fileAdminGroupGid = grp.getgrnam(FILE_ADMIN_GROUP)[2]
-	
+
 	distribution = getDistribution()
 
 	depotDir = ''
@@ -705,7 +707,7 @@ def update(fromVersion=None):
 		except Exception, e:
 			logger.warning(u"Failed to create symlink '%s' pointing to '%s': %s" % (link, source, e))
 	"""
-	
+
 	# 4.0.3 => 4.0.4
 	depotDir = '/var/lib/opsi/depot'
 	if not os.path.exists(depotDir):
@@ -1584,9 +1586,8 @@ def updateMySQLBackend():
 			for tab in ('SOFTWARE_LICENSE_TO_LICENSE_POOL', 'LICENSE_ON_CLIENT'):
 				for i in data[tab]:
 					mysql.insert(tab, i)
-	
+
 	#Increase productId Fields on existing database:
-	
 	logger.notice(u"Updating productId Columns")
 	for line in mysql.getSet(u"SHOW TABLES;"):
 		tableName = line.values()[0]
@@ -1595,9 +1596,19 @@ def updateMySQLBackend():
 			fieldName = column['Field']
 			fieldType = column['Type']
 			if "productid" in fieldName.lower() and fieldType != "varchar(255)":
-				logger.debug("ALTER TABLE for Table: '%s' and Column: '%s" % (tableName, fieldName))
+				logger.debug("ALTER TABLE for Table: '%s' and Column: '%s'" % (tableName, fieldName))
 				mysql.execute(u"alter table %s MODIFY COLUMN `%s` VARCHAR(255);" % (tableName, fieldName))
-	
+
+	# Changing description fields to type TEXT
+	for tableName in (u"PRODUCT_PROPERTY", u"BOOT_CONFIGURATION"):
+		logger.notice(u"Updating field 'description' on table {name}".format(name=tableName))
+		fieldName = u"description"
+		mysql.execute(
+			u"alter table {name} MODIFY COLUMN `{column}` TEXT;".format(
+				name=tableName,
+				column=fieldName
+			)
+		)
 
 	mysqlBackend = MySQLBackend(**config)
 	mysqlBackend.backend_createBase()

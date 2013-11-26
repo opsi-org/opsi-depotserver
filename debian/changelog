@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.4.2-1) testing; urgency=low
+
+  * --update-mysql: Altering tables to support long descriptions
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Tue, 26 Nov 2013 15:15:24 +0100
+
 opsi-depotserver (4.0.4.1-2) testing; urgency=low
 
   * version modified for buildservice
