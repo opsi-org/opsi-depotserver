@@ -588,6 +588,7 @@ def setRights(path=u'/'):
 		gid  = fileAdminGroupGid
 		fmod = 0660
 		dmod = 0770
+		correctLinks = False
 
 		isProduct = False
 		if dirname not in (u'/var/lib/tftpboot/opsi', u'/tftpboot/linux', u'/var/log/opsi', u'/etc/opsi', u'/var/lib/opsi', u'/var/lib/opsi/workbench'):
@@ -598,6 +599,7 @@ def setRights(path=u'/'):
 			dmod = 0775
 		if dirname in (u'/var/log/opsi', u'/etc/opsi'):
 			gid = adminGroupGid
+			correctLinks = True
 		if dirname in (u'/home/opsiproducts', '/var/lib/opsi/workbench'):
 			uid = -1
 			dmod = 02770
@@ -605,8 +607,9 @@ def setRights(path=u'/'):
 			dmod = 02770
 
 		if os.path.isfile(path):
-			logger.debug(u"Setting rights on file '%s'" % path)
+			logger.debug(u"Setting ownership to {user}:{group} on file '{file}'".format(file=path, user=uid, group=gid))
 			os.chown(path, uid, gid)
+			logger.debug(u"Setting rights on file '%s'" % path)
 			if isProduct:
 				os.chmod(path, (os.stat(path)[0] | 0660) & 0770)
 			else:
@@ -620,7 +623,8 @@ def setRights(path=u'/'):
 		logger.notice(u"Setting rights on directory '%s'" % startPath)
 		os.chown(startPath, uid, gid)
 		os.chmod(startPath, dmod)
-		for f in findFiles(startPath, prefix=startPath, returnLinks=False):
+		for f in findFiles(startPath, prefix=startPath, returnLinks=correctLinks):
+			logger.debug(u"Setting ownership to {user}:{group} on file '{file}'".format(file=f, user=uid, group=gid))
 			os.chown(f, uid, gid)
 			if os.path.isdir(f):
 				logger.debug(u"Setting rights on directory '%s'" % f)
@@ -629,10 +633,13 @@ def setRights(path=u'/'):
 				logger.debug(u"Setting rights on file '%s'" % f)
 				if isProduct:
 					if os.path.basename(f) in specialfiles:
+						logger.debug(u"Setting rights on special file '{0}'".format(f))
 						os.chmod(f, 0770)
 					else:
+						logger.debug(u"Setting rights on file '{0}'".format(f))
 						os.chmod(f, (os.stat(f)[0] | 0660) & 0770)
 				else:
+					logger.debug(u"Setting rights {rights} on file '{file}'".format(file=f, rights=fmod))
 					os.chmod(f, fmod)
 
 		if startPath.startswith(u'/var/lib/opsi'):
