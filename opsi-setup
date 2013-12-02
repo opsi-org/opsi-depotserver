@@ -1617,6 +1617,11 @@ def updateMySQLBackend():
 			)
 		)
 
+	# Fixing unwanted MySQL defaults:
+	if 'HOST' in tables.keys():
+		logger.notice(u"Fixing DEFAULT for colum 'created' on table HOST")
+		mysql.execute(u"alter table HOST modify `created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
+
 	mysqlBackend = MySQLBackend(**config)
 	mysqlBackend.backend_createBase()
 	mysqlBackend.backend_exit()
