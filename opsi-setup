@@ -2042,10 +2042,6 @@ def updateFileBackend():
 								updatedProductOnClients.append(ProductOnClient.fromHash(poc))
 							except Exception, e:
 								logger.error(u"Exception while creating ProductOnClient from '%s': %s" % (oldClient, e))
-
-#					elif (section.lower().endswith(u'-state')):
-#						continue #will be handled above
-
 					elif (section.lower() in (u'networkconfig', u'generalconfig')):
 						for option in ini.options(section):
 							configId = configId = option.lower()
