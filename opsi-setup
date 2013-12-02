@@ -2065,7 +2065,7 @@ def updateFileBackend():
 
 							updatedConfigStates.append(ConfigState(configId=configId, objectId=clientId, values=[value]))
 
-			except Exceptionas as e:
+			except Exception as e:
 				logger.warning(u"Could not get all information on client: %s" % e)
 
 			backend.host_createObjects([OpsiClient.fromHash(oldClientDict)])
@@ -3328,7 +3328,7 @@ def main():
 			 'register-depot', 'configure-mysql', 'update-mysql', 'update-ldap', 'update-univention', 'update-file', 'edit-config-defaults', 'cleanup-backend',
 			 'update-from=', 'renew-opsiconfd-cert', 'patch-sudoers-file'])
 
-	except Exception, e:
+	except Exception:
 		usage()
 		raise
 
