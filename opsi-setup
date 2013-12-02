@@ -67,6 +67,7 @@ if os.path.exists(u'/etc/init.d/smb'):
 	SMB_INIT = u'/etc/init.d/smb'
 
 sysConfig = {}
+ipAddress = None
 
 
 def getDistributor():
@@ -3339,8 +3340,6 @@ def main():
 	updateFrom = None
 	autoConfigureSamba = False
 	autoConfigureDhcpd = False
-	global ipAddress
-	ipAddress = None
 	global backendConfig
 	backendConfig = {}
 
@@ -3354,6 +3353,7 @@ def main():
 		elif (opt == "-l"):
 			logger.setConsoleLevel(int(arg))
 		elif (opt == "--ip-address"):
+			global ipAddress
 			ipAddress = forceIpAddress(arg)
 		elif (opt == "--backend-config"):
 			backendConfig = json.loads(arg)
