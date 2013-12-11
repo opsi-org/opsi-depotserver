@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.4.2-1) testing; urgency=low
+
+  * opsi-setup: small fix for --edit-config-defaults
+
+ -- Erol ueluekmen <e.ueluekmen@uib.de>  Wed, 11 Dec 2013 03:38:29 +0100
+
 opsi-depotserver (4.0.4.1-2) testing; urgency=low
 
   * version modified for buildservice
