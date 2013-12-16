@@ -7,7 +7,7 @@
 #
 
 Name:           opsi-depotserver
-Requires:       python-opsi >= 4.0.1 opsiconfd >= 4.0.1 opsi-atftp opsipxeconfd >= 4.0 opsi-utils >= 4.0 opsi-linux-bootimage >= 20090927 samba sudo wget
+Requires:       python-opsi >= 4.0.4.3 opsiconfd >= 4.0.1 opsi-atftp opsipxeconfd >= 4.0 opsi-utils >= 4.0 opsi-linux-bootimage >= 20090927 samba sudo wget
 Conflicts:      opsi-depotserver-expert
 %if 0%{?suse_version}
 BuildRequires:  pwdutils python-opsi
@@ -108,9 +108,9 @@ else
 		mysqlstate=$(/etc/init.d/mysqld status | grep "start/running")
 		mysqlbackend=$(grep -e "^backend_" /etc/opsi/backendManager/dispatch.conf | grep mysql)
 		if [ "mysqlstate" != "" -a "mysqlbackend" != "" ]; then
-			/usr/bin/opsi-setup --update-mysql			
+			/usr/bin/opsi-setup --update-mysql
 		fi
-		
+
 	fi
 fi
 
