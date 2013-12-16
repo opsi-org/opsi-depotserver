@@ -1,3 +1,15 @@
+opsi-depotserver (4.0.4.2-2) testing; urgency=low
+
+  * Correctly checking for running Oracle mysqld / usage of MySQL backend.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Mon, 16 Dec 2013 14:16:02 +0100
+
+opsi-depotserver (4.0.4.2-1) testing; urgency=low
+
+  * opsi-setup: small fix for --edit-config-defaults
+
+ -- Erol ueluekmen <e.ueluekmen@uib.de>  Wed, 11 Dec 2013 03:38:29 +0100
+
 opsi-depotserver (4.0.4.1-2) testing; urgency=low
 
   * version modified for buildservice
