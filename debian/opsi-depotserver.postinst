@@ -59,7 +59,8 @@ case "$1" in
 			/usr/bin/opsi-setup --set-rights /etc/opsi || true
 			/usr/bin/opsi-setup --set-rights /tftpboot || true
 			if [ -e "/etc/init.d/mysql" ];then
-				mysqlstate=$(/etc/init.d/mysql status | grep "start/running")
+				mysqlstate=$(/etc/init.d/mysql status | grep -E "start/running|Uptime")
+				mysqlbackend=$(grep -e "^backend_" /etc/opsi/backendManager/dispatch.conf | grep mysql)
 				if [ "$mysqlstate" != "" -a "$mysqlbackend" != "" ]; then
 					/usr/bin/opsi-setup --update-mysql
 				fi
