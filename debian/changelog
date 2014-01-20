@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.4.2-3) UNRELEASED; urgency=low
+
+  * Do not duplicate the lines of the sudoers file. 
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Mon, 20 Jan 2014 15:14:15 +0100
+
 opsi-depotserver (4.0.4.2-2) testing; urgency=low
 
   * Correctly checking for running Oracle mysqld / usage of MySQL backend.
