@@ -2759,6 +2759,7 @@ def initializeBackends():
 				isMasterDepot=True,
 				masterDepotId=None,
 			)
+
 	if configServer:
 		if configServer[0].id == getSysConfig()['fqdn']:
 			configServer = backend.host_getObjects(type='OpsiConfigserver')
@@ -2773,7 +2774,7 @@ def initializeBackends():
 			#make sure the config server is present in all backends or we get reference error later on
 			backend.host_insertObject(configServer)
 	backend.backend_exit()
-	initializeConfigs(configServer = configServer)
+	initializeConfigs(configServer=configServer)
 
 	depotDir = '/var/lib/opsi/depot'
 	if not os.path.exists(depotDir):
@@ -2781,8 +2782,8 @@ def initializeBackends():
 			os.mkdir(depotDir)
 			if os.path.exists("/opt/pcbin/install"):
 				logger.warning(u"You have an old depot configuration. Using /opt/pcbin/install is depracted, please use /var/lib/opsi/depot instead.")
-		except Exception as e:
-			logger.warning(u"Failed to create depot directory '%s': %s" % (depotDir, e))
+		except Exception as error:
+			logger.warning(u"Failed to create depot directory '%s': %s" % (depotDir, error))
 
 
 def initializeConfigs(configServer=None):
