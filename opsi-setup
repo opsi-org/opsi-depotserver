@@ -2518,7 +2518,16 @@ def restartServices():
 	execute("/etc/init.d/opsipxeconfd restart")
 
 
-def renewOpsiconfdCert():
+def renewOpsiconfdCert(unattendedConfiguration=None):
+	def renewCert():
+		if certificateExisted:
+			renewCertificate(
+				yearsUntilExpiration=certparams['expires'],
+				config=certparams
+			)
+		else:
+			createCertificate(config=certparams)
+
 	try:
 		which("ucr")
 		logger.notice(u"Don't use recreate method on UCS-Systems")
@@ -2544,6 +2553,15 @@ def renewOpsiconfdCert():
 	if 'expires' not in certparams:
 		certparams['expires'] = "2"  # Not included in existing cert
 
+	if unattendedConfiguration is not None:
+		logger.debug(u"Unattended certificate config: {0}".format(unattendedConfiguration))
+		certparams.update(unattendedConfiguration)
+		logger.debug(u"Configuration for unattended certificate renewal: {0}".format(certparams))
+
+		renewCert()
+		setPasswdRights()
+		restartServices()
+		return
 
 	consoleLevel = logger.getConsoleLevel()
 	logger.setConsoleLevel(LOG_NONE)
@@ -2595,13 +2613,9 @@ def renewOpsiconfdCert():
 		ui.exit()
 		logger.setConsoleLevel(consoleLevel)
 
-	if certificateExisted:
-		renewCertificate(
-			yearsUntilExpiration=certparams['expires'],
-			config=certparams
-		)
-	else:
-		createCertificate(config=certparams)
+	renewCert()
+	setPasswdRights()
+	restartServices()
 
 
 def setPasswdRights():
@@ -3117,7 +3131,7 @@ def main():
 		cleanupBackend()
 
 	elif (task == "renew-opsiconfd-cert"):
-		renewOpsiconfdCert()
+		renewOpsiconfdCert(unattended)
 
 	elif (task == "patch-sudoers-file"):
 		patchSudoersFileForOpsi()
