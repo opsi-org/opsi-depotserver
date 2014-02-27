@@ -36,8 +36,12 @@ from OPSI.Util.Task.Certificate import (DEFAULT_CERTIFICATE_PARAMETERS,
 	NoCertificateError, UnreadableCertificateError, createCertificate,
 	loadConfigurationFromCertificate, renewCertificate)
 from OPSI.Util.Task.CleanupBackend import cleanupBackend
-from OPSI.Util.Task.ConfigureBackend.MySQL import (DatabaseConnectionFailedException,
-	configureMySQLBackend as configureMySQLBackendWithoutGUI)
+from OPSI.Util.Task.ConfigureBackend.MySQL import (
+	DatabaseConnectionFailedException,
+	configureMySQLBackend as configureMySQLBackendWithoutGUI
+)
+from OPSI.Util.Task.Sudoers import patchSudoersFileForOpsi
+
 
 logger = Logger()
 
@@ -401,6 +405,8 @@ def configureDHCPD():
 
 	logger.notice(u"Configuring sudoers")
 
+	# TODO: supply something from OPSI.Util.Task.Sudoers here
+	# a lot of duplicate code that shouldn't exist like this.
 	found = False
 	f = codecs.open(SUDOERS, 'r', 'utf-8')
 	lines = []
@@ -427,45 +433,6 @@ def configureDHCPD():
 	adminGroupGid = grp.getgrnam(ADMIN_GROUP)[2]
 	os.chown(DHCPD_CONF, opsiconfdUid, adminGroupGid)
 	os.chmod(DHCPD_CONF, 0664)
-
-
-def patchSudoersFileForOpsi():
-	#get opsifileadmins groupname!!!!
-	entries = [
-		"opsiconfd ALL=NOPASSWD: %s" % "/usr/bin/opsi-set-rights",
-		"%%%s ALL=NOPASSWD: %s" % (FILE_ADMIN_GROUP, "/usr/bin/opsi-set-rights"),
-	]
-	lines = []
-	found = False
-
-	with codecs.open(SUDOERS, 'r', 'utf-8') as sudoersFile:
-		for line in sudoersFile:
-			for entry in entries:
-				if entry in line:
-					found = True
-
-			lines.append(line)
-
-	if not found:
-		logger.notice(u"   Creating backup of %s" % SUDOERS)
-		shutil.copy(SUDOERS, SUDOERS + u'.' + time.strftime("%Y-%m-%d_%H:%M"))
-
-		logger.notice(u"   Adding sudoers entries for opsi")
-		for entry in entries:
-			lines.append("{0}\n".format(entry))
-
-		distributor = getSysConfig()['distributor']
-		distributor = distributor.lower()
-		if ('scientificsl' in distributor or 'redhat' in distributor
-			or 'centos' in distributor or 'sme' in distributor):
-
-			lines.append(u"Defaults:opsiconfd !requiretty\n")
-
-		lines.append('\n')
-
-		logger.notice(u"   Writing new %s" % SUDOERS)
-		with codecs.open(SUDOERS, 'w', 'utf-8') as sudoersFile:
-			sudoersFile.writelines(lines)
 
 
 def configureClientUser():
