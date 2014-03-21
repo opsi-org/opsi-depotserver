@@ -98,6 +98,17 @@ def getDistribution():
 		pass
 	return distribution
 
+def isSamba4():
+	samba4 = False
+	try:
+		smbd = which('smbd')
+		f = os.popen('%s -V 2>/dev/null' % smbd)
+		samba4 = f.read().split('')[1].startswith('4')
+		f.close()
+	except:
+		pass
+	return samba4
+
 
 # TODO: use OPSI.System.Posix.Sysconfig for a more standardized approach
 def getSysConfig():
@@ -193,6 +204,7 @@ def configureSamba():
 	workbenchShareFound = False
 	opsiImagesFound = False
 	confChanged = False
+	samba4 = isSamba4()
 
 	for i in range(len(lines)):
 		if (lines[i].lower().strip() == '; load opsi shares') and ((i+1) < len(lines)) and (lines[i+1].lower().strip() == 'include = /etc/samba/share.conf'):
@@ -228,6 +240,8 @@ def configureSamba():
 		newlines.append(u"   level2 oplocks = no\n")
 		newlines.append(u"   writeable = no\n")
 		newlines.append(u"   invalid users = root\n")
+		if samba4:
+			newlines.append(u"   admin users = @%s\n" % FILE_ADMIN_GROUP)
 		newlines.append(u"\n")
 
 		depotDir = '/var/lib/opsi/depot'
