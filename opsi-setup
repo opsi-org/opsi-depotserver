@@ -27,7 +27,6 @@ from OPSI.Backend.MySQL import *
 from OPSI.Logger import LOG_DEBUG, LOG_NONE, LOG_INFO, LOG_NOTICE, Logger
 from OPSI.Object import *
 from OPSI.System import *
-from OPSI.System.Posix import Distribution
 from OPSI.Types import *
 from OPSI.UI import *
 from OPSI.Util.File import *
