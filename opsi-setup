@@ -27,6 +27,7 @@ from OPSI.Backend.MySQL import *
 from OPSI.Logger import LOG_DEBUG, LOG_NONE, LOG_INFO, LOG_NOTICE, Logger
 from OPSI.Object import *
 from OPSI.System import *
+from OPSI.System.Posix import Distribution
 from OPSI.Types import *
 from OPSI.UI import *
 from OPSI.Util.File import *
@@ -425,6 +426,18 @@ def configureDHCPD():
 	adminGroupGid = grp.getgrnam(ADMIN_GROUP)[2]
 	os.chown(DHCPD_CONF, opsiconfdUid, adminGroupGid)
 	os.chmod(DHCPD_CONF, 0664)
+
+	sysinfo = SysInfo()
+	if 'Red Hat Enterprise Linux' in sysinfo.distribution or 'CentOS' in sysinfo.distribution:
+		dhcpDir = os.path.dirname(DHCPD_CONF)
+		if dhcpDir == '/etc':
+			return
+
+		logger.notice(
+			'Detected Red Hat-family system. Providing rights on "{dir}" '
+			'to group "{group}"'.format(dir=dhcpDir, group=ADMIN_GROUP)
+		)
+		os.chown(dhcpDir, -1, adminGroupGid)
 
 
 def configureClientUser():

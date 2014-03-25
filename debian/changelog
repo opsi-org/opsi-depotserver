@@ -2,6 +2,8 @@ opsi-depotserver (4.0.4.5-1.1) UNRELEASED; urgency=low
 
   * Using OPSI.Util.Task.ConfigureBackend.MySQL
   * Samba4 Fix
+  * RHEL / CentOS: Running --auto-configure-dhcp grants rights to opsi
+    administrator group on /etc/dhcp
 
  -- Erol Ueluekmen <e.ueluekmen@uib.de>  Fri, 21 Mar 2014 02:03:20 +0100
 
@@ -13,7 +15,7 @@ opsi-depotserver (4.0.4.4-1) stable; urgency=low
  
 opsi-depotserver (4.0.4.3-1) stable; urgency=low
 
-  * Do not duplicate the lines of the sudoers file. 
+  * Do not duplicate the lines of the sudoers file.
 
  -- Erol Ueluekmen <e.ueluekmen@uib.de>  Wed, 05 Feb 2014 10:30:15 +0100
 
