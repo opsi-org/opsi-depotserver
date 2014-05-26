@@ -4,15 +4,16 @@ opsi-depotserver (4.0.4.5-1.1) UNRELEASED; urgency=low
   * Samba4 Fix
   * RHEL / CentOS: Running --auto-configure-dhcp grants rights to opsi
     administrator group on /etc/dhcp
+  * Create configuration item "clientconfig.dhcpd.filename" on update
 
- -- Erol Ueluekmen <e.ueluekmen@uib.de>  Fri, 21 Mar 2014 02:03:20 +0100
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Mon, 26 May 2014 12:40:46 +0200
 
 opsi-depotserver (4.0.4.4-1) stable; urgency=low
 
   * fix in Depotserver Handling.
 
  -- Erol Ueluekmen <e.ueluekmen@uib.de>  Fri, 07 Feb 2014 02:43:39 +0100
- 
+
 opsi-depotserver (4.0.4.3-1) stable; urgency=low
 
   * Do not duplicate the lines of the sudoers file.
