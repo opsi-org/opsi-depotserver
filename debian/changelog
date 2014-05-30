@@ -1,12 +1,13 @@
-opsi-depotserver (4.0.4.5-1.1) UNRELEASED; urgency=low
+opsi-depotserver (4.0.5.1-1) UNRELEASED; urgency=low
 
   * Using OPSI.Util.Task.ConfigureBackend.MySQL
   * Samba4 Fix
   * RHEL / CentOS: Running --auto-configure-dhcp grants rights to opsi
     administrator group on /etc/dhcp
   * Create configuration item "clientconfig.dhcpd.filename" on update
+  * Using OPSI.Util.Task.ConfigureBackend.ConfigurationData
 
- -- Niko Wenselowski <n.wenselowski@uib.de>  Mon, 26 May 2014 12:40:46 +0200
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Fri, 30 May 2014 11:48:09 +0200
 
 opsi-depotserver (4.0.4.4-1) stable; urgency=low
 

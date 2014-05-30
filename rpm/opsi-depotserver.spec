@@ -7,7 +7,7 @@
 #
 
 Name:           opsi-depotserver
-Requires:       python-opsi >= 4.0.4.3 opsiconfd >= 4.0.1 opsi-atftp opsipxeconfd >= 4.0 opsi-utils >= 4.0 opsi-linux-bootimage >= 20090927 samba sudo wget
+Requires:       python-opsi >= 4.0.5.1 opsiconfd >= 4.0.1 opsi-atftp opsipxeconfd >= 4.0 opsi-utils >= 4.0 opsi-linux-bootimage >= 20090927 samba sudo wget
 Conflicts:      opsi-depotserver-expert
 %if 0%{?suse_version}
 BuildRequires:  pwdutils python-opsi
@@ -20,11 +20,11 @@ Url:            http://www.opsi.org
 License:        GPL v2 or later
 Group:          Productivity/Networking/Opsi
 AutoReqProv:    on
-Version:        4.0.4.1
+Version:        4.0.5.1
 Release:        2
 Summary:        opsi depotserver
 %define tarname opsi-depotserver
-Source:         opsi-depotserver_4.0.4.1-2.tar.gz
+Source:         opsi-depotserver_4.0.5.1-1.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
 
