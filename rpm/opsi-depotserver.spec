@@ -1,7 +1,7 @@
 #
 # spec file for package opsi-depotserver
 #
-# Copyright (c) 2010 uib GmbH.
+# Copyright (c) 2010-2014 uib GmbH.
 # This file and all modifications and additions to the pristine
 # package are under the same license as the package itself.
 #
@@ -30,9 +30,20 @@ BuildArch:      noarch
 
 %define toplevel_dir %{name}-%{version}
 
+%package expert
+Group: Productivity/Networking/Opsi
+Summary: opsi depotserver in expert mode
+Conflicts: opsi-depotserver
+Requires: python-opsi >= 4.0.5.1 opsiconfd >= 4.0.1 opsi-atftp opsipxeconfd >= 4.0 opsi-utils >= 4.0 opsi-linux-bootimage >= 20090927
+
+%define toplevel_dir %{name}-%{version}
+
 # ===[ description ]================================
 %description
 opsi depotserver
+
+%description expert
+opsi depotserver in expert mode requires manual setup but has less dependencies.
 
 # ===[ debug_package ]==============================
 %debug_package
@@ -113,6 +124,9 @@ else
 
 	fi
 fi
+
+%post expert
+echo "No postinstallation for expert package."
 
 # ===[ preun ]======================================
 %preun
