@@ -1,4 +1,4 @@
-opsi-depotserver (4.0.5.1-1) UNRELEASED; urgency=low
+opsi-depotserver (4.0.5.1-1) experimental; urgency=low
 
   * Using OPSI.Util.Task.ConfigureBackend.MySQL
   * Samba4 Fix
