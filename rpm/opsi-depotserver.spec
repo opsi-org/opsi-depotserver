@@ -17,11 +17,11 @@ Requires:       pwdutils
 Requires:       redhat-lsb
 %endif
 Url:            http://www.opsi.org
-License:        GPL v2 or later
+License:        AGPL v3 or later
 Group:          Productivity/Networking/Opsi
 AutoReqProv:    on
 Version:        4.0.5.1
-Release:        2
+Release:        1
 Summary:        opsi depotserver
 %define tarname opsi-depotserver
 Source:         opsi-depotserver_4.0.5.1-1.tar.gz
