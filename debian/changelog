@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.5.2-1) experimental; urgency=low
+
+  * Fix in samba4 detection
+
+ -- Erol Ueluekmen <e.ueluekmen@uib.de>  Sun, 03 Aug 2014 00:56:54 +0200
+
 opsi-depotserver (4.0.5.1-1) experimental; urgency=low
 
   * Using OPSI.Util.Task.ConfigureBackend.MySQL
