@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.5.3-3) experimental; urgency=low
+
+  * Workaround for getopt not correctly reading in JSON objects.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Tue, 05 Aug 2014 12:29:21 +0200
+
 opsi-depotserver (4.0.5.3-1) experimental; urgency=low
 
   * Renewing a certificate automatically sets rights on file
