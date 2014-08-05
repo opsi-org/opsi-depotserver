@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.5.3-1) experimental; urgency=low
+
+  * Renewing a certificate automatically sets rights on file
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Tue, 05 Aug 2014 10:39:18 +0200
+
 opsi-depotserver (4.0.5.2-1) experimental; urgency=low
 
   * Fix in samba4 detection
