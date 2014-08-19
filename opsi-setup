@@ -268,7 +268,7 @@ def configureSamba():
 				slicedList = lines[startpos:]
 				for z in range(len(slicedList)):
 					line = slicedList[z].lower().strip()
-					if line == "admin users = @%s\n" % FILE_ADMIN_GROUP:
+					if line == "admin users = @%s" % FILE_ADMIN_GROUP:
 						logger.notice(u"   fix found, nothing to do")
 						found = True
 						break
