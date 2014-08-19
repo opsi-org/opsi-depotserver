@@ -1,3 +1,10 @@
+opsi-depotserver (4.0.5.6-1) experimental; urgency=medium
+
+  * --auto-configure-samba fix for executebit problem even if 
+    opsi_depot-Shareconfig already exists.
+
+ -- Erol Ueluekmen <e.ueluekmen@uib.de>  Sun, 17 Aug 2014 13:42:03 +0200
+
 opsi-depotserver (4.0.5.5-1) experimental; urgency=low
 
   * --auto-configure-dhcpd does not fail on missing file 

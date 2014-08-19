@@ -254,6 +254,43 @@ def configureSamba():
 					logger.warning(u"You have an old depot configuration. Using /opt/pcbin/install is depracted, please youse /var/lib/opsi/depot instead.")
 			except Exception as e:
 				logger.warning(u"Failed to create depot directory '%s': %s" % (depotDir, e))
+	elif samba4:
+		logger.notice(u"   Share opsi_depot found and samba 4 is detected. Trying to detect the executablefix for opsi_depot-Share")
+		startpos = 0
+		endpos = 0
+		found = False
+		fixedLines = []
+		sectionFound = False
+		for i in range(len(lines)):
+			if lines[i].lower().strip() == '[opsi_depot]':
+				startpos = endpos = i + 1
+				sectionFound = True
+				slicedList = lines[startpos:]
+				for z in range(len(slicedList)):
+					line = slicedList[z].lower().strip()
+					if line == "admin users = @%s\n" % FILE_ADMIN_GROUP:
+						logger.notice(u"   fix found, nothing to do")
+						found = True
+						break
+					elif line.startswith("[") or not line:
+						logger.notice(u"   End of section detected")
+						break
+					else:
+						endpos += 1
+			if sectionFound:
+				break
+
+		if not found:
+			logger.notice(u"   Section found but don't inherits samba4 fix, trying to set the fix.")
+			fixedLines = lines
+			fixedLines.insert(endpos, u"   admin users = @%s\n" % FILE_ADMIN_GROUP)
+			with codecs.open(SMB_CONF, 'w', 'utf-8') as f:
+				f.writelines(fixedLines)
+			logger.notice(u"   Reloading samba")
+			try:
+				execute(u'%s reload' % SMB_INIT)
+			except Exception as e:
+				logger.warning(e)
 
 	if not depotShareRWFound:
 		logger.notice(u"   Adding share [opsi_depot_rw]")
