@@ -1,0 +1,8 @@
+debian/files
+debian/opsi-depotserver-expert.debhelper.log
+debian/opsi-depotserver-expert.substvars
+debian/opsi-depotserver-expert/
+debian/opsi-depotserver.debhelper.log
+debian/opsi-depotserver.postrm.debhelper
+debian/opsi-depotserver.substvars
+debian/opsi-depotserver/
