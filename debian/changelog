@@ -1,3 +1,10 @@
+opsi-depotserver (4.0.5.7-1) stable; urgency=low
+
+  * opsi-setup: changed restarting services over service calls
+    instead of using init-scripts directly.
+
+ -- Erol Ueluekmen <e.ueluekmen@uib.de>  Wed, 01 Oct 2014 15:26:16 +0200
+
 opsi-depotserver (4.0.5.6-3) experimental; urgency=low
 
   * Removed automatic update of mysql-backend.
