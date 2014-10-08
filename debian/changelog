@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.5.10-1) experimental; urgency=low
+
+  * Providing a default for the name of the Samba service
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Wed, 08 Oct 2014 14:54:13 +0200
+
 opsi-depotserver (4.0.5.9-1) experimental; urgency=low
 
   * Fix for creating the service command
@@ -31,14 +37,14 @@ opsi-depotserver (4.0.5.6-2) testing; urgency=medium
 
 opsi-depotserver (4.0.5.6-1) experimental; urgency=medium
 
-  * --auto-configure-samba fix for executebit problem even if 
+  * --auto-configure-samba fix for executebit problem even if
     opsi_depot-Shareconfig already exists.
 
  -- Erol Ueluekmen <e.ueluekmen@uib.de>  Sun, 17 Aug 2014 13:42:03 +0200
 
 opsi-depotserver (4.0.5.5-1) experimental; urgency=low
 
-  * --auto-configure-dhcpd does not fail on missing file 
+  * --auto-configure-dhcpd does not fail on missing file
 
  -- Niko Wenselowski <n.wenselowski@uib.de>  Mon, 11 Aug 2014 17:31:12 +0200
 

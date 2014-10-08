@@ -53,7 +53,7 @@ logger.setConsoleColor(True)
 
 LOG_FILE = u'/tmp/opsi-setup.log'
 SMB_CONF = u'/etc/samba/smb.conf'
-SMB_INIT = u'service {name} '.format(name=Posix.getSambaServiceName())
+SMB_INIT = u'service {name} '.format(name=Posix.getSambaServiceName(default="smbd"))
 DHCPD_CONF = Posix.locateDHCPDConfig(u'/etc/dhcp3/dhcpd.conf')
 DHCPD_INIT = Posix.locateDHCPDInit(u'/etc/init.d/dhcp3-server')
 DHCPD_SERVICE_NAME = DHCPD_INIT.split("/")[3]
@@ -94,6 +94,7 @@ def getDistribution():
 	except:
 		pass
 	return distribution
+
 
 def isSamba4():
 	samba4 = False
