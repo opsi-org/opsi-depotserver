@@ -17,7 +17,7 @@ Requires:       pwdutils
 Requires:       redhat-lsb
 %endif
 Url:            http://www.opsi.org
-License:        AGPL v3 or later
+License:        AGPLv3+
 Group:          Productivity/Networking/Opsi
 AutoReqProv:    on
 Version:        4.0.5.7
