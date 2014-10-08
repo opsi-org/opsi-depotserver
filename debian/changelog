@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.5.8-1) experimental; urgency=low
+
+  * Getting the Samba service name does not depend on files in /etc/init.d
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Wed, 08 Oct 2014 11:01:50 +0200
+
 opsi-depotserver (4.0.5.7-1) stable; urgency=low
 
   * opsi-setup: changed restarting services over service calls

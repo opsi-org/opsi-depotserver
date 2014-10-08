@@ -53,8 +53,7 @@ logger.setConsoleColor(True)
 
 LOG_FILE = u'/tmp/opsi-setup.log'
 SMB_CONF = u'/etc/samba/smb.conf'
-SMB_INIT = u'/etc/init.d/samba'
-SMB_SERVICE_NAME = u"samba"
+SMB_INIT = u'service {name} '.format(Posix.getSambaServiceName())
 DHCPD_CONF = Posix.locateDHCPDConfig(u'/etc/dhcp3/dhcpd.conf')
 DHCPD_INIT = Posix.locateDHCPDInit(u'/etc/init.d/dhcp3-server')
 DHCPD_SERVICE_NAME = DHCPD_INIT.split("/")[3]
@@ -70,13 +69,6 @@ try:
 	FILE_ADMIN_GROUP = OpsiConfFile(OPSI_CONF).getOpsiFileAdminGroup()
 except:
 	FILE_ADMIN_GROUP = u'pcpatch'
-
-if os.path.exists(u'/etc/init.d/smbd'):
-	SMB_INIT = u'/etc/init.d/smbd'
-	SMB_SERVICE_NAME = u'smbd'
-if os.path.exists(u'/etc/init.d/smb'):
-	SMB_INIT = u'/etc/init.d/smb'
-	SMB_SERVICE_NAME = u'smb'
 
 sysConfig = {}
 ipAddress = None

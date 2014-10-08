@@ -10,7 +10,7 @@ Section: opsi
 Architecture: all
 Replaces: opsi-depotserver-expert
 Conflicts: opsi-depotserver-expert
-Depends: python-opsi (>= 4.0.5.1), opsiconfd (>=4.0.1), opsipxeconfd (>=4.0), opsi-atftpd, opsi-utils (>=4.0), opsi-linux-bootimage (>=20100927), samba, sudo, wget, ${depend:opsi}
+Depends: python-opsi (>= 4.0.5.11), opsiconfd (>=4.0.1), opsipxeconfd (>=4.0), opsi-atftpd, opsi-utils (>=4.0), opsi-linux-bootimage (>=20100927), samba, sudo, wget, ${depend:opsi}
 Suggests: mysql-server, p7zip-full, cabextract
 Description: opsi depotserver configuration package
  This package is used to configure an opsi depotserver.
