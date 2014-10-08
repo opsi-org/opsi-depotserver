@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.5.9-1) experimental; urgency=low
+
+  * Fix for creating the service command
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Wed, 08 Oct 2014 12:08:26 +0200
+
 opsi-depotserver (4.0.5.8-1) experimental; urgency=low
 
   * Getting the Samba service name does not depend on files in /etc/init.d
