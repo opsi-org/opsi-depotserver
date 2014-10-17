@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.5.10-2) experimental; urgency=low
+
+  * Red Hat-familiy: added requirement samba-client for current distros
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Fri, 17 Oct 2014 14:24:41 +0200
+
 opsi-depotserver (4.0.5.10-1) experimental; urgency=low
 
   * Providing a default for the name of the Samba service
