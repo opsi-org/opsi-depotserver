@@ -1,7 +1,7 @@
 #! /bin/bash -e
 
 # = = = = = = = = = = = = = = = = = = = = = = =
-# =       Copyright (C) 2010 uib GmbH         =
+# =     Copyright (C) 2010-2014 uib GmbH      =
 # =           http://www.uib.de               =
 # =          All rights reserved.             =
 # = = = = = = = = = = = = = = = = = = = = = = =
@@ -37,31 +37,35 @@ fi
 
 case "$1" in
 	configure)
-		
+
 		arguments=""
 		if [ "$CONFIGURE_DHCPD" = "true" ]; then
 			arguments="${arguments} --auto-configure-dhcpd"
 		fi
-		
+
 		if [ "$CONFIGURE_SAMBA" = "true" ]; then
 			arguments="${arguments} --auto-configure-samba"
 		fi
-		
+
 		if [ "$CONFIGURE_SUDO" = "true" ]; then
 			arguments="${arguments} --patch-sudoers-file"
 		fi
+
 		if [ -n "$2" ] && dpkg --compare-versions "$2" lt "4.0.5"; then
 			/usr/bin/opsi-setup --update-from "$2" || true
 			/usr/bin/opsi-setup --set-rights /etc/opsi || true
 			/usr/bin/opsi-setup --set-rights /tftpboot || true
 		else
-			/usr/bin/opsi-setup --init-current-config $arguments || true
+			/usr/bin/opsi-setup --init-current-config || true
+			if [ -n "$arguments" ]; then
+				/usr/bin/opsi-setup $arguments || true
+			fi
 			/usr/bin/opsi-setup --set-rights || true
 		fi
 	;;
-	
+
 	abort-upgrade|abort-remove|abort-deconfigure)
-	
+
 	;;
 
 	*)

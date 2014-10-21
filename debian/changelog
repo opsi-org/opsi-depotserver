@@ -1,3 +1,10 @@
+opsi-depotserver (4.0.5.10-3) experimental; urgency=low
+
+  * Debian-based postinst: Avoid problems with arguments possibly not executed
+    by opsi-setup
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Tue, 21 Oct 2014 13:40:03 +0200
+
 opsi-depotserver (4.0.5.10-2) experimental; urgency=low
 
   * Red Hat-familiy: added requirement samba-client for current distros
