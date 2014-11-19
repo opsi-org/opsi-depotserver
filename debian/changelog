@@ -1,4 +1,4 @@
-opsi-depotserver (4.0.5.11-1) experimental; urgency=low
+opsi-depotserver (4.0.5.11-1) stable; urgency=low
 
   * Only fetching the Samba init command if configuring Samba
 
