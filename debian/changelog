@@ -1,4 +1,10 @@
-opsi-depotserver (4.0.5.11-1) stable; urgency=low
+opsi-depotserver (4.0.5.12-1) UNRELEASED; urgency=low
+
+  * Using OPSI.Util.Task.UpdateBackend.MySQL
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Thu, 18 Dec 2014 11:55:42 +0100
+
+opsi-depotserver (4.0.5.11-1) experimental; urgency=low
 
   * Only fetching the Samba init command if configuring Samba
 
