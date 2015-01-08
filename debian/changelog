@@ -1,8 +1,9 @@
-opsi-depotserver (4.0.5.12-1) UNRELEASED; urgency=low
+opsi-depotserver (4.0.6.1-1) UNRELEASED; urgency=low
 
   * Using OPSI.Util.Task.UpdateBackend.MySQL
+  * Using OPSI.Util.Task.Rights.setRights 
 
- -- Niko Wenselowski <n.wenselowski@uib.de>  Thu, 18 Dec 2014 11:55:42 +0100
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Thu, 08 Jan 2015 15:56:17 +0100
 
 opsi-depotserver (4.0.5.11-1) experimental; urgency=low
 
