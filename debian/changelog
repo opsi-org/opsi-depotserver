@@ -2,6 +2,7 @@ opsi-depotserver (4.0.6.1-1) UNRELEASED; urgency=low
 
   * Using OPSI.Util.Task.UpdateBackend.MySQL
   * Using OPSI.Util.Task.Rights.setRights 
+  * Using OPSI.System.Posix.getDHCPDRestartCommand
 
  -- Niko Wenselowski <n.wenselowski@uib.de>  Thu, 08 Jan 2015 15:56:17 +0100
 

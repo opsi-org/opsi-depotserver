@@ -27,6 +27,7 @@ from OPSI.Backend.MySQL import *
 from OPSI.Logger import LOG_DEBUG, LOG_NONE, LOG_INFO, LOG_NOTICE, Logger
 from OPSI.Object import *
 from OPSI.System import *
+from OPSI.System.Posix import getDHCPDRestartCommand
 from OPSI.Types import *
 from OPSI.UI import *
 from OPSI.Util.File import *
@@ -57,7 +58,6 @@ LOG_FILE = u'/tmp/opsi-setup.log'
 SMB_CONF = u'/etc/samba/smb.conf'
 DHCPD_CONF = Posix.locateDHCPDConfig(u'/etc/dhcp3/dhcpd.conf')
 DHCPD_INIT = Posix.locateDHCPDInit(u'/etc/init.d/dhcp3-server')
-DHCPD_SERVICE_NAME = DHCPD_INIT.split("/")[3]
 OPSICONFD_USER = u'opsiconfd'
 ADMIN_GROUP = u'opsiadmin'
 CLIENT_USER = u'pcpatch'
@@ -456,13 +456,14 @@ def configureDHCPD():
 		dhcpdConf.generate()
 
 		logger.notice(u"   Restarting dhcpd")
+		restartCommand = getDHCPDRestartCommand(default=u'/etc/init.d/dhcp3-server restart')
 		try:
-			execute(u'service %s restart' % DHCPD_SERVICE_NAME)
+			execute(restartCommand)
 		except Exception as e:
 			logger.warning(e)
 
 	logger.notice(u"Configuring sudoers")
-	patchSudoersFileToAllowRestartingDHCPD('{0} {1} restart'.format(which("service"), DHCPD_SERVICE_NAME))
+	patchSudoersFileToAllowRestartingDHCPD(restartCommand)
 
 	opsiconfdUid  = pwd.getpwnam(OPSICONFD_USER)[2]
 	adminGroupGid = grp.getgrnam(ADMIN_GROUP)[2]
