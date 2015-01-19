@@ -448,6 +448,7 @@ def configureDHCPD():
 				)
 				logger.notice(u"         filename set to %s" % filename)
 
+	restartCommand = getDHCPDRestartCommand(default=u'/etc/init.d/dhcp3-server restart')
 	if confChanged:
 		logger.notice(u"   Creating backup of %s" % DHCPD_CONF)
 		shutil.copy(DHCPD_CONF, DHCPD_CONF + u'.' + time.strftime("%Y-%m-%d_%H:%M"))
@@ -456,7 +457,6 @@ def configureDHCPD():
 		dhcpdConf.generate()
 
 		logger.notice(u"   Restarting dhcpd")
-		restartCommand = getDHCPDRestartCommand(default=u'/etc/init.d/dhcp3-server restart')
 		try:
 			execute(restartCommand)
 		except Exception as e:
