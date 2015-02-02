@@ -57,7 +57,7 @@ logger.setConsoleColor(True)
 LOG_FILE = u'/tmp/opsi-setup.log'
 SMB_CONF = u'/etc/samba/smb.conf'
 DHCPD_CONF = Posix.locateDHCPDConfig(u'/etc/dhcp3/dhcpd.conf')
-DHCPD_INIT = Posix.locateDHCPDInit(u'/etc/init.d/dhcp3-server')
+
 OPSICONFD_USER = u'opsiconfd'
 ADMIN_GROUP = u'opsiadmin'
 CLIENT_USER = u'pcpatch'
@@ -68,13 +68,14 @@ OPSI_GLOBAL_CONF = u'/etc/opsi/global.conf'
 
 try:
 	FILE_ADMIN_GROUP = OpsiConfFile(OPSI_CONF).getOpsiFileAdminGroup()
-except:
+except Exception:
 	FILE_ADMIN_GROUP = u'pcpatch'
 
 sysConfig = {}
 ipAddress = None
 
 
+# TODO: use Classes in Posix.py
 def getDistributor():
 	distributor = ''
 	try:
@@ -522,7 +523,7 @@ def configureClientUser():
 
 		configserverId = None
 		for configserver in backend.host_getObjects(type='OpsiConfigserver'):
-			if (configserver.id == getSysConfig()['fqdn']):
+			if configserver.id == getSysConfig()['fqdn']:
 				configserverId = None
 				break
 			else:
@@ -1786,9 +1787,6 @@ def registerDepot():
 			if not depot.depotWebdavUrl:
 				depot.depotWebdavUrl = u'webdavs://%s:4447/depot' % getSysConfig()['fqdn']
 		else:
-			#depotLocalUrl  = u'file:///opt/pcbin/install'
-			#depotRemoteUrl = u'smb://%s/opt_pcbin/install' % getSysConfig()['hostname']
-			#if (getSysConfig()['distribution'].lower().find('suse linux enterprise server') != -1):
 			depotLocalUrl = u'file:///var/lib/opsi/depot'
 			depotRemoteUrl = u'smb://%s/opsi_depot' % getSysConfig()['hostname']
 
@@ -1810,10 +1808,11 @@ def registerDepot():
 					isMasterDepot=True,
 					masterDepotId=None,
 			)
+
 		while True:
-			if (depot.maxBandwidth < 0):
+			if depot.maxBandwidth < 0:
 				depot.maxBandwidth = 0
-			if (depot.maxBandwidth > 0):
+			if depot.maxBandwidth > 0:
 				depot.maxBandwidth = int(depot.maxBandwidth/1000)
 
 			values = [
