@@ -44,7 +44,7 @@ Requires: python-opsi >= 4.0.6.1 opsiconfd >= 4.0.1 opsi-atftp opsipxeconfd >= 4
 opsi depotserver
 
 %description expert
-opsi depotserver in expert mode requires manual setup but has less dependencies.
+opsi depotserver in expert mode requires manual setup but has no dependencies to samba.
 
 # ===[ debug_package ]==============================
 %debug_package
