@@ -5,3 +5,4 @@ var/lib/opsi/ntfs-images
 var/log/opsi/clientconnect
 var/log/opsi/bootimage
 var/log/opsi/instlog
+var/log/opsi/userlogin

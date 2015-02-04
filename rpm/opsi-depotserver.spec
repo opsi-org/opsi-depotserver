@@ -1,7 +1,7 @@
 #
 # spec file for package opsi-depotserver
 #
-# Copyright (c) 2010-2014 uib GmbH.
+# Copyright (c) 2010-2015 uib GmbH.
 # This file and all modifications and additions to the pristine
 # package are under the same license as the package itself.
 #
@@ -71,6 +71,7 @@ mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/repository
 mkdir -p $RPM_BUILD_ROOT/var/log/opsi/clientconnect
 mkdir -p $RPM_BUILD_ROOT/var/log/opsi/bootimage
 mkdir -p $RPM_BUILD_ROOT/var/log/opsi/instlog
+mkdir -p $RPM_BUILD_ROOT/var/log/opsi/userlogin
 mkdir -p $RPM_BUILD_ROOT/usr/bin
 install -m 0755 opsi-setup $RPM_BUILD_ROOT/usr/bin/opsi-setup
 install -m 0755 opsi-set-rights $RPM_BUILD_ROOT/usr/bin/opsi-set-rights
@@ -152,6 +153,7 @@ fi
 %dir /var/log/opsi/clientconnect
 %dir /var/log/opsi/bootimage
 %dir /var/log/opsi/instlog
+%dir /var/log/opsi/userlogin
 
 # ===[ changelog ]==================================
 %changelog
