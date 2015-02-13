@@ -37,6 +37,7 @@ BuildArch:      noarch
 Group: Productivity/Networking/Opsi
 Summary: opsi depotserver in expert mode
 Conflicts: opsi-depotserver
+Provides: opsi-depotserver = %{version}
 Requires: python-opsi >= 4.0.6.1 opsiconfd >= 4.0.1 opsi-atftp opsipxeconfd >= 4.0 opsi-utils >= 4.0 opsi-linux-bootimage >= 20090927
 
 # ===[ description ]================================
