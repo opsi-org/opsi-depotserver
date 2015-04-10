@@ -1,4 +1,4 @@
-opsi-depotserver (4.0.6.1-2) UNRELEASED; urgency=low
+opsi-depotserver (4.0.6.1-2) experimental; urgency=low
 
   * RPM: Improved check for SLES to also work on SLES 12.
 
