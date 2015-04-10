@@ -141,7 +141,8 @@ fi
 /usr/bin/opsi-set-rights
 
 # directories
-%if 0%{?sles_version}
+%if 0%{?suse_version} == 1110  || 0%{?suse_version} == 1315
+# SLES 11 & 12
 %dir /var/lib/opsi/workbench
 %dir /var/lib/opsi/depot
 %else
