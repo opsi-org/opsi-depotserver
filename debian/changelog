@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.6.1-2) UNRELEASED; urgency=low
+
+  * RPM: Improved check for SLES to also work on SLES 12.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Fri, 10 Apr 2015 10:38:54 +0200
+
 opsi-depotserver (4.0.6.1-1) experimental; urgency=low
 
   * Using OPSI.Util.Task.UpdateBackend.MySQL

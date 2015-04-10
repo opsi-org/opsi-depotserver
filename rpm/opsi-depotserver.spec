@@ -61,7 +61,7 @@ opsi depotserver in expert mode requires manual setup but has no dependencies to
 
 # ===[ install ]====================================
 %install
-%if 0%{?sles_version}
+%if 0%{?suse_version} == 1110  || 0%{?suse_version} == 1315
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/workbench
 %else
 mkdir -p $RPM_BUILD_ROOT/home/opsiproducts
