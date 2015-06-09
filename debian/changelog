@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.5.11-2) stable; urgency=low
+
+  * Bumped version for upgrade-handling.
+
+ -- Erol Ueluekmen <e.ueluekmen@uib.de>  Tue, 09 Jun 2015 13:07:24 +0200
+
 opsi-depotserver (4.0.5.11-1) stable; urgency=low
 
   * Only fetching the Samba init command if configuring Samba
