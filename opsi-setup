@@ -511,8 +511,9 @@ def configureClientUser():
 
 	password = None
 	backend = None
+	from OPSI.Backend.BackendManager import BackendManager
+
 	try:
-		from OPSI.Backend.BackendManager import BackendManager
 		backend = BackendManager(
 			dispatchConfigFile=u'/etc/opsi/backendManager/dispatch.conf',
 			backendConfigDir=u'/etc/opsi/backends',
