@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.6.2-1) UNRELEASED; urgency=medium
+
+  * Fix problem where no password would be obtained during user config.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Tue, 16 Jun 2015 14:52:38 +0200
+
 opsi-depotserver (4.0.6.1-3) experimental; urgency=low
 
   * Another fix regarding detection of SLES 12.
