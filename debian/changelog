@@ -1,6 +1,7 @@
 opsi-depotserver (4.0.6.2-1) UNRELEASED; urgency=medium
 
   * Fix problem where no password would be obtained during user config.
+  * Various packaging fixes for Debian 8.
 
  -- Niko Wenselowski <n.wenselowski@uib.de>  Tue, 16 Jun 2015 14:52:38 +0200
 
