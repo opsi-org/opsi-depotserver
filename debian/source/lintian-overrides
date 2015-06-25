@@ -1,0 +1,2 @@
+opsi-depotserver source: not-using-po-debconf
+opsi-depotserver source: untranslatable-debconf-templates templates
