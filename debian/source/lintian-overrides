@@ -1,0 +1,6 @@
+opsi-depotserver source: native-package-with-dash-version
+opsi-depotserver source: dh-clean-k-is-deprecated
+opsi-depotserver source: maintainer-script-lacks-debhelper-token
+opsi-depotserver source: changelog-should-mention-nmu
+opsi-depotserver source: source-nmu-has-incorrect-version-number
+opsi-depotserver source: not-using-po-debconf
