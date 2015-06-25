@@ -39,7 +39,7 @@ binary-indep: install
 	dh_builddeb
 
 
-binary: binary-indep
-build:
+binary binary-arch: binary-indep
+build build-indep build-arch:
 .PHONY: clean binary-indep binary install build
 
