@@ -18,14 +18,14 @@ clean:
 install:
 	dh_testdir
 	dh_testroot
-	dh_clean -k
+	dh_prep
 	dh_installdirs
 	install -m 0755 opsi-setup debian/opsi-depotserver/usr/bin/opsi-setup
 	install -m 0755 opsi-set-rights debian/opsi-depotserver/usr/bin/opsi-set-rights
 	install -m 0755 opsi-setup debian/opsi-depotserver-expert/usr/bin/opsi-setup
 	install -m 0755 opsi-set-rights debian/opsi-depotserver-expert/usr/bin/opsi-set-rights
 	dh_install
-	
+
 binary-indep: install
 	dh_testdir -i
 	dh_testroot -i
