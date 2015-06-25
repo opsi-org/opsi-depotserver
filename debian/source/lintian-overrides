@@ -4,4 +4,4 @@ opsi-depotserver source: maintainer-script-lacks-debhelper-token
 opsi-depotserver source: changelog-should-mention-nmu
 opsi-depotserver source: source-nmu-has-incorrect-version-number
 opsi-depotserver source: not-using-po-debconf
-opsi-depotserver source: untranslatable-debconf-templates templates
+opsi-depotserver source: untranslatable-debconf-templates
