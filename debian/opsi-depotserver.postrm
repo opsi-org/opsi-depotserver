@@ -52,4 +52,6 @@ esac
 
 db_stop
 
+#DEBHELPER#
+
 exit 0
