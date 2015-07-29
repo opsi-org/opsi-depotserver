@@ -62,15 +62,8 @@ DHCPD_CONF = Posix.locateDHCPDConfig(u'/etc/dhcp3/dhcpd.conf')
 OPSICONFD_USER = u'opsiconfd'
 ADMIN_GROUP = u'opsiadmin'
 CLIENT_USER = u'pcpatch'
-FILE_ADMIN_GROUP = u'pcpatch'
 
-OPSI_CONF = u'/etc/opsi/opsi.conf'
 OPSI_GLOBAL_CONF = u'/etc/opsi/global.conf'
-
-try:
-	FILE_ADMIN_GROUP = OpsiConfFile(OPSI_CONF).getOpsiFileAdminGroup()
-except Exception:
-	FILE_ADMIN_GROUP = u'pcpatch'
 
 sysConfig = {}
 ipAddress = None
