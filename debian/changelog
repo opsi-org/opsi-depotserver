@@ -1,4 +1,4 @@
-opsi-depotserver (4.0.6.3-1) UNRELEASED; urgency=medium
+opsi-depotserver (4.0.6.3-1) experimental; urgency=medium
 
   [ Mathias Radtke ]
   * refactored configureSamba function in python-opsi
