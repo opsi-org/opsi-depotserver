@@ -52,15 +52,15 @@ case "$1" in
 		fi
 
 		if [ -n "$2" ] && dpkg --compare-versions "$2" lt "4.0.5"; then
-			/usr/bin/opsi-setup --update-from "$2" || true
-			/usr/bin/opsi-setup --set-rights /etc/opsi || true
-			/usr/bin/opsi-setup --set-rights /tftpboot || true
+			opsi-setup --update-from "$2" || true
+			opsi-setup --set-rights /etc/opsi || true
+			opsi-setup --set-rights /tftpboot || true
 		else
-			/usr/bin/opsi-setup --init-current-config || true
+			opsi-setup --init-current-config || true
 			if [ -n "$arguments" ]; then
-				/usr/bin/opsi-setup $arguments || true
+				opsi-setup $arguments || true
 			fi
-			/usr/bin/opsi-setup --set-rights || true
+			opsi-setup --set-rights || true
 		fi
 	;;
 
