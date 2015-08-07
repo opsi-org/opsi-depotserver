@@ -1,6 +1,7 @@
 opsi-depotserver (4.0.6.3-2) UNRELEASED; urgency=medium
 
   * Debian postinst: do not specify full path to opsi-setup.
+  * Debian control: requiring Python
 
  -- Niko Wenselowski <n.wenselowski@uib.de>  Fri, 31 Jul 2015 11:55:17 +0200
 
