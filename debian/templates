@@ -1,21 +1,21 @@
 Template: opsi/configure_samba
 Type: boolean
 Default: false
-Description: Do you want me to edit your samba config?
- I can try to add the needed samba shares and users 
- but if your samba config get messed up you have been warned!!!
+Description: Edit samba config?
+ It is possible to add the needed samba shares and users
+ but if your samba config get messed up you have been warned!
 
 Template: opsi/configure_dhcpd
 Type: boolean
 Default: false
-Description: Do you want me to edit your dhcpd config?
- I can try to add the needed options to your dhcp server config 
- but if your config get messed up you have been warned!!!
+Description: Edit dhcpd config?
+ It is possible to add the needed options to your dhcp server config
+ but if your config get messed up you have been warned!
 
 Template: opsi/configure_sudoers
 Type: boolean
 Default: false
-Description: Do you want me to edit your sudoers config?
- I can try to add the needed options to your sudoers file 
- but if your config get messed up you have been warned!!!
+Description: Edit sudoers config?
+ It is possible add the needed options to your sudoers file
+ but if your config get messed up you have been warned!
 
