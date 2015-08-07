@@ -564,42 +564,36 @@ opsi-depotserver (2.5-1) stable; urgency=low
   * removed net boot image + added dependency to opsi-linux-bootimage deb
 
   * new version of opsibootmanager (reinstmgr)
-	- now supports writing of pipes for clients with unkown hardware address (using hex-ip)
-	- support for reading hardware addresses from ldap by using univention-admin on UCS
-	- some adjustments to new linux-bootimage
-	- bugfixes
+    - now supports writing of pipes for clients with unkown hardware address (using hex-ip)
+    - support for reading hardware addresses from ldap by using univention-admin on UCS
+    - some adjustments to new linux-bootimage
+    - bugfixes
 
  -- Jan Schneider <j.schneider@uib.de>  Thu, 07 Sep 2006 00:00:00 +0200
 
 
 opsi-depotserver (2.4-1) stable; urgency=low
   * new net boot image (miniroot and kernel)
-        - kernel 2.6.15.4
-        - added partimage
-	- new parameter "askBeforeInst" added to sysconf, section [General]
-          if set to "false" the bootimage will install an operating system
-	  without any user interaction
-
+    - kernel 2.6.15.4
+    - added partimage
+    - new parameter "askBeforeInst" added to sysconf, section [General]
+      if set to "false" the bootimage will install an operating system
+      without any user interaction
   * fif version 0.9.5
-        - preparations for opsi 3.0
-	     createProduct()
-	     setProductProperties()
-	     createProductDependency()
-	     setupWhereInstalled()
-
+    - preparations for opsi 3.0
+      createProduct()
+      setProductProperties()
+      createProductDependency()
+      setupWhereInstalled()
   * new version of makeproductfile
-        - adjustments for new fif
-	- easier realization of customer depending adjustments
-
+    - adjustments for new fif
+    - easier realization of customer depending adjustments
   * new version of sysbackup
-
   * new version of opsibootmanager (reinsmgr)
-        - boot configuration now contains kernel param hn=<hostname>
-	- if mac address of host is not known, reinstmgr uses
-	  ip address of host (hex) as pipe name
-
+    - boot configuration now contains kernel param hn=<hostname>
+    - if mac address of host is not known, reinstmgr uses
+      ip address of host (hex) as pipe name
   * improved version of delalteprodukte
-
   * some default configuration values changed
 
   -- Jan Schneider <j.schneider@uib.de>  Wed, 22 Feb 2006 00:00:00 +0200
