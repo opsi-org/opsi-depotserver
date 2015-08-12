@@ -1,8 +1,17 @@
-opsi-depotserver (4.0.6.3-3) UNRELEASED; urgency=medium
+opsi-depotserver (4.0.6.3-4ubuntu1) UNRELEASED; urgency=medium
+
+  * Debian: Added dependency to Python >= 2.6
+  * Debian: provide debian/install for opsi-depotserver-expert
+  * Debian: try to fix warnings about invalid changelog entry.
+  * Debian: postinst: added DEBHELPER token.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Wed, 12 Aug 2015 17:20:41 +0200
+
+opsi-depotserver (4.0.6.3-3) experimental; urgency=medium
 
   * Debian: Overhauled installation
 
- -- Niko Wenselowski <n.wenselowski@uib.de>  Wed, 12 Aug 2015 17:01:38 +0200
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Wed, 12 Aug 2015 17:16:48 +0200
 
 opsi-depotserver (4.0.6.3-2) experimental; urgency=medium
 

@@ -18,6 +18,8 @@
 # the debian-policy package
 #
 
+#DEBHELPER#
+
 . /usr/share/debconf/confmodule
 
 db_get opsi/configure_samba
