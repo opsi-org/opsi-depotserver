@@ -1,46 +1,21 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+#
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+#
+# Modified to make a template file for a multi-binary package with separated
+# build-arch and build-indep targets  by Bill Allombert 2001
 
-DIST_DEPENDS ?= ""
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
 
-ifeq (Ubuntu,$(shell lsb_release -is))
-	DIST_DEPENDS = samba-common-bin | sernet-samba-common
-else ifeq (squeeze,$(shell lsb_release -cs))
-	DIST_DEPENDS = samba-common-bin | sernet-samba-common
-endif
-
-clean:
-	dh_testdir
-	dh_testroot
-	dh_clean
-	rm -f debian/files || true
-
-install:
-	dh_testdir
-	dh_testroot
-	dh_prep
-	dh_installdirs
-	install -m 0755 opsi-setup debian/opsi-depotserver/usr/bin/opsi-setup
-	install -m 0755 opsi-set-rights debian/opsi-depotserver/usr/bin/opsi-set-rights
-	install -m 0755 opsi-setup debian/opsi-depotserver-expert/usr/bin/opsi-setup
-	install -m 0755 opsi-set-rights debian/opsi-depotserver-expert/usr/bin/opsi-set-rights
-	dh_install
-
-binary-indep: install
-	dh_testdir -i
-	dh_testroot -i
-	dh_installdebconf
-	dh_installchangelogs -i
-	dh_shlibdeps
-	echo "depend:opsi=$(DIST_DEPENDS)" >> debian/opsi-depotserver.substvars
-	dh_md5sums
-	dh_gencontrol
-	dh_installdeb
-	dh_builddeb
+# This has to be exported to make some magic below work.
+export DH_OPTIONS
 
 
-binary binary-arch: binary-indep
-build build-arch build-indep:
-.PHONY: clean binary-indep binary install build
-
-#DEBHELPER#
+%:
+	dh $@ --with-python2
