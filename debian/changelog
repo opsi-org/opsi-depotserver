@@ -1,4 +1,4 @@
-opsi-depotserver (4.0.6.3-4ubuntu1) UNRELEASED; urgency=medium
+opsi-depotserver (4.0.6.3-4) experimental; urgency=medium
 
   * Debian: Added dependency to Python >= 2.6
   * Debian: provide debian/install for opsi-depotserver-expert
