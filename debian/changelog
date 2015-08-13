@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.6.3-6) experimental; urgency=medium
+
+  * Debian: Removing  python:depends dependency.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Thu, 13 Aug 2015 11:24:59 +0200
+
 opsi-depotserver (4.0.6.3-5) experimental; urgency=medium
 
   * Debian: Creating /home/opsiproducts in postinst
