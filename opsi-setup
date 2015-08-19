@@ -38,7 +38,8 @@ from OPSI.Util import blowfishDecrypt, getfqdn, randomString
 from OPSI.Util.File import (DHCPDConfFile, DHCPDConf_Block,
 	DHCPDConf_Parameter, IniFile)
 from OPSI.Util.File.Opsi import (BackendDispatchConfigFile, HostKeyFile,
-	PackageControlFile, SysInfo)from OPSI.Util.Task.Certificate import (DEFAULT_CERTIFICATE_PARAMETERS,
+	PackageControlFile, SysInfo)
+from OPSI.Util.Task.Certificate import (DEFAULT_CERTIFICATE_PARAMETERS,
 	OPSICONFD_CERTFILE, NoCertificateError, UnreadableCertificateError,
 	createCertificate, loadConfigurationFromCertificate, renewCertificate)
 from OPSI.Util.Task.CleanupBackend import cleanupBackend
