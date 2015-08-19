@@ -20,20 +20,25 @@ import time
 import OPSI.System.Posix as Posix
 import OPSI.Util.Task.ConfigureBackend as backendUtils
 from OPSI.Backend.Backend import ExtendedConfigDataBackend
-from OPSI.Backend.File import *
-from OPSI.Backend.JSONRPC import *
-from OPSI.Backend.LDAP import *
-from OPSI.Backend.MySQL import *
+from OPSI.Backend.File import FileBackend
+from OPSI.Backend.JSONRPC import JSONRPCBackend
+from OPSI.Backend.LDAP import LDAPBackend
 from OPSI.Logger import LOG_DEBUG, LOG_NONE, LOG_INFO, LOG_NOTICE, Logger
-from OPSI.Object import *
-from OPSI.System import *
-from OPSI.System.Posix import getDHCPDRestartCommand
-from OPSI.Types import *
-from OPSI.UI import *
-from OPSI.Util.File import *
-from OPSI.Util.File.Opsi import *
-from OPSI.Util import *
-from OPSI.Util.Task.Certificate import (DEFAULT_CERTIFICATE_PARAMETERS,
+from OPSI.Object import (ConfigState, HostGroup, LocalbootProduct,
+	NetbootProduct, ObjectToGroup, OpsiClient,
+	OpsiConfigserver, OpsiDepotserver, ProductDependency, ProductOnClient,
+	ProductOnDepot, ProductPropertyState, UnicodeConfig, UnicodeProductProperty)
+from OPSI.System.Posix import (execute, getDHCPDRestartCommand,
+	getEthernetDevices, getNetworkDeviceConfig, which)
+from OPSI.Types import (forceActionRequest, forceFilename, forceGroupId,
+	forceHostId, forceInstallationStatus, forceInt, forceIpAddress,
+	forceObjectId, forceProductId, forceUnicodeList)
+from OPSI.UI import UIFactory
+from OPSI.Util import blowfishDecrypt, getfqdn, randomString
+from OPSI.Util.File import (DHCPDConfFile, DHCPDConf_Block,
+	DHCPDConf_Parameter, IniFile)
+from OPSI.Util.File.Opsi import (BackendDispatchConfigFile, HostKeyFile,
+	PackageControlFile, SysInfo)from OPSI.Util.Task.Certificate import (DEFAULT_CERTIFICATE_PARAMETERS,
 	OPSICONFD_CERTFILE, NoCertificateError, UnreadableCertificateError,
 	createCertificate, loadConfigurationFromCertificate, renewCertificate)
 from OPSI.Util.Task.CleanupBackend import cleanupBackend

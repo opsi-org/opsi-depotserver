@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.6.4-1) UNRELEASED; urgency=medium
+
+  * Removed wildcard imports.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Wed, 19 Aug 2015 11:29:42 +0200
+
 opsi-depotserver (4.0.6.3-6) experimental; urgency=medium
 
   * Debian: Removing  python:depends dependency.
