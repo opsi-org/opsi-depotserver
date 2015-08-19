@@ -22,7 +22,7 @@ import OPSI.Util.Task.ConfigureBackend as backendUtils
 from OPSI.Backend.Backend import ExtendedConfigDataBackend
 from OPSI.Backend.File import FileBackend
 from OPSI.Backend.JSONRPC import JSONRPCBackend
-from OPSI.Backend.LDAP import LDAPBackend
+from OPSI.Backend.LDAP import LDAPBackend, LDAPSession, LDAPObject, LDAPObjectSearch
 from OPSI.Logger import LOG_DEBUG, LOG_NONE, LOG_INFO, LOG_NOTICE, Logger
 from OPSI.Object import (ConfigState, HostGroup, LocalbootProduct,
 	NetbootProduct, ObjectToGroup, OpsiClient,
