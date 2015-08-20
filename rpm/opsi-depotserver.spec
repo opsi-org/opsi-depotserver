@@ -20,7 +20,7 @@ Requires:       redhat-lsb
 Requires:       samba-client
 %endif
 Url:            http://www.opsi.org
-License:        AGPLv3+
+License:        AGPL-3.0+
 Group:          Productivity/Networking/Opsi
 AutoReqProv:    on
 Version:        4.0.6.4
