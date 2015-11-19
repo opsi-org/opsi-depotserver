@@ -1,8 +1,9 @@
-opsi-depotserver (4.0.6.4-2) UNRELEASED; urgency=medium
+opsi-depotserver (4.0.6.5-1) UNRELEASED; urgency=medium
 
   * RPM: license now machine-parseable.
+  * Using OPSI.Util.Task.ConfigureBackend.DHCPD.
 
- -- Niko Wenselowski <n.wenselowski@uib.de>  Thu, 20 Aug 2015 15:59:48 +0200
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Thu, 19 Nov 2015 15:02:51 +0100
 
 opsi-depotserver (4.0.6.4-1) experimental; urgency=medium
 
