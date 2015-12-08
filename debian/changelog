@@ -1,4 +1,4 @@
-opsi-depotserver (4.0.6.5-1) UNRELEASED; urgency=medium
+opsi-depotserver (4.0.6.5-1) experimental; urgency=medium
 
   * RPM: license now machine-parseable.
   * Using OPSI.Util.Task.ConfigureBackend.DHCPD.
