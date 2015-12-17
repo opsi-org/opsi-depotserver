@@ -5,7 +5,13 @@ opsi-depotserver (4.0.6.5-1) experimental; urgency=medium
 
  -- Niko Wenselowski <n.wenselowski@uib.de>  Thu, 19 Nov 2015 15:02:51 +0100
 
-opsi-depotserver (4.0.6.4-1) experimental; urgency=medium
+opsi-depotserver (4.0.6.4-2) stable; urgency=low
+
+  * Version bumped to force init-current-config run.
+
+ -- Erol Ueluekmen <e.ueluekmen@uib.de>  Thu, 17 Dec 2015 16:18:22 +0100
+
+opsi-depotserver (4.0.6.4-1) stable; urgency=medium
 
   * Removed wildcard imports.
 
