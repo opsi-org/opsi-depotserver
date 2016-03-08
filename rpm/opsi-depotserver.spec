@@ -1,7 +1,7 @@
 #
 # spec file for package opsi-depotserver
 #
-# Copyright (c) 2010-2015 uib GmbH.
+# Copyright (c) 2010-2016 uib GmbH.
 # This file and all modifications and additions to the pristine
 # package are under the same license as the package itself.
 #
