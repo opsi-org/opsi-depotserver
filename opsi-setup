@@ -32,7 +32,7 @@ from OPSI.System.Posix import (execute, getEthernetDevices,
 	getNetworkDeviceConfig, which)
 from OPSI.Types import (forceActionRequest, forceFilename, forceGroupId,
 	forceHostId, forceInstallationStatus, forceInt, forceIpAddress,
-	forceObjectId, forceProductId, forceUnicodeList)
+	forceList, forceObjectId, forceProductId, forceUnicodeList)
 from OPSI.UI import UIFactory
 from OPSI.Util import blowfishDecrypt, getfqdn, randomString
 from OPSI.Util.File import IniFile
@@ -1869,7 +1869,7 @@ def initializeBackends():
 			backend.host_insertObject(configServer)
 
 		# initializeConfigs does only handle a single object
-		configServer = configServer[0]
+		configServer = forceList(configServer)[0]
 
 	initializeConfigs(backend=backend, configServer=configServer)
 	backend.backend_exit()
