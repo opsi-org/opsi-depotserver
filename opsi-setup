@@ -1853,6 +1853,7 @@ def initializeBackends():
 				isMasterDepot=True,
 				masterDepotId=None,
 			)
+
 	if configServer:
 		if configServer[0].id == getSysConfig()['fqdn']:
 			configServer = backend.host_getObjects(type='OpsiConfigserver')
@@ -1866,6 +1867,9 @@ def initializeBackends():
 
 			#make sure the config server is present in all backends or we get reference error later on
 			backend.host_insertObject(configServer)
+
+		# initializeConfigs does only handle a single object
+		configServer = configServer[0]
 
 	initializeConfigs(backend=backend, configServer=configServer)
 	backend.backend_exit()
