@@ -21,7 +21,7 @@ Section: opsi
 Architecture: all
 Replaces: opsi-depotserver
 Conflicts: opsi-depotserver
-Depends: python (>= 2.6), python-opsi (>= 4.0.6.12), opsiconfd (>=4.0.1), opsipxeconfd (>=4.0), opsi-utils (>=4.0), opsi-linux-bootimage (>=20100927), ${misc:Depends}
+Depends: python (>= 2.6), python-opsi (>= 4.0.6.12), opsiconfd (>=4.0.1), opsipxeconfd (>=4.0), opsi-utils (>=4.0), ${misc:Depends}
 Description: opsi depotserver configuration package - expert version
  This package is used to configure an opsi depotserver.
 
