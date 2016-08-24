@@ -1668,7 +1668,7 @@ def restartServices():
 
 
 def renewOpsiconfdCert(unattendedConfiguration=None):
-	def renewCert():
+	def makeCert():
 		if certificateExisted:
 			renewCertificate(
 				yearsUntilExpiration=certparams['expires'],
@@ -1707,7 +1707,7 @@ def renewOpsiconfdCert(unattendedConfiguration=None):
 		certparams.update(unattendedConfiguration)
 		logger.debug(u"Configuration for unattended certificate renewal: {0}".format(certparams))
 
-		renewCert()
+		makeCert()
 		setPasswdRights()
 		setRights(OPSICONFD_CERTFILE)
 		restartServices()
@@ -1763,7 +1763,7 @@ def renewOpsiconfdCert(unattendedConfiguration=None):
 		ui.exit()
 		logger.setConsoleLevel(consoleLevel)
 
-	renewCert()
+	makeCert()
 	setPasswdRights()
 	setRights(OPSICONFD_CERTFILE)
 	restartServices()
