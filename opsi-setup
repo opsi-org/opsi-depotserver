@@ -1732,7 +1732,7 @@ def renewOpsiconfdCert(unattendedConfiguration=None):
 			values = ui.getValues(title=u'Renew opsiconfd Certificate', width=70, height=15, entries=values)
 
 			if values is None:
-				raise Exception(u"Canceled")
+				raise RuntimeError(u"Canceled")
 
 			certparams["country"] = values[0]["value"]
 			certparams["state"] = values[1]["value"]
