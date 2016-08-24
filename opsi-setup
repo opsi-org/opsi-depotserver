@@ -1734,8 +1734,6 @@ def renewOpsiconfdCert(unattendedConfiguration=None):
 			if values is None:
 				raise Exception(u"Canceled")
 
-			error = None
-
 			certparams["country"] = values[0]["value"]
 			certparams["state"] = values[1]["value"]
 			certparams["locality"] = values[2]["value"]
@@ -1743,6 +1741,8 @@ def renewOpsiconfdCert(unattendedConfiguration=None):
 			certparams["organizationalUnit"] = values[4]["value"]
 			certparams["commonName"] = values[5]["value"]
 			certparams["emailAddress"] = values[6]["value"]
+
+			error = None
 
 			if error is None:
 				if not certparams["commonName"] == forceHostId(getfqdn(conf=OPSI_GLOBAL_CONF)):
