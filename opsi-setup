@@ -1720,14 +1720,14 @@ def renewOpsiconfdCert(unattendedConfiguration=None):
 	try:
 		while True:
 			values = [
-				{ "name": u"Country", "value": certparams["country"] },
-				{ "name": u"State", "value": certparams["state"] },
-				{ "name": u"Locality", "value": certparams["locality"] },
-				{ "name": u"Organization", "value": certparams["organization"] },
-				{ "name": u"OrganizationUnit", "value": certparams["organizationalUnit"] },
-				{ "name": u"Hostname", "value": certparams["commonName"] },
-				{ "name": u"Emailaddress", "value": certparams["emailAddress"] },
-				{ "name": u"Expires (Years)", "value": certparams["expires"] },
+				{"name": u"Country", "value": certparams["country"] or ''},
+				{"name": u"State", "value": certparams["state"] or ''},
+				{"name": u"Locality", "value": certparams["locality"] or ''},
+				{"name": u"Organization", "value": certparams["organization"] or ''},
+				{"name": u"OrganizationUnit", "value": certparams["organizationalUnit"] or ''},
+				{"name": u"Hostname", "value": certparams["commonName"] or ''},
+				{"name": u"Emailaddress", "value": certparams["emailAddress"] or ''},
+				{"name": u"Expires (Years)", "value": certparams["expires"] or ''},
 			]
 			values = ui.getValues(title=u'Renew opsiconfd Certificate', width=70, height=15, entries=values)
 
