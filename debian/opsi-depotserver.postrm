@@ -1,7 +1,7 @@
 #! /bin/bash -e
 
 # = = = = = = = = = = = = = = = = = = = = = = =
-# =       Copyright (C) 2010 uib GmbH         =
+# =     Copyright (C) 2010-2017 uib GmbH      =
 # =           http://www.uib.de               =
 # =          All rights reserved.             =
 # = = = = = = = = = = = = = = = = = = = = = = =
@@ -26,23 +26,23 @@ VERBOSE=true
 
 case "$1" in
 	upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
-	
+
 	;;
-	
+
 	remove)
-	
+
 	;;
-	
+
 	purge)
 		# delete samba user pcpatch
-		
+
 		smbpasswd -x pcpatch >/dev/null 2>/dev/null || true
-		
+
 		db_purge
 		db_stop
-		
+
 	;;
-	
+
 	*)
 		echo "postrm called with unknown argument \`$1'" >&2
 		exit 1
