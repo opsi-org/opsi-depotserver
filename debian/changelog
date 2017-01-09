@@ -1,3 +1,10 @@
+opsi-depotserver (4.0.7.1-1) testing; urgency=medium
+
+  * opsi-setup: Do not display None for value if this is returned reading data
+    from an existing certificate.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Mon, 09 Jan 2017 15:53:20 +0100
+
 opsi-depotserver (4.0.6.7-2) stable; urgency=medium
 
   * Debian: opsi-depotserver-expert does not depend on
