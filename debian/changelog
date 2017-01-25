@@ -1,3 +1,10 @@
+opsi-depotserver (4.1.1.1-1) stable; urgency=medium
+
+  * Remove references to obsolete LDAP support.
+    This removes support for --update-ldap and --update-univention.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Tue, 24 Jan 2017 18:58:53 +0100
+
 opsi-depotserver (4.0.7.1-1) testing; urgency=medium
 
   * opsi-setup: Do not display None for value if this is returned reading data
