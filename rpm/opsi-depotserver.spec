@@ -24,10 +24,10 @@ License:        AGPL-3.0+
 Group:          Productivity/Networking/Opsi
 AutoReqProv:    on
 Version:        4.1.1.1
-Release:        3
+Release:        4
 Summary:        opsi depotserver
 %define tarname opsi-depotserver
-Source:         opsi-depotserver_4.1.1.1-3.tar.gz
+Source:         opsi-depotserver_4.1.1.1-4.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
 
