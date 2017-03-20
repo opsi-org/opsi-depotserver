@@ -1,4 +1,4 @@
-opsi-server (4.1.1.1-5) UNRELEASED; urgency=medium
+opsi-server (4.1.1.1-5) experimental; urgency=medium
 
   * Renamed package to opsi-server.
   * .deb: Depend on opsi-tftpd-hpa
