@@ -44,10 +44,10 @@ Requires: python-opsi >= 4.0.6.1 opsiconfd >= 4.0.1 opsi-tftp-hpa-server opsipxe
 
 # ===[ description ]================================
 %description
-opsi depotserver
+opsi server
 
 %description expert
-opsi depotserver in expert mode requires manual setup but has no dependencies to samba.
+opsi server in expert mode requires manual setup but has no dependencies to samba.
 
 # ===[ debug_package ]==============================
 %debug_package

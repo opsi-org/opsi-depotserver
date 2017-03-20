@@ -17,7 +17,7 @@ Conflicts: opsi-server-expert
 Depends: python (>= 2.6), python-opsi (>= 4.0.6.35), opsiconfd (>=4.0.1), opsipxeconfd (>=4.0), opsi-tftpd-hpa, opsi-utils (>=4.0), opsi-linux-bootimage (>=20100927), samba, sudo, wget, ${misc:Depends}
 Suggests: mysql-server, p7zip-full, cabextract
 Description: opsi server configuration package
- This package is used to configure an opsi depotserver.
+ This package is used to configure an opsi server.
 
 Package: opsi-server-expert
 Section: opsi
@@ -28,5 +28,5 @@ Replaces: opsi-depotserver-expert (<< 4.1), opsi-server
 Conflicts: opsi-server
 Depends: python (>= 2.6), python-opsi (>= 4.0.6.12), opsiconfd (>=4.0.1), opsipxeconfd (>=4.0), opsi-utils (>=4.0), ${misc:Depends}
 Description: opsi server configuration package - expert version
- This package is used to configure an opsi depotserver.
+ This package is used to configure an opsi server.
 
