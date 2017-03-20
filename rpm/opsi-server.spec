@@ -1,14 +1,16 @@
 #
-# spec file for package opsi-depotserver
+# spec file for package opsi-server
 #
-# Copyright (c) 2010-2016 uib GmbH.
+# Copyright (c) 2010-2017 uib GmbH.
 # This file and all modifications and additions to the pristine
 # package are under the same license as the package itself.
 #
 
-Name:           opsi-depotserver
-Requires:       python-opsi >= 4.1.1.1 opsiconfd >= 4.0.1 tftp-hpa-server opsipxeconfd >= 4.0 opsi-utils >= 4.0 opsi-linux-bootimage >= 20090927 samba sudo wget
-Conflicts:      opsi-depotserver-expert
+Name:           opsi-server
+Requires:       python-opsi >= 4.1.1.1 opsiconfd >= 4.0.1 opsi-tftp-hpa-server opsipxeconfd >= 4.0 opsi-utils >= 4.0 opsi-linux-bootimage >= 20090927 samba sudo wget
+Provides:       opsi-depotserver = %{version}-%{release}
+Conflicts:      opsi-server-expert
+Obsoletes:      opsi-depotserver < 4.1
 %if 0%{?suse_version}
 BuildRequires:  pwdutils python-opsi
 Requires:       pwdutils
@@ -36,16 +38,16 @@ BuildArch:      noarch
 %package expert
 Group: Productivity/Networking/Opsi
 Summary: opsi depotserver in expert mode
-# Conflicts: opsi-depotserver
-Provides: opsi-depotserver = %{version}
-Requires: python-opsi >= 4.0.6.1 opsiconfd >= 4.0.1 tftp-hpa-server opsipxeconfd >= 4.0 opsi-utils >= 4.0 opsi-linux-bootimage >= 20090927
+# Conflicts: opsi-server
+Provides: opsi-server = %{version}
+Requires: python-opsi >= 4.0.6.1 opsiconfd >= 4.0.1 opsi-tftp-hpa-server opsipxeconfd >= 4.0 opsi-utils >= 4.0 opsi-linux-bootimage >= 20090927
 
 # ===[ description ]================================
 %description
-opsi depotserver
+opsi server
 
 %description expert
-opsi depotserver in expert mode requires manual setup but has no dependencies to samba.
+opsi server in expert mode requires manual setup but has no dependencies to samba.
 
 # ===[ debug_package ]==============================
 %debug_package
