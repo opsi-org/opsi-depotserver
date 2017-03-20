@@ -1,6 +1,8 @@
 opsi-server (4.1.1.1-5) UNRELEASED; urgency=medium
 
   * Renamed package to opsi-server.
+  * .deb: Depend on opsi-tftpd-hpa
+  * .rpm: Depend on opsi-tftp-hpa-server
 
  -- Niko Wenselowski <n.wenselowski@uib.de>  Mon, 20 Mar 2017 10:08:10 +0100
 
