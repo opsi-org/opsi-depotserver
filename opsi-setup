@@ -1429,16 +1429,16 @@ def registerDepot():
 
 	consoleLevel = logger.getConsoleLevel()
 	logger.setConsoleLevel(LOG_NONE)
-	ui = UIFactory(type = 'snack')
+	ui = UIFactory(type='snack')
 	try:
 		adminUser = u'root'
 		adminPass = u''
 		messageBox = None
 		while True:
 			values = [
-				{ "name": u"Config server", "value": config['address'] },
-				{ "name": u"Opsi admin user", "value": adminUser },
-				{ "name": u"Opsi admin password", "value": adminPass, "password": True }
+				{"name": u"Config server", "value": config['address']},
+				{"name": u"Opsi admin user", "value": adminUser},
+				{"name": u"Opsi admin password", "value": adminPass, "password": True}
 			]
 			values = ui.getValues(title=u'Config server connection', width=70, height=10, entries=values)
 			if values is None:
@@ -1460,8 +1460,10 @@ def registerDepot():
 			except Exception as e:
 				messageBox.hide()
 				logger.error(u"Failed to connect to config server '%s' as user '%s': %s" % (config['address'], adminUser, e))
-				ui.showError(text=u"Failed to connect to config server '%s' as user '%s': %s" % (config['address'], adminUser, e),
-						title=u'Failed to connect', width=70, height=6, seconds=0)
+				ui.showError(
+					title=u'Failed to connect', width=70, height=6, seconds=0,
+					text=u"Failed to connect to config server '%s' as user '%s': %s" % (config['address'], adminUser, e)
+				)
 				continue
 			logger.notice(u"Successfully connected to config server '%s' as user '%s'" % (config['address'], adminUser))
 			messageBox.addText(u"Successfully connected to config server '%s' as user '%s'\n" % (config['address'], adminUser))
@@ -1519,14 +1521,14 @@ def registerDepot():
 				{"name": u"Ip address", "value": depot.ipAddress},
 				{"name": u"Hardware address", "value": depot.hardwareAddress},
 				{"name": u"Network address", "value": depot.networkAddress},
-				{"name": u"Maximum bandwidth (kbyte/s)", "value": depot.maxBandwidth         },
+				{"name": u"Maximum bandwidth (kbyte/s)", "value": depot.maxBandwidth},
 				{"name": u"Local depot url", "value": depot.depotLocalUrl},
 				{"name": u"Remote depot url", "value": depot.depotRemoteUrl},
 				{"name": u"Depot webdav url", "value": depot.depotWebdavUrl},
 				{"name": u"Local repository url", "value": depot.repositoryLocalUrl},
 				{"name": u"Remote repository url", "value": depot.repositoryRemoteUrl},
 				{"name": u"Is master depot", "value": depot.isMasterDepot},
-				{"name": u"Master depot id", "value": depot.masterDepotId or u'' },
+				{"name": u"Master depot id", "value": depot.masterDepotId or u''},
 
 			]
 			values = ui.getValues(title=u'Depot server settings', width=70, height=16, entries=values)
@@ -1535,80 +1537,94 @@ def registerDepot():
 
 			error = None
 			try:
-				depot.setDescription( values[0].get('value') )
+				depot.setDescription(values[0].get('value'))
 			except Exception as e:
-				if not error: error = u'Invalid description'
+				if not error:
+					error = u'Invalid description'
 
 			try:
-				depot.setInventoryNumber( values[1].get('value') )
+				depot.setInventoryNumber(values[1].get('value'))
 			except Exception as e:
-				if not error: error = u'Inventory number invalid'
+				if not error:
+					error = u'Inventory number invalid'
 
 			try:
-				depot.setNotes( values[2].get('value') )
+				depot.setNotes(values[2].get('value'))
 			except Exception as e:
-				if not error: error = u'Invalid notes'
+				if not error:
+					error = u'Invalid notes'
 
 			try:
-				depot.setIpAddress( values[3].get('value') )
+				depot.setIpAddress(values[3].get('value'))
 			except Exception as e:
-				if not error: error = u'Invalid ip address'
+				if not error:
+					error = u'Invalid ip address'
 
 			try:
-				depot.setHardwareAddress( values[4].get('value') )
+				depot.setHardwareAddress(values[4].get('value'))
 			except Exception as e:
-				if not error: error = u'Invalid hardware address'
+				if not error:
+					error = u'Invalid hardware address'
 
 			try:
-				depot.setNetworkAddress( values[5].get('value') )
+				depot.setNetworkAddress(values[5].get('value'))
 			except Exception as e:
-				if not error: error = u'Invalid network address'
+				if not error:
+					error = u'Invalid network address'
 
 			try:
-				depot.setMaxBandwidth( forceInt(values[6].get('value'))*1000 )
+				depot.setMaxBandwidth(forceInt(values[6].get('value')) * 1000)
 			except Exception as e:
-				if not error: error = u'Invalid maximum bandwidth'
+				if not error:
+					error = u'Invalid maximum bandwidth'
 
 			try:
-				depot.setDepotLocalUrl( values[7].get('value') )
+				depot.setDepotLocalUrl(values[7].get('value'))
 			except Exception as e:
-				if not error: error = u'Depot local url invalid'
+				if not error:
+					error = u'Depot local url invalid'
 
 			try:
-				depot.setDepotRemoteUrl( values[8].get('value') )
+				depot.setDepotRemoteUrl(values[8].get('value'))
 			except Exception as e:
-				if not error: error = u'Depot remote url invalid'
+				if not error:
+					error = u'Depot remote url invalid'
 
 			try:
 				if values[9].get('value'):
-					depot.setDepotWebdavUrl( values[9].get('value') )
+					depot.setDepotWebdavUrl(values[9].get('value'))
 				else:
 					depot.depotWebdavUrl = None
 			except Exception as e:
-				if not error: error = u'Depot webdav url invalid'
+				if not error:
+					error = u'Depot webdav url invalid'
 
 			try:
-				depot.setRepositoryLocalUrl( values[10].get('value') )
+				depot.setRepositoryLocalUrl(values[10].get('value'))
 			except Exception as e:
-				if not error: error = u'Repository local url invalid'
+				if not error:
+					error = u'Repository local url invalid'
 
 			try:
-				depot.setRepositoryRemoteUrl( values[11].get('value') )
+				depot.setRepositoryRemoteUrl(values[11].get('value'))
 			except Exception as e:
-				if not error: error = u'Repository remote url invalid'
+				if not error:
+					error = u'Repository remote url invalid'
 
 			try:
-				depot.setIsMasterDepot( values[12].get('value') )
+				depot.setIsMasterDepot(values[12].get('value'))
 			except Exception as e:
-				if not error: error = u'Invalid value for is master depot'
+				if not error:
+					error = u'Invalid value for is master depot'
 
 			try:
 				if values[13].get('value'):
-					depot.setMasterDepotId( values[13].get('value') )
+					depot.setMasterDepotId(values[13].get('value'))
 				else:
 					depot.masterDepotId = None
 			except Exception as e:
-				if not error: error = u'Master depot id invalid'
+				if not error:
+					error = u'Master depot id invalid'
 
 			if error:
 				ui.showError(title=u'Bad value', text=error, width=50, height=5)
@@ -1620,10 +1636,10 @@ def registerDepot():
 		logger.setConsoleLevel(consoleLevel)
 
 	logger.notice(u"Creating depot '%s'" % depot.id)
-	jsonrpcBackend.host_createObjects([ depot ])
+	jsonrpcBackend.host_createObjects([depot])
 
 	logger.notice(u"Getting depot '%s'" % depot.id)
-	depots = jsonrpcBackend.host_getObjects(id = depot.id)
+	depots = jsonrpcBackend.host_getObjects(id=depot.id)
 	if not depots:
 		raise Exception(u"Failed to create depot")
 	depot = depots[0]
