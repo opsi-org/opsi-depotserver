@@ -30,9 +30,10 @@ from OPSI.Object import (ConfigState, HostGroup, LocalbootProduct,
 	ProductOnDepot, ProductPropertyState, UnicodeConfig, UnicodeProductProperty)
 from OPSI.System.Posix import (execute, getEthernetDevices,
 	getNetworkDeviceConfig, which)
-from OPSI.Types import (forceActionRequest, forceFilename, forceGroupId,
-	forceHostId, forceInstallationStatus, forceInt, forceIpAddress,
-	forceList, forceObjectId, forceProductId, forceUnicodeList)
+from OPSI.Types import (forceActionRequest, forceBool, forceFilename,
+	forceGroupId, forceHostId, forceInstallationStatus, forceInt,
+	forceIpAddress, forceList, forceObjectId, forceProductId,
+	forceUnicodeList)
 from OPSI.UI import UIFactory
 from OPSI.Util import blowfishDecrypt, getfqdn, randomString
 from OPSI.Util.File import IniFile
@@ -1415,7 +1416,51 @@ def configureMySQLBackend(unattendedConfiguration=None):
 		logger.setConsoleLevel(consoleLevel)
 
 
-def registerDepot():
+def registerDepot(unattendedConfiguration=None):
+	"""
+	Register a depot.
+
+	The registration is done manually through a graphical commandline
+	interface unless `unattendedConfiguration` supplies required data.
+
+	For an unattended registration `unattendedConfiguration` should be
+	of dict-type that must contain the following data:
+
+		{
+			"address": "fqdn.of.master",
+			"username": "admin user for registration",
+			"password": "the password of the user",
+			"depot": {} //see below for config
+		}
+
+
+	An example configuration for `depot` can be:
+
+		{
+			"masterDepotId" : "id of master depot",
+			"networkAddress" : "12.34.5.6/255.255.255.0",
+			"description" : "Description of depot.",
+			"inventoryNumber" : "inventory number",
+			"ipAddress" : "12.34.5.6",
+			"repositoryRemoteUrl" : "webdavs://depot.address:4447/repository",
+			"depotLocalUrl" : "file:///var/lib/opsi/depot",
+			"isMasterDepot" : true, // or false
+			"notes" : "Put some notes here",
+			"hardwareAddress" : "01:02:03:0a:0b:0c",
+			"maxBandwidth" : 0,
+			"repositoryLocalUrl" : "file:///var/lib/opsi/repository",
+			"depotWebdavUrl" : "webdavs://depot.address:4447/depot",
+			"depotRemoteUrl" : "smb://12.34.5.6/opsi_depot"
+		}
+
+	None of the entries in `depot` are mandatory.
+	Machine-specific defaults will be used if no values are given.
+	If a re-registration of a system is done the values of the existing
+	depot will be used and any values given in `depot` will override
+	the existing values.
+
+	The `id` of the new depot will be the FQDN of the current system.
+	"""
 	backendConfigFile = u'/etc/opsi/backends/jsonrpc.conf'
 	dispatchConfigFile = u'/etc/opsi/backendManager/dispatch.conf'
 
@@ -1424,11 +1469,225 @@ def registerDepot():
 	config.update(backendConfig)
 	logger.info(u"Current jsonrpc backend config: %s" % config)
 
-	jsonrpcBackend = None
-	depot = None
+	if unattendedConfiguration:
+		depotConfig = unattendedConfiguration.pop('depot', {})
+		config.update(unattendedConfiguration)
 
+		jsonrpcBackend = _getJSONRPCBackendFromConfig(unattendedConfiguration)
+
+		depot = _getConfiguredDepot(jsonrpcBackend, depotConfig)
+	else:
+		jsonrpcBackend, depot = _getBackendConfigViaGUI(config)
+
+	logger.notice(u"Creating depot '%s'" % depot.id)
+	jsonrpcBackend.host_createObjects([depot])
+
+	logger.notice(u"Getting depot '%s'" % depot.id)
+	depots = jsonrpcBackend.host_getObjects(id=depot.id)
+	if not depots:
+		raise Exception(u"Failed to create depot")
+	depot = depots[0]
+	config['username'] = depot.id
+	config['password'] = depot.opsiHostKey
+	jsonrpcBackend.backend_exit()
+
+	logger.notice(u"Testing connection to config server as user '%s'" % config['username'])
+	try:
+		jsonrpcBackend = JSONRPCBackend(address=config['address'], username=config['username'], password=config['password'])
+	except Exception as e:
+		raise Exception(u"Failed to connect to config server as user '%s': %s" % (config['username'], e))
+	logger.notice(u"Successfully connected to config server as user '%s'" % config['username'])
+
+	backendUtils.updateConfigFile(backendConfigFile, config)
+
+	logger.notice(u"Updating dispatch config '%s'" % dispatchConfigFile)
+
+	# We want to keep lines that are currently commented out and only
+	# replace the currently active backend configuration
+	with codecs.open(dispatchConfigFile, 'r', 'utf-8') as originalDispatchConfig:
+		lines = [
+			line for line in originalDispatchConfig
+			if line.strip().startswith((';', '#'))
+		]
+
+	with codecs.open(dispatchConfigFile, 'w', 'utf-8') as newDispatchConfig:
+		newDispatchConfig.writelines(lines)
+		newDispatchConfig.write("backend_.* : jsonrpc, opsipxeconfd, dhcpd\n")
+		newDispatchConfig.write(".*         : jsonrpc\n")
+	logger.notice(u"Dispatch config '%s' updated" % dispatchConfigFile)
+
+	setRights()
+	restartServices()
+
+
+def _getJSONRPCBackendFromConfig(config):
+	"""
+	Connect to a depot using the given `config`.
+
+	`config` must be a dict like the following:
+		{
+			"address": "fqdn.of.master",
+			"username": "admin user for registration",
+			"password": "the password of the user",
+		}
+
+	:type config: dict
+	:raises OpsiAuthenticationError: If username / password is wrong.
+	:raises Exception: If the supplied user is no opsi administrator.
+	:return: A connected backend.
+	:returntype: JSONRPCBackend
+	"""
+	connectionConfig = {
+		"address": config['address'],
+		"username": config['username'],
+		"password": config['password']
+	}
+	logger.notice(u"Connecting to config server {address!r} as user {username!r}", **connectionConfig)
+	jsonrpcBackend = JSONRPCBackend(**connectionConfig)
+	if not jsonrpcBackend.accessControl_userIsAdmin():
+		raise Exception(u"User {username!r} is not an admin user".format(**connectionConfig))
+
+	logger.notice(u"Successfully connected to config server {address!r} as user {username!r}", **connectionConfig)
+	return jsonrpcBackend
+
+
+def _getConfiguredDepot(jsonrpcBackend, depotConfig=None):
+	"""
+	Get an configured depot.
+
+	An example configuration for `depot` can be:
+		{
+			"masterDepotId" : "id of master depot",
+			"networkAddress" : "12.34.5.6/255.255.255.0",
+			"description" : "Description of depot.",
+			"inventoryNumber" : "inventory number",
+			"ipAddress" : "12.34.5.6",
+			"repositoryRemoteUrl" : "webdavs://depot.address:4447/repository",
+			"depotLocalUrl" : "file:///var/lib/opsi/depot",
+			"isMasterDepot" : true, // or false
+			"notes" : "Put some notes here",
+			"hardwareAddress" : "01:02:03:0a:0b:0c",
+			"maxBandwidth" : 0,
+			"repositoryLocalUrl" : "file:///var/lib/opsi/repository",
+			"depotWebdavUrl" : "webdavs://depot.address:4447/depot",
+			"depotRemoteUrl" : "smb://depot.address/opsi_depot"
+		}
+
+	None of the entries are mandatory.
+	We try to set sensible defaults
+
+	The `id` of the new depot will be the FQDN of the current system.
+	"""
+	depotId = getSysConfig()['fqdn']
+	depots = jsonrpcBackend.host_getObjects(id=depotId)
+	try:
+		depot = depots[0]
+	except IndexError:  # no depot found
+		depotLocalUrl = u'file:///var/lib/opsi/depot'
+		depotRemoteUrl = u'smb://%s/opsi_depot' % getSysConfig()['hostname']
+		depotWebdavUrl = u'webdavs://%s:4447/depot' % depotId
+		hardwareAddress = getSysConfig()['hardwareAddress'] or u''
+		repositoryRemoteUrl = u'webdavs://%s:4447/repository' % depotId
+
+		depot = OpsiDepotserver(
+			id=depotId,
+			opsiHostKey=None,
+			depotLocalUrl=depotLocalUrl,
+			depotRemoteUrl=depotRemoteUrl,
+			depotWebdavUrl=depotWebdavUrl,
+			repositoryLocalUrl=u'file:///var/lib/opsi/repository',
+			repositoryRemoteUrl=repositoryRemoteUrl,
+			hardwareAddress=hardwareAddress,
+			ipAddress=getSysConfig()['ipAddress'] or u'',
+			networkAddress=u'%s/%s' % (getSysConfig()['subnet'], getSysConfig()['netmask']),
+			maxBandwidth=0,
+			isMasterDepot=True,
+			masterDepotId=None,
+		)
+
+	depotConfig = depotConfig or {}
+	try:
+		depot.setDescription(depotConfig['description'])
+	except KeyError:
+		logger.debug("Depot config holds no 'description'.")
+
+	try:
+		depot.setInventoryNumber(depotConfig['inventoryNumber'])
+	except KeyError:
+		logger.debug("Depot config holds no 'inventoryNumber'.")
+
+	try:
+		depot.setNotes(depotConfig["notes"])
+	except KeyError:
+		logger.debug("Depot config holds no 'notes'.")
+
+	try:
+		depot.setIpAddress(depotConfig["ipAddress"])
+	except KeyError:
+		logger.debug("Depot config holds no 'ipAddress'.")
+
+	try:
+		depot.setHardwareAddress(depotConfig["hardwareAddress"])
+	except KeyError:
+		logger.debug("Depot config holds no 'hardwareAddress'.")
+
+	try:
+		depot.setNetworkAddress(depotConfig['networkAddress'])
+	except KeyError:
+		logger.debug("Depot config holds no 'networkAddress'.")
+
+	try:
+		depot.setMaxBandwidth(forceInt(depotConfig['maxBandwidth']))
+	except KeyError:
+		logger.debug("Depot config holds no 'maxBandwidth'.")
+
+	try:
+		depot.setDepotLocalUrl(depotConfig["depotLocalUrl"])
+	except KeyError:
+		logger.debug("Depot config holds no 'depotLocalUrl'.")
+
+	try:
+		depot.setDepotRemoteUrl(depotConfig["depotRemoteUrl"])
+	except KeyError:
+		logger.debug("Depot config holds no 'depotRemoteUrl'.")
+
+	try:
+		depot.setDepotWebdavUrl(depotConfig["depotWebdavUrl"])
+	except KeyError:
+		logger.debug("Depot config holds no 'depotWebdavUrl'.")
+		depot.depotWebdavUrl = None
+
+	try:
+		depot.setRepositoryLocalUrl(depotConfig["repositoryLocalUrl"])
+	except KeyError:
+		logger.debug("Depot config holds no 'repositoryLocalUrl'.")
+
+	try:
+		depot.setRepositoryRemoteUrl(depotConfig["repositoryRemoteUrl"])
+	except KeyError:
+		logger.debug("Depot config holds no 'repositoryRemoteUrl'.")
+
+	try:
+		depot.setIsMasterDepot(forceBool(depotConfig["isMasterDepot"]))
+	except KeyError:
+		logger.debug("Depot config holds no 'isMasterDepot'.")
+
+	try:
+		depot.setMasterDepotId(depotConfig["masterDepotId"])
+	except KeyError:
+		logger.debug("Depot config holds no 'masterDepotId'.")
+		depot.masterDepotId = None
+
+	if depot.maxBandwidth < 0:
+		depot.maxBandwidth = 0
+
+	return depot
+
+
+def _getBackendConfigViaGUI(config):
 	consoleLevel = logger.getConsoleLevel()
 	logger.setConsoleLevel(LOG_NONE)
+
 	ui = UIFactory(type='snack')
 	try:
 		adminUser = u'root'
@@ -1454,9 +1713,11 @@ def registerDepot():
 			messageBox.addText(u"Connecting to config server '%s' as user '%s'\n" % (config['address'], adminUser))
 
 			try:
-				jsonrpcBackend = JSONRPCBackend(address=config['address'], username=adminUser, password=adminPass)
-				if not jsonrpcBackend.accessControl_userIsAdmin():
-					raise Exception(u"User '%s' is not an admin user" % adminUser)
+				jsonrpcBackend = _getJSONRPCBackendFromConfig({
+					"address": config['address'],
+					"username": adminUser,
+					"password": adminPass
+				})
 			except Exception as e:
 				messageBox.hide()
 				logger.error(u"Failed to connect to config server '%s' as user '%s': %s" % (config['address'], adminUser, e))
@@ -1465,7 +1726,7 @@ def registerDepot():
 					text=u"Failed to connect to config server '%s' as user '%s': %s" % (config['address'], adminUser, e)
 				)
 				continue
-			logger.notice(u"Successfully connected to config server '%s' as user '%s'" % (config['address'], adminUser))
+
 			messageBox.addText(u"Successfully connected to config server '%s' as user '%s'\n" % (config['address'], adminUser))
 			break
 
@@ -1512,7 +1773,7 @@ def registerDepot():
 			if depot.maxBandwidth < 0:
 				depot.maxBandwidth = 0
 			if depot.maxBandwidth > 0:
-				depot.maxBandwidth = int(depot.maxBandwidth/1000)
+				depot.maxBandwidth = int(depot.maxBandwidth / 1000)
 
 			values = [
 				{"name": u"Description", "value": depot.description},
@@ -1635,45 +1896,7 @@ def registerDepot():
 		ui.exit()
 		logger.setConsoleLevel(consoleLevel)
 
-	logger.notice(u"Creating depot '%s'" % depot.id)
-	jsonrpcBackend.host_createObjects([depot])
-
-	logger.notice(u"Getting depot '%s'" % depot.id)
-	depots = jsonrpcBackend.host_getObjects(id=depot.id)
-	if not depots:
-		raise Exception(u"Failed to create depot")
-	depot = depots[0]
-	config['username'] = depot.id
-	config['password'] = depot.opsiHostKey
-	jsonrpcBackend.backend_exit()
-
-	logger.notice(u"Testing connection to config server as user '%s'" % config['username'])
-	try:
-		jsonrpcBackend = JSONRPCBackend(address=config['address'], username=config['username'], password=config['password'])
-	except Exception as e:
-		raise Exception(u"Failed to connect to config server as user '%s': %s" % (config['username'], e))
-	logger.notice(u"Successfully connected to config server as user '%s'" % config['username'])
-
-	backendUtils.updateConfigFile(backendConfigFile, config)
-
-	logger.notice(u"Updating dispatch config '%s'" % dispatchConfigFile)
-
-	# We want to keep lines that are currently commented out and only
-	# replace the currently active backend configuration
-	with codecs.open(dispatchConfigFile, 'r', 'utf-8') as originalDispatchConfig:
-		lines = [
-			line for line in originalDispatchConfig
-			if line.strip().startswith((';', '#'))
-		]
-
-	with codecs.open(dispatchConfigFile, 'w', 'utf-8') as newDispatchConfig:
-		newDispatchConfig.writelines(lines)
-		newDispatchConfig.write("backend_.* : jsonrpc, opsipxeconfd, dhcpd\n")
-		newDispatchConfig.write(".*         : jsonrpc\n")
-	logger.notice(u"Dispatch config '%s' updated" % dispatchConfigFile)
-
-	setRights()
-	restartServices()
+	return jsonrpcBackend, depot
 
 
 def restartServices():
@@ -2167,7 +2390,7 @@ def main():
 		update()
 
 	elif (task == 'register-depot'):
-		registerDepot()
+		registerDepot(unattended)
 		configureClientUser()
 
 	elif (task == 'edit-config-defaults'):
