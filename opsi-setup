@@ -1497,6 +1497,7 @@ def registerDepot(unattendedConfiguration=None):
 		raise Exception(u"Failed to connect to config server as user '%s': %s" % (config['username'], e))
 	logger.notice(u"Successfully connected to config server as user '%s'" % config['username'])
 
+	logger.debug("Updating config file {0}", backendConfigFile)
 	backendUtils.updateConfigFile(backendConfigFile, config)
 
 	logger.notice(u"Updating dispatch config '%s'" % dispatchConfigFile)
