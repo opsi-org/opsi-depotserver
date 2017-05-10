@@ -1,3 +1,9 @@
+opsi-depotserver (4.0.7.3-1) experimental; urgency=medium
+
+  * depends on opsi-tftpd
+
+ -- Mathias Radtke <m.radtke@uib.de>  Tue, 09 May 2017 16:17:27 +0200
+
 opsi-depotserver (4.0.7.2-1) testing; urgency=medium
 
   * opsi-setup: it is now possible to use --unattended with --register-depot.
