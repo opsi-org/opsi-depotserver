@@ -90,8 +90,10 @@ if [ -z "$fileadmingroup" ]; then
 	fileadmingroup=pcpatch
 fi
 if [ $fileadmingroup != pcpatch -a -z "$(getent group $fileadmingroup)" ]; then
-	echo "  -> Renaming group pcpatch to $fileadmingroup"
-	groupmod -n $fileadmingroup pcpatch
+	if [ ! -z "$(getent group pcpatch)"  ]; then
+		echo "  -> Renaming group pcpatch to $fileadmingroup"
+		groupmod -n $fileadmingroup pcpatch
+	fi
 else
 	if [ -z "$(getent group $fileadmingroup)"  ]; then
 		echo "  -> Adding group $fileadmingroup"
