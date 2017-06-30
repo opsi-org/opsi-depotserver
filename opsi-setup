@@ -53,6 +53,7 @@ from OPSI.Util.Task.InitializeBackend import initializeBackends
 from OPSI.Util.Task.Rights import setRights, setPasswdRights
 from OPSI.Util.Task.Sudoers import patchSudoersFileForOpsi
 from OPSI.Util.Task.UpdateBackend.MySQL import updateMySQLBackend
+from OPSI.Util.Task.UpdateBackend.ConfigurationData import updateBackendData
 from OPSI.Util.Task.Samba import SMB_CONF, configureSamba
 
 
@@ -247,9 +248,18 @@ def update(fromVersion=None):
 		except Exception as e:
 			logger.warning(u"Failed to create depot directory '%s': %s" % (depotDir, e))
 
-
 	if isConfigServer:
 		initializeConfigs()
+
+		backend = BackendManager(
+			dispatchConfigFile=u'/etc/opsi/backendManager/dispatch.conf',
+			backendConfigDir=u'/etc/opsi/backends',
+			extensionConfigDir=u'/etc/opsi/backendManager/extend.d',
+			depotbackend=False
+		)
+
+		updateBackendData(backend)  # opsi 4.0 -> 4.1
+
 	configureSamba()
 
 
