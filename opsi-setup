@@ -6,7 +6,6 @@
 
 import codecs
 import getopt
-import grp
 import json
 import os
 import pwd
@@ -21,36 +20,39 @@ import OPSI.Util.Task.ConfigureBackend as backendUtils
 from OPSI.Backend.Backend import ExtendedConfigDataBackend
 from OPSI.Backend.File import FileBackend
 from OPSI.Backend.JSONRPC import JSONRPCBackend
+from OPSI.Config import DEFAULT_DEPOT_USER as CLIENT_USER
 from OPSI.Logger import LOG_DEBUG, LOG_NONE, LOG_INFO, LOG_NOTICE, Logger
-from OPSI.Object import (ConfigState, HostGroup, LocalbootProduct,
-	NetbootProduct, ObjectToGroup, OpsiClient,
-	OpsiConfigserver, OpsiDepotserver, ProductDependency, ProductOnClient,
-	ProductOnDepot, ProductPropertyState, UnicodeConfig, UnicodeProductProperty)
-from OPSI.System.Posix import (execute, getEthernetDevices,
-	getNetworkDeviceConfig, which)
-from OPSI.Types import (forceActionRequest, forceBool, forceFilename,
-	forceGroupId, forceHostId, forceInstallationStatus, forceInt,
-	forceIpAddress, forceList, forceObjectId, forceProductId,
-	forceUnicodeList)
+from OPSI.Object import (
+	ConfigState, HostGroup, ObjectToGroup, OpsiClient,
+	OpsiDepotserver, ProductOnClient, ProductOnDepot, ProductPropertyState,
+	UnicodeConfig)
+from OPSI.System.Posix import (
+	execute, getLocalFqdn, getNetworkConfiguration, which, Distribution)
+from OPSI.Types import (
+	forceBool, forceFilename, forceGroupId, forceHostId, forceInt,
+	forceIpAddress, forceObjectId, forceProductId, forceUnicodeList)
 from OPSI.UI import UIFactory
-from OPSI.Util import blowfishDecrypt, getfqdn, randomString
+from OPSI.Util import blowfishDecrypt, randomString
 from OPSI.Util.File import IniFile
-from OPSI.Util.File.Opsi import (BackendDispatchConfigFile, HostKeyFile,
-	PackageControlFile)
-from OPSI.Util.Task.Certificate import (DEFAULT_CERTIFICATE_PARAMETERS,
-	OPSICONFD_CERTFILE, NoCertificateError, UnreadableCertificateError,
+from OPSI.Util.File.Opsi import (
+	BackendDispatchConfigFile, HostKeyFile,	PackageControlFile)
+from OPSI.Util.Task.Certificate import (
+	DEFAULT_CERTIFICATE_PARAMETERS,	OPSICONFD_CERTFILE,
+	NoCertificateError, UnreadableCertificateError,
 	createCertificate, loadConfigurationFromCertificate, renewCertificate)
 from OPSI.Util.Task.CleanupBackend import cleanupBackend
-from OPSI.Util.Task.ConfigureBackend.ConfigurationData import initializeConfigs
+from OPSI.Util.Task.ConfigureBackend.ConfigurationData import (
+	initializeConfigs, readWindowsDomainFromSambaConfig)
 from OPSI.Util.Task.ConfigureBackend.DHCPD import configureDHCPD
 from OPSI.Util.Task.ConfigureBackend.MySQL import (
 	DatabaseConnectionFailedException,
 	configureMySQLBackend as configureMySQLBackendWithoutGUI
 )
-from OPSI.Util.Task.Rights import setRights
+from OPSI.Util.Task.InitializeBackend import initializeBackends
+from OPSI.Util.Task.Rights import setRights, setPasswdRights
 from OPSI.Util.Task.Sudoers import patchSudoersFileForOpsi
 from OPSI.Util.Task.UpdateBackend.MySQL import updateMySQLBackend
-from OPSI.Util.Task.Samba import configureSamba
+from OPSI.Util.Task.Samba import SMB_CONF, configureSamba
 
 
 logger = Logger()
@@ -59,14 +61,7 @@ logger.setConsoleLevel(LOG_NOTICE)
 logger.setConsoleColor(True)
 
 LOG_FILE = u'/tmp/opsi-setup.log'
-SMB_CONF = u'/etc/samba/smb.conf'
 DHCPD_CONF = Posix.locateDHCPDConfig(u'/etc/dhcp3/dhcpd.conf')
-
-OPSICONFD_USER = u'opsiconfd'
-ADMIN_GROUP = u'opsiadmin'
-CLIENT_USER = u'pcpatch'
-
-OPSI_GLOBAL_CONF = u'/etc/opsi/global.conf'
 
 sysConfig = {}
 ipAddress = None
