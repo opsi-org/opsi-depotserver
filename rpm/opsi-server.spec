@@ -7,7 +7,7 @@
 #
 
 Name:           opsi-server
-Requires:       python-opsi >= 4.1.1.10 opsiconfd >= 4.1.1 opsi-tftpd opsipxeconfd >= 4.1 opsi-utils >= 4.1 opsi-linux-bootimage >= 20170620 samba sudo wget
+Requires:       python-opsi >= 4.1.1.11 opsiconfd >= 4.1.1 opsi-tftpd opsipxeconfd >= 4.1 opsi-utils >= 4.1 opsi-linux-bootimage >= 20170620 samba sudo wget
 Provides:       opsi-depotserver = %{version}-%{release}
 Conflicts:      opsi-server-expert
 Obsoletes:      opsi-depotserver < 4.1
@@ -40,7 +40,7 @@ Group: Productivity/Networking/Opsi
 Summary: opsi depotserver in expert mode
 # Conflicts: opsi-server
 Provides: opsi-server = %{version}
-Requires: python-opsi >= 4.1.1.10 opsiconfd >= 4.1.1 opsi-tftpd opsipxeconfd >= 4.1 opsi-utils >= 4.1 opsi-linux-bootimage >= 20170620
+Requires: python-opsi >= 4.1.1.11 opsiconfd >= 4.1.1 opsi-tftpd opsipxeconfd >= 4.1 opsi-utils >= 4.1 opsi-linux-bootimage >= 20170620
 
 # ===[ description ]================================
 %description
