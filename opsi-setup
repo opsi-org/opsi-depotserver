@@ -18,6 +18,7 @@ import time
 import OPSI.System.Posix as Posix
 import OPSI.Util.Task.ConfigureBackend as backendUtils
 from OPSI.Backend.Backend import ExtendedConfigDataBackend
+from OPSI.Backend.BackendManager import BackendManager
 from OPSI.Backend.File import FileBackend
 from OPSI.Backend.JSONRPC import JSONRPCBackend
 from OPSI.Config import DEFAULT_DEPOT_USER as CLIENT_USER
@@ -142,7 +143,6 @@ def configureClientUser():
 
 	password = None
 	backend = None
-	from OPSI.Backend.BackendManager import BackendManager
 
 	try:
 		backend = BackendManager(
@@ -214,8 +214,6 @@ def update(fromVersion=None):
 		logger.warning(e)
 
 	if isConfigServer:
-		from OPSI.Backend.BackendManager import BackendManager
-
 		try:
 			backend = BackendManager(
 				dispatchConfigFile=u'/etc/opsi/backendManager/dispatch.conf',
@@ -1492,7 +1490,6 @@ def renewOpsiconfdCert(unattendedConfiguration=None):
 
 
 def editConfigDefaults():
-	from OPSI.Backend.BackendManager import BackendManager
 	backend = BackendManager(
 		dispatchConfigFile=u'/etc/opsi/backendManager/dispatch.conf',
 		backendConfigDir=u'/etc/opsi/backends',
