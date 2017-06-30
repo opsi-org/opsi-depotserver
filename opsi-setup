@@ -136,7 +136,7 @@ def configureClientUser():
 		os.mkdir(sshDir)
 	if not os.path.exists(idRsa):
 		logger.notice(u"   Creating RSA private key for user %s in '%s'" % (CLIENT_USER, idRsa))
-		execute(u"%s -N '' -t rsa -f %s" % ( which('ssh-keygen'), idRsa))
+		execute(u"%s -N '' -t rsa -f %s" % (which('ssh-keygen'), idRsa))
 
 	if not os.path.exists(authorizedKeys):
 		with codecs.open(idRsaPub, 'r', 'utf-8') as f:
