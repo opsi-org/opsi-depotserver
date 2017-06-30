@@ -1,3 +1,9 @@
+opsi-server (4.1.1.2-2) testing; urgency=medium
+
+  * Providing module header for opsi-setup.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Fri, 30 Jun 2017 15:23:37 +0200
+
 opsi-server (4.1.1.2-1) testing; urgency=medium
 
   * Depending on opsi 4.1 packages.
