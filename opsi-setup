@@ -1065,7 +1065,7 @@ def _getConfiguredDepot(jsonrpcBackend, depotConfig=None):
 
 	The `id` of the new depot will be the FQDN of the current system.
 	"""
-	depotId = getSysConfig()['fqdn']
+	depotId = getLocalFqdn()
 	depots = jsonrpcBackend.host_getObjects(id=depotId)
 	try:
 		depot = depots[0]
@@ -1420,11 +1420,11 @@ def renewOpsiconfdCert(unattendedConfiguration=None):
 			u'failed: {0}'.format(err)
 		)
 		certparams = DEFAULT_CERTIFICATE_PARAMETERS
-		certparams["commonName"] = forceHostId(getfqdn(conf=OPSI_GLOBAL_CONF))
+		certparams["commonName"] = getLocalFqdn()
 	except NoCertificateError:
 		certificateExisted = False
 		certparams = DEFAULT_CERTIFICATE_PARAMETERS
-		certparams["commonName"] = forceHostId(getfqdn(conf=OPSI_GLOBAL_CONF))
+		certparams["commonName"] = getLocalFqdn()
 
 	if 'expires' not in certparams:
 		certparams['expires'] = "2"  # Not included in existing cert
@@ -1472,7 +1472,7 @@ def renewOpsiconfdCert(unattendedConfiguration=None):
 			error = None
 
 			if error is None:
-				if not certparams["commonName"] == forceHostId(getfqdn(conf=OPSI_GLOBAL_CONF)):
+				if not certparams["commonName"] == getLocalFqdn():
 					error = "Hostname must be the FQDN from Server"
 
 			if error is None:
