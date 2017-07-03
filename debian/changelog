@@ -1,3 +1,9 @@
+opsi-server (4.1.1.3-2) UNRELEASED; urgency=medium
+
+  * Creating /var/lib/opsi/workbench through the package.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Mon, 03 Jul 2017 18:51:14 +0200
+
 opsi-server (4.1.1.3-1) testing; urgency=medium
 
   * Adjusting import for getServerAddress.

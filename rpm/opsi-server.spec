@@ -63,11 +63,7 @@ opsi server in expert mode requires manual setup but has no dependencies to samb
 
 # ===[ install ]====================================
 %install
-%if 0%{?suse_version} == 1110  || 0%{?suse_version} == 1315
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/workbench
-%else
-mkdir -p $RPM_BUILD_ROOT/home/opsiproducts
-%endif
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/ntfs-images
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/depot
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/repository
@@ -143,16 +139,14 @@ fi
 /usr/bin/opsi-set-rights
 
 # directories
-%if 0%{?suse_version} == 1110  || 0%{?suse_version} == 1315
-# SLES 11 & 12
-%dir /var/lib/opsi/workbench
-%dir /var/lib/opsi/depot
-%else
-%dir /home/opsiproducts
-%endif
 %dir /var/lib/opsi
-%dir /var/lib/opsi/repository
+%if 0%{?suse_version} == 1315
+# SLES 12
+%dir /var/lib/opsi/depot
+%endif
 %dir /var/lib/opsi/ntfs-images
+%dir /var/lib/opsi/repository
+%dir /var/lib/opsi/workbench
 %dir /var/log/opsi
 %dir /var/log/opsi/clientconnect
 %dir /var/log/opsi/bootimage
