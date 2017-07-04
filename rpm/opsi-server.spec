@@ -107,16 +107,8 @@ fi
 
 # ===[ post ]=======================================
 %post
-if [ $1 -eq 1 ]; then
-	# Install
-	/usr/bin/opsi-setup --auto-configure-dhcpd --auto-configure-samba || true
-	/usr/bin/opsi-setup --set-rights || true
-else
-	# Upgrade
-	/usr/bin/opsi-setup --update-from unknown || true
-	/usr/bin/opsi-setup --set-rights /etc/opsi || true
-	/usr/bin/opsi-setup --set-rights /tftpboot || true
-fi
+/usr/bin/opsi-setup --auto-configure-dhcpd --auto-configure-samba || true
+/usr/bin/opsi-setup --set-rights || true
 
 %post expert
 echo "No postinstallation for expert package."
