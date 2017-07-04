@@ -58,7 +58,6 @@ case "$1" in
 			opsi-setup --set-rights /etc/opsi || true
 			opsi-setup --set-rights /tftpboot || true
 		else
-			opsi-setup --init-current-config || true
 			if [ -n "$arguments" ]; then
 				opsi-setup $arguments || true
 			fi

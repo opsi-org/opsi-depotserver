@@ -109,7 +109,7 @@ fi
 %post
 if [ $1 -eq 1 ]; then
 	# Install
-	/usr/bin/opsi-setup --init-current-config --auto-configure-dhcpd --auto-configure-samba || true
+	/usr/bin/opsi-setup --auto-configure-dhcpd --auto-configure-samba || true
 	/usr/bin/opsi-setup --set-rights || true
 else
 	# Upgrade
