@@ -40,10 +40,6 @@ fi
 case "$1" in
 	configure)
 
-		if [ ! -d "/home/opsiproducts" ]; then
-			mkdir -p /home/opsiproducts || echo "Creating /home/opsiproducts failed!"
-		fi
-
 		arguments=""
 		if [ "$CONFIGURE_DHCPD" = "true" ]; then
 			arguments="${arguments} --auto-configure-dhcpd"
@@ -57,17 +53,10 @@ case "$1" in
 			arguments="${arguments} --patch-sudoers-file"
 		fi
 
-		if [ -n "$2" ] && dpkg --compare-versions "$2" lt "4.0.5"; then
-			opsi-setup --update-from "$2" || true
-			opsi-setup --set-rights /etc/opsi || true
-			opsi-setup --set-rights /tftpboot || true
-		else
-			opsi-setup --init-current-config || true
-			if [ -n "$arguments" ]; then
-				opsi-setup $arguments || true
-			fi
-			opsi-setup --set-rights || true
+		if [ -n "$arguments" ]; then
+			opsi-setup $arguments || true
 		fi
+		opsi-setup --set-rights || true
 	;;
 
 	abort-upgrade|abort-remove|abort-deconfigure)
