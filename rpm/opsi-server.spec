@@ -63,17 +63,18 @@ opsi server in expert mode requires manual setup but has no dependencies to samb
 
 # ===[ install ]====================================
 %install
-mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/workbench
+mkdir -p $RPM_BUILD_ROOT/usr/bin
+install -m 0755 opsi-setup $RPM_BUILD_ROOT/usr/bin/opsi-setup
+install -m 0755 opsi-set-rights $RPM_BUILD_ROOT/usr/bin/opsi-set-rights
+
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/ntfs-images
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/depot
 mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/repository
+mkdir -p $RPM_BUILD_ROOT/var/lib/opsi/workbench
 mkdir -p $RPM_BUILD_ROOT/var/log/opsi/clientconnect
 mkdir -p $RPM_BUILD_ROOT/var/log/opsi/bootimage
 mkdir -p $RPM_BUILD_ROOT/var/log/opsi/instlog
 mkdir -p $RPM_BUILD_ROOT/var/log/opsi/userlogin
-mkdir -p $RPM_BUILD_ROOT/usr/bin
-install -m 0755 opsi-setup $RPM_BUILD_ROOT/usr/bin/opsi-setup
-install -m 0755 opsi-set-rights $RPM_BUILD_ROOT/usr/bin/opsi-set-rights
 
 # ===[ clean ]======================================
 %clean
@@ -132,16 +133,13 @@ fi
 
 # directories
 %dir /var/lib/opsi
-%if 0%{?suse_version} == 1315
-# SLES 12
 %dir /var/lib/opsi/depot
-%endif
 %dir /var/lib/opsi/ntfs-images
 %dir /var/lib/opsi/repository
 %dir /var/lib/opsi/workbench
 %dir /var/log/opsi
-%dir /var/log/opsi/clientconnect
 %dir /var/log/opsi/bootimage
+%dir /var/log/opsi/clientconnect
 %dir /var/log/opsi/instlog
 %dir /var/log/opsi/userlogin
 
