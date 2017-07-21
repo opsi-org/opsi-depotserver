@@ -705,7 +705,7 @@ def _getBackendConfigViaGUI(config):
 					# string for the UI
 					serverConfig[key] = u''
 
-			depot = OpsiDepotserver(serverConfig)
+			depot = OpsiDepotserver(**serverConfig)
 
 		while True:
 			if depot.maxBandwidth < 0:
