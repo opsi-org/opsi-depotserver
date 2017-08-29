@@ -11,6 +11,17 @@ Requires:       python-opsi >= 4.1.1.11 opsiconfd >= 4.1.1 opsi-tftpd opsipxecon
 Provides:       opsi-depotserver = %{version}-%{release}
 Conflicts:      opsi-server-expert
 Obsoletes:      opsi-depotserver < 4.1
+Url:            http://www.opsi.org
+License:        AGPL-3.0+
+Group:          Productivity/Networking/Opsi
+AutoReqProv:    on
+Version:        4.1.1.1
+Release:        6
+Summary:        opsi depotserver
+Source:         opsi-server_4.1.1.1-6.tar.gz
+BuildRoot:      %{_tmppath}/%{name}-%{version}-build
+BuildArch:      noarch
+
 %if 0%{?suse_version}
 BuildRequires:  pwdutils python-opsi
 Requires:       pwdutils
@@ -21,18 +32,8 @@ Requires:       redhat-lsb
 %if 0%{?rhel_version} >= 700 || 0%{?centos_version} >= 700 || 0%{?fedora_version}
 Requires:       samba-client
 %endif
-Url:            http://www.opsi.org
-License:        AGPL-3.0+
-Group:          Productivity/Networking/Opsi
-AutoReqProv:    on
-Version:        4.1.1.1
-Release:        6
-Summary:        opsi depotserver
-%define tarname opsi-depotserver
-Source:         opsi-server_4.1.1.1-6.tar.gz
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-BuildArch:      noarch
 
+%define tarname opsi-depotserver
 %define toplevel_dir %{name}-%{version}
 
 %package expert
