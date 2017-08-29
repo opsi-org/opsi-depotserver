@@ -7,7 +7,6 @@
 #
 
 Name:           opsi-server
-Requires:       python-opsi >= 4.1.1.11 opsiconfd >= 4.1.1 opsi-tftpd opsipxeconfd >= 4.1 opsi-utils >= 4.1 opsi-linux-bootimage >= 20170620 samba sudo wget
 Provides:       opsi-depotserver = %{version}-%{release}
 Conflicts:      opsi-server-expert
 Obsoletes:      opsi-depotserver < 4.1
@@ -21,6 +20,16 @@ Summary:        opsi depotserver
 Source:         opsi-server_4.1.1.1-6.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
+
+Requires:       python-opsi >= 4.1.1.11
+Requires:       opsiconfd >= 4.1.1
+Requires:       opsi-tftpd
+Requires:       opsipxeconfd >= 4.1
+Requires:       opsi-utils >= 4.1
+Requires:       opsi-linux-bootimage >= 20170620
+Requires:       samba
+Requires:       sudo
+Requires:       wget
 
 %if 0%{?suse_version}
 BuildRequires:  pwdutils python-opsi
