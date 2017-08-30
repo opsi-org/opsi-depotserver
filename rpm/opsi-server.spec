@@ -30,12 +30,7 @@ Requires:       opsi-linux-bootimage >= 20170620
 Requires:       samba
 Requires:       sudo
 Requires:       wget
-
-%if 0%{?suse_version}
 Requires:       mariadb-server
-%else
-Requires:       mysql-server
-%endif
 
 %if 0%{?suse_version}
 BuildRequires:  pwdutils python-opsi
