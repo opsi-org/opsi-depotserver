@@ -42,7 +42,6 @@ Requires:       redhat-lsb
 Requires:       samba-client
 %endif
 
-%define tarname opsi-depotserver
 %define toplevel_dir %{name}-%{version}
 
 %package expert
