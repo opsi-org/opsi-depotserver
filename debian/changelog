@@ -1,3 +1,10 @@
+opsi-server (4.1.1.4-3) testing; urgency=medium
+
+  * Depending on server for MySQL / MariaDB as the default dispatch.conf
+    now relies on this.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Wed, 06 Sep 2017 12:45:12 +0200
+
 opsi-server (4.1.1.4-2) testing; urgency=medium
 
   * Listing all required folders as part of the package.
