@@ -35,15 +35,13 @@ case "$1" in
 		smbpasswd -x pcpatch >/dev/null 2>/dev/null || true
 
 		db_purge
-		db_stop
-
 	;;
 
 	*)
 		echo "postrm called with unknown argument \`$1'" >&2
+		db_stop
 		exit 1
 	;;
-
 esac
 
 db_stop
