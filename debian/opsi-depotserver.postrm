@@ -31,9 +31,9 @@ case "$1" in
 
 	purge)
 		# delete samba user pcpatch
-
 		smbpasswd -x pcpatch >/dev/null 2>/dev/null || true
 
+		# Reset debconf settings
 		db_purge
 	;;
 
