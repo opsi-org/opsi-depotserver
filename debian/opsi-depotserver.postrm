@@ -25,11 +25,7 @@ set -e
 VERBOSE=true
 
 case "$1" in
-	upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
-
-	;;
-
-	remove)
+	upgrade|failed-upgrade|abort-install|abort-upgrade|disappear|remove)
 
 	;;
 
