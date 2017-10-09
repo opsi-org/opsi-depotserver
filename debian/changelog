@@ -1,3 +1,10 @@
+opsi-depotserver (4.0.7.3-2) testing; urgency=medium
+
+  * .deb: lowered severity of debconf questions.
+  * .deb: requesting debconf results only if configuring the package.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Mon, 09 Oct 2017 18:16:33 +0200
+
 opsi-depotserver (4.0.7.3-1) experimental; urgency=medium
 
   * depends on opsi-tftpd
