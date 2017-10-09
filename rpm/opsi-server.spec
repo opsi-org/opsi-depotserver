@@ -30,7 +30,11 @@ Requires:       opsi-linux-bootimage >= 20170620
 Requires:       samba
 Requires:       sudo
 Requires:       wget
+
+%if 0%{?suse_version}
 Suggests:       mariadb-server
+# RHEL / CentOS do not support this keyword.
+%endif
 
 %if 0%{?suse_version}
 BuildRequires:  pwdutils python-opsi
