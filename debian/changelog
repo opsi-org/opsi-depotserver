@@ -1,3 +1,9 @@
+opsi-server (4.1.1.4-5) testing; urgency=medium
+
+  * RPM: CentOS / RHEL do not support Suggests. Removed for these distros.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Mon, 09 Oct 2017 18:03:02 +0200
+
 opsi-server (4.1.1.4-4) testing; urgency=medium
 
   * Removed hard dependency for MySQL / MariaDB because it is not necessary
