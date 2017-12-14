@@ -33,6 +33,7 @@ Requires:       wget
 
 %if 0%{?suse_version}
 Suggests:       mariadb-server
+Suggests:       opsi-windows-support
 # RHEL / CentOS do not support this keyword.
 %endif
 
