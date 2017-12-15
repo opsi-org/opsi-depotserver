@@ -104,6 +104,26 @@ opsi-depotserver (4.1.1.1-1) stable; urgency=medium
 
  -- Niko Wenselowski <n.wenselowski@uib.de>  Tue, 24 Jan 2017 18:58:53 +0100
 
+opsi-depotserver (4.0.7.3-2) testing; urgency=medium
+
+  * .deb: lowered severity of debconf questions.
+  * .deb: requesting debconf results only if configuring the package.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Mon, 09 Oct 2017 18:16:33 +0200
+
+opsi-depotserver (4.0.7.3-1) experimental; urgency=medium
+
+  * depends on opsi-tftpd
+
+ -- Mathias Radtke <m.radtke@uib.de>  Tue, 09 May 2017 16:17:27 +0200
+
+opsi-depotserver (4.0.7.2-1) testing; urgency=medium
+
+  * opsi-setup: it is now possible to use --unattended with --register-depot.
+    Please refer to the manual for further details.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Thu, 04 May 2017 10:31:54 +0200
+
 opsi-depotserver (4.0.7.1-1) testing; urgency=medium
 
   * opsi-setup: Do not display None for value if this is returned reading data
