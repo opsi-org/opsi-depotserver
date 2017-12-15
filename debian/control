@@ -38,7 +38,12 @@ Provides: opsi-depotserver-expert
 Breaks: opsi-depotserver-expert (<< 4.1)
 Replaces: opsi-depotserver-expert (<< 4.1), opsi-server
 Conflicts: opsi-server
-Depends: python (>= 2.7), python-opsi (>= 4.1.1.11), opsiconfd (>=4.1.1), opsipxeconfd (>=4.1), opsi-utils (>=4.1), ${misc:Depends}
+Depends: python (>= 2.7),
+	python-opsi (>= 4.1.1.11),
+	opsiconfd (>=4.1.1),
+	opsipxeconfd (>=4.1),
+	opsi-utils (>=4.1),
+	${misc:Depends}
 Description: opsi server configuration package - expert version
  This package is used to configure an opsi server.
 
