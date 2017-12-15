@@ -1,3 +1,9 @@
+opsi-server (4.1.1.4-6) stable; urgency=medium
+
+  * Suggest opsi-linux-support and opsi-windows-support.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Fri, 15 Dec 2017 14:09:29 +0100
+
 opsi-server (4.1.1.4-5) testing; urgency=medium
 
   * RPM: CentOS / RHEL do not support Suggests. Removed for these distros.
