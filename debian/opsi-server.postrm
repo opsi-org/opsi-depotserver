@@ -25,29 +25,23 @@ set -e
 VERBOSE=true
 
 case "$1" in
-	upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
-
-	;;
-
-	remove)
+	upgrade|failed-upgrade|abort-install|abort-upgrade|disappear|remove)
 
 	;;
 
 	purge)
 		# delete samba user pcpatch
-
 		smbpasswd -x pcpatch >/dev/null 2>/dev/null || true
 
+		# Reset debconf settings
 		db_purge
-		db_stop
-
 	;;
 
 	*)
 		echo "postrm called with unknown argument \`$1'" >&2
+		db_stop
 		exit 1
 	;;
-
 esac
 
 db_stop
