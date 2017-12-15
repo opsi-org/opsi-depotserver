@@ -26,7 +26,8 @@ Depends: python (>= 2.7),
 	wget,
 	${misc:Depends}
 Suggests: mysql-server,
-	opsi-windows-support
+	opsi-windows-support,
+	opsi-linux-support
 Description: opsi server configuration package
  This package is used to configure an opsi server.
 
