@@ -1,7 +1,7 @@
 #! /bin/bash -e
 
 # = = = = = = = = = = = = = = = = = = = = = = =
-# =     Copyright (C) 2010-2017 uib GmbH      =
+# =     Copyright (C) 2010-2018 uib GmbH      =
 # =           http://www.uib.de               =
 # =          All rights reserved.             =
 # = = = = = = = = = = = = = = = = = = = = = = =
@@ -39,6 +39,14 @@ case "$1" in
 			echo "  -> Adding user opsiconfd"
 			useradd -u 993 -g 992 -d /var/lib/opsi -s /bin/bash opsiconfd
 		fi
+
+		if [ -z "$2" ]; then
+			# On the initial installation we suppress configuration
+			# questions in postinst because the backend needs to be
+			# initialised first.
+			touch /tmp/.opsi.no_backend_configuration
+		fi
+	fi
 	;;
 
 	abort-upgrade)

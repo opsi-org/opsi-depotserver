@@ -1,7 +1,7 @@
 #
 # spec file for package opsi-server
 #
-# Copyright (c) 2010-2017 uib GmbH.
+# Copyright (c) 2010-2018 uib GmbH.
 # This file and all modifications and additions to the pristine
 # package are under the same license as the package itself.
 #
@@ -122,10 +122,19 @@ if [ -z "`getent passwd opsiconfd`" ]; then
 	useradd -u 993 -g 992 -d /var/lib/opsi -s /bin/bash opsiconfd
 fi
 
+if [ "$1" -eq 1 ]; then
+	# On the initial installation we suppress configuration
+	# questions in postinst because the backend needs to be
+	# initialised first.
+	touch /tmp/.opsi.no_backend_configuration
+fi
+
 # ===[ post ]=======================================
 %post
-/usr/bin/opsi-setup --auto-configure-dhcpd --auto-configure-samba || true
-/usr/bin/opsi-setup --set-rights || true
+if [ ! -e "/tmp/.opsi.no_backend_configuration" ]; then
+	/usr/bin/opsi-setup --auto-configure-dhcpd --auto-configure-samba || true
+	/usr/bin/opsi-setup --set-rights || true
+fi
 
 %post expert
 echo "No postinstallation for expert package."
