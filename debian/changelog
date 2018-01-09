@@ -1,3 +1,9 @@
+opsi-server (4.1.1.4-8) stable; urgency=medium
+
+  * Configuration tasks will only be run on an update.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Tue, 09 Jan 2018 10:11:09 +0100
+
 opsi-server (4.1.1.4-7) stable; urgency=medium
 
   * Based on opsi-depotserver 4.0.7.3-2.
