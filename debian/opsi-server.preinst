@@ -46,7 +46,6 @@ case "$1" in
 			# initialised first.
 			touch /tmp/.opsi.no_backend_configuration
 		fi
-	fi
 	;;
 
 	abort-upgrade)
