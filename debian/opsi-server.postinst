@@ -1,0 +1,77 @@
+#! /bin/bash -e
+
+# = = = = = = = = = = = = = = = = = = = = = = =
+# =     Copyright (C) 2010-2018 uib GmbH      =
+# =           http://www.uib.de               =
+# =          All rights reserved.             =
+# = = = = = = = = = = = = = = = = = = = = = = =
+
+# summary of how this script can be called:
+#        * <postinst> `configure' <most-recently-configured-version>
+#        * <old-postinst> `abort-upgrade' <new version>
+#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>
+#          <new-version>
+#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
+#          <failed-install-package> <version> `removing'
+#          <conflicting-package> <version>
+# for details, see http://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+#
+
+#DEBHELPER#
+
+. /usr/share/debconf/confmodule
+
+case "$1" in
+	configure)
+		if [ ! -e "/tmp/.opsi.no_backend_configuration" ]; then
+			db_get opsi/configure_samba
+			CONFIGURE_SAMBA=$RET
+
+			if [ ! -e "/etc/dhcp/dhcpd.conf" ]; then
+				CONFIGURE_DHCPD="false"
+			else
+				db_get opsi/configure_dhcpd
+				CONFIGURE_DHCPD=$RET
+			fi
+
+			if [ ! -e "/etc/sudoers" ]; then
+				CONFIGURE_SUDO="false"
+			else
+				db_get opsi/configure_sudoers
+				CONFIGURE_SUDO=$RET
+			fi
+
+			arguments=""
+			if [ "$CONFIGURE_DHCPD" = "true" ]; then
+				arguments="${arguments} --auto-configure-dhcpd"
+			fi
+
+			if [ "$CONFIGURE_SAMBA" = "true" ]; then
+				arguments="${arguments} --auto-configure-samba"
+			fi
+
+			if [ "$CONFIGURE_SUDO" = "true" ]; then
+				arguments="${arguments} --patch-sudoers-file"
+			fi
+
+			if [ -n "$arguments" ]; then
+				opsi-setup $arguments || true
+			fi
+			opsi-setup --set-rights || true
+		fi
+	;;
+
+	abort-upgrade|abort-remove|abort-deconfigure)
+
+	;;
+
+	*)
+		echo "postinst called with unknown argument \`$1'" >&2
+		exit 1
+	;;
+esac
+
+db_stop
+
+exit 0
