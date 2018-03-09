@@ -122,6 +122,13 @@ opsi-depotserver (4.1.1.1-1) stable; urgency=medium
 
  -- Niko Wenselowski <n.wenselowski@uib.de>  Tue, 24 Jan 2017 18:58:53 +0100
 
+opsi-depotserver (4.0.7.3-3) stable; urgency=medium
+
+  * Quote shell variables to avoid possible side effects.
+  * postinst: Do not fail on renaming fileadmingroup.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Mon, 09 Mar 2018 13:05:33 +0100
+
 opsi-depotserver (4.0.7.3-2) testing; urgency=medium
 
   * .deb: lowered severity of debconf questions.
