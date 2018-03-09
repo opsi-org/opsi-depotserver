@@ -1,7 +1,7 @@
 #
 # spec file for package opsi-depotserver
 #
-# Copyright (c) 2010-2016 uib GmbH.
+# Copyright (c) 2010-2018 uib GmbH.
 # This file and all modifications and additions to the pristine
 # package are under the same license as the package itself.
 #
@@ -90,7 +90,7 @@ if [ -z "$fileadmingroup" ]; then
 	fileadmingroup=pcpatch
 fi
 if [ $fileadmingroup != pcpatch -a -z "$(getent group $fileadmingroup)" ]; then
-	if [ ! -z "$(getent group pcpatch)"  ]; then
+	if [ -n "$(getent group pcpatch)" ]; then
 		echo "  -> Renaming group pcpatch to $fileadmingroup"
 		groupmod -n $fileadmingroup pcpatch
 	fi

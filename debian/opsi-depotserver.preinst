@@ -1,7 +1,7 @@
 #! /bin/bash -e
 
 # = = = = = = = = = = = = = = = = = = = = = = =
-# =     Copyright (C) 2010-2017 uib GmbH      =
+# =     Copyright (C) 2010-2018 uib GmbH      =
 # =           http://www.uib.de               =
 # =          All rights reserved.             =
 # = = = = = = = = = = = = = = = = = = = = = = =
@@ -23,7 +23,7 @@ case "$1" in
 			fileadmingroup=pcpatch
 		fi
 		if [ $fileadmingroup != pcpatch -a -z "$(getent group $fileadmingroup)" ]; then
-			if [ ! -z "$(getent group pcpatch)"  ]; then
+			if [ -n "$(getent group pcpatch)" ]; then
 				echo "  -> Renaming group pcpatch to $fileadmingroup"
 				groupmod -n $fileadmingroup pcpatch
 			fi
