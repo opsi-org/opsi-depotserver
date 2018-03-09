@@ -89,15 +89,15 @@ fileadmingroup=$(grep "fileadmingroup" /etc/opsi/opsi.conf | cut -d "=" -f 2 | s
 if [ -z "$fileadmingroup" ]; then
 	fileadmingroup=pcpatch
 fi
-if [ $fileadmingroup != pcpatch -a -z "$(getent group $fileadmingroup)" ]; then
+if [ "$fileadmingroup" != pcpatch -a -z "$(getent group $fileadmingroup)" ]; then
 	if [ -n "$(getent group pcpatch)" ]; then
 		echo "  -> Renaming group pcpatch to $fileadmingroup"
-		groupmod -n $fileadmingroup pcpatch
+		groupmod -n "$fileadmingroup" pcpatch
 	fi
 else
 	if [ -z "$(getent group $fileadmingroup)"  ]; then
 		echo "  -> Adding group $fileadmingroup"
-		groupadd -g 992 $fileadmingroup
+		groupadd -g 992 "$fileadmingroup"
 	fi
 fi
 if [ -z "`getent passwd pcpatch`" ]; then
@@ -111,7 +111,7 @@ fi
 
 # ===[ post ]=======================================
 %post
-if [ $1 -eq 1 ]; then
+if [ "$1" -eq 1 ]; then
 	# Install
 	/usr/bin/opsi-setup --init-current-config --auto-configure-dhcpd --auto-configure-samba || true
 	/usr/bin/opsi-setup --set-rights || true
@@ -130,7 +130,7 @@ echo "No postinstallation for expert package."
 
 # ===[ postun ]=====================================
 %postun
-if [ $1 -eq 0 ]; then
+if [ "$1" -eq 0 ]; then
 	smbpasswd -x pcpatch >/dev/null 2>/dev/null || true
 fi
 
