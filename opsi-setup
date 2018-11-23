@@ -1115,7 +1115,7 @@ def usage():
 
 
 def main():
-	if (os.geteuid() != 0):
+	if os.geteuid() != 0:
 		raise Exception(u"This script must be startet as root")
 
 	try:
