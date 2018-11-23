@@ -35,7 +35,7 @@ Requires:       wget
 Suggests:       mariadb-server
 Suggests:       opsi-windows-support
 Suggests:       opsi-linux-support
-# RHEL / CentOS do not support this keyword.
+# RHEL / CentOS do not support the keyword 'Suggests'
 %endif
 
 %if 0%{?suse_version}
