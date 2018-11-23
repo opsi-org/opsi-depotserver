@@ -32,16 +32,15 @@ Requires:       sudo
 Requires:       wget
 
 %if 0%{?suse_version}
+BuildRequires:  pwdutils python-opsi
+Requires:       pwdutils
+
+# RHEL / CentOS do not support the keyword 'Suggests'
 Suggests:       mariadb-server
 Suggests:       opsi-windows-support
 Suggests:       opsi-linux-support
-# RHEL / CentOS do not support the keyword 'Suggests'
 %endif
 
-%if 0%{?suse_version}
-BuildRequires:  pwdutils python-opsi
-Requires:       pwdutils
-%endif
 %if 0%{?rhel_version} || 0%{?centos_version}
 Requires:       redhat-lsb
 Requires:       samba-client
