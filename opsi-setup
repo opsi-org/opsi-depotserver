@@ -1134,12 +1134,11 @@ def main():
 		usage()
 		raise
 
+	global backendConfig
 	task = None
 	updateFrom = None
 	autoConfigureSamba = False
 	autoConfigureDhcpd = False
-	global backendConfig
-	backendConfig = {}
 	unattended = None
 
 	for (opt, arg) in opts:
