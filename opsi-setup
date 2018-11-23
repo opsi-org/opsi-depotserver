@@ -50,12 +50,12 @@ from OPSI.Object import OpsiDepotserver
 from OPSI.System.Posix import (
 	execute, getLocalFqdn, getNetworkConfiguration, which, Distribution)
 from OPSI.Types import (
-	forceBool, forceFilename, forceInt,	forceIpAddress, forceUnicodeList)
+	forceBool, forceFilename, forceInt, forceIpAddress, forceUnicodeList)
 from OPSI.UI import UIFactory
 from OPSI.Util import blowfishDecrypt, randomString
 from OPSI.Util.File.Opsi import BackendDispatchConfigFile
 from OPSI.Util.Task.Certificate import (
-	DEFAULT_CERTIFICATE_PARAMETERS,	OPSICONFD_CERTFILE,
+	DEFAULT_CERTIFICATE_PARAMETERS, OPSICONFD_CERTFILE,
 	NoCertificateError, UnreadableCertificateError,
 	createCertificate, loadConfigurationFromCertificate, renewCertificate)
 from OPSI.Util.Task.CleanupBackend import cleanupBackend
