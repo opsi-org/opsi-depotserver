@@ -175,11 +175,11 @@ def configureClientUser():
 			extensionConfigDir=u'/etc/opsi/backendManager/extend.d',
 			depotBackend=True
 		)
-		depot = backend.host_getObjects(type='OpsiDepotserver', id=getSysConfig()['fqdn'])[0]
+		depot = backend.host_getObjects(type='OpsiDepotserver', id=getLocalFqdn())[0]
 
 		configserverId = None
 		for configserver in backend.host_getObjects(type='OpsiConfigserver'):
-			if configserver.id == getSysConfig()['fqdn']:
+			if configserver.id == getLocalFqdn():
 				configserverId = None
 				break
 			else:
@@ -709,7 +709,7 @@ This will remove the client and it's settings from opsi.''') % depot.id,
 			if not depot.networkAddress:
 				depot.ipAddress = u'%s/%s' % (getSysConfig()['subnet'], getSysConfig()['netmask'])
 			if not depot.depotWebdavUrl:
-				depot.depotWebdavUrl = u'webdavs://%s:4447/depot' % getSysConfig()['fqdn']
+				depot.depotWebdavUrl = u'webdavs://%s:4447/depot' % fqdn
 
 			if not depot.workbenchLocalUrl:
 				depot.workbenchLocalUrl = u'file:///var/lib/opsi/workbench'
