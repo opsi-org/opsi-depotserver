@@ -44,8 +44,6 @@ Requires:       pwdutils
 %endif
 %if 0%{?rhel_version} || 0%{?centos_version}
 Requires:       redhat-lsb
-%endif
-%if 0%{?rhel_version} >= 700 || 0%{?centos_version} >= 700 || 0%{?fedora_version}
 Requires:       samba-client
 %endif
 
