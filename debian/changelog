@@ -1,3 +1,9 @@
+opsi-server (4.1.1.6-1) stable; urgency=medium
+
+  * Fix unattended setup.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Mon, 26 Nov 2018 15:11:44 +0100
+
 opsi-server (4.1.1.5.1-1) stable; urgency=medium
 
   * Remove unsupported translation functions.
