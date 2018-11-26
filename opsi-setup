@@ -84,8 +84,9 @@ logger.setConsoleColor(True)
 LOG_FILE = u'/tmp/opsi-setup.log'
 DHCPD_CONF = Posix.locateDHCPDConfig(u'/etc/dhcp3/dhcpd.conf')
 
-sysConfig = {}
 ipAddress = None
+backendConfig = {}
+sysConfig = {}
 
 
 class CancelledByUserError(Exception):
@@ -692,7 +693,7 @@ This will remove the client and it's settings from opsi.''' % depot.id,
 				)
 
 				if not deleteClient:
-					raise CancelledByUserError(_(u'Cancelled'))
+					raise CancelledByUserError(u'Cancelled')
 
 				jsonrpcBackend.host_delete(id=depot.id)
 
