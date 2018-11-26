@@ -84,8 +84,8 @@ logger.setConsoleColor(True)
 LOG_FILE = u'/tmp/opsi-setup.log'
 DHCPD_CONF = Posix.locateDHCPDConfig(u'/etc/dhcp3/dhcpd.conf')
 
-ipAddress = None
 backendConfig = {}
+ipAddress = None
 sysConfig = {}
 
 
