@@ -1,7 +1,7 @@
 #
 # spec file for package opsi-server
 #
-# Copyright (c) 2010-2018 uib GmbH.
+# Copyright (c) 2010-2019 uib GmbH.
 # This file and all modifications and additions to the pristine
 # package are under the same license as the package itself.
 #
@@ -21,7 +21,7 @@ Source:         opsi-server_4.1.1.1-6.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
 
-Requires:       python-opsi >= 4.1.1.11
+Requires:       python-opsi >= 4.1.1.58
 Requires:       opsiconfd >= 4.1.1
 Requires:       opsi-tftpd
 Requires:       opsipxeconfd >= 4.1
@@ -53,7 +53,7 @@ Group: Productivity/Networking/Opsi
 Summary: opsi depotserver in expert mode
 # Conflicts: opsi-server
 Provides: opsi-server = %{version}
-Requires: python-opsi >= 4.1.1.11 opsiconfd >= 4.1.1 opsi-tftpd opsipxeconfd >= 4.1 opsi-utils >= 4.1 opsi-linux-bootimage >= 20170620
+Requires: python-opsi >= 4.1.1.58 opsiconfd >= 4.1.1 opsi-tftpd opsipxeconfd >= 4.1 opsi-utils >= 4.1 opsi-linux-bootimage >= 20170620
 
 # ===[ description ]================================
 %description
