@@ -14,10 +14,10 @@ Url:            http://www.opsi.org
 License:        AGPL-3.0+
 Group:          Productivity/Networking/Opsi
 AutoReqProv:    on
-Version:        4.1.1.1
-Release:        6
+Version:        4.1.1.7
+Release:        1
 Summary:        opsi depotserver
-Source:         opsi-server_4.1.1.1-6.tar.gz
+Source:         opsi-server_4.1.1.7-1.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
 

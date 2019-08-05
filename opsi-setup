@@ -67,6 +67,7 @@ from OPSI.Util.Task.ConfigureBackend.MySQL import (
 	DatabaseConnectionFailedException,
 	configureMySQLBackend as configureMySQLBackendWithoutGUI
 )
+from OPSI.Util.Task.ConfigureBootimage import patchServiceUrlInDefaultConfigs
 from OPSI.Util.Task.InitializeBackend import (
 	_getServerConfig as getServerConfig, initializeBackends)
 from OPSI.Util.Task.Rights import setRights, setPasswdRights
@@ -1114,6 +1115,8 @@ def main():
 	elif (task == 'init-current-config'):
 		initializeBackends(ipAddress)
 		configureClientUser()
+		with BackendManager() as backend:
+			patchServiceUrlInDefaultConfigs(backend)
 
 	elif task == 'configure-mysql':
 		configureMySQLBackend(unattended)
@@ -1129,6 +1132,8 @@ def main():
 	elif (task == 'register-depot'):
 		registerDepot(unattended)
 		configureClientUser()
+		with BackendManager() as backend:
+			patchServiceUrlInDefaultConfigs(backend)
 
 	elif (task == 'edit-config-defaults'):
 		editConfigDefaults()
