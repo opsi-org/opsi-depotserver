@@ -1,3 +1,10 @@
+opsi-server (4.1.1.8-1) stable; urgency=medium
+
+  * opsi-setup: patching the service url into default.menu and grub.cfg
+    when the current configuration is applied.
+
+ -- Niko Wenselowski <n.wenselowski@uib.de>  Mon, 19 Aug 2019 17:41:07 +0200
+
 opsi-server (4.1.1.7-1) testing; urgency=medium
 
   * Using the code for edit-config-default from python-opsi.
