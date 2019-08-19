@@ -15,7 +15,7 @@ Breaks: opsi-depotserver (<< 4.1)
 Replaces: opsi-depotserver (<< 4.1), opsi-depotserver-expert
 Conflicts: opsi-server-expert
 Depends: python (>= 2.7),
-	python-opsi (>= 4.1.1.58),
+	python-opsi (>= 4.1.1.71),
 	opsiconfd (>=4.1.1),
 	opsipxeconfd (>=4.1),
 	opsi-tftpd,
@@ -39,7 +39,7 @@ Breaks: opsi-depotserver-expert (<< 4.1)
 Replaces: opsi-depotserver-expert (<< 4.1), opsi-server
 Conflicts: opsi-server
 Depends: python (>= 2.7),
-	python-opsi (>= 4.1.1.58),
+	python-opsi (>= 4.1.1.71),
 	opsiconfd (>=4.1.1),
 	opsipxeconfd (>=4.1),
 	opsi-utils (>=4.1),

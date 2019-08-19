@@ -14,14 +14,14 @@ Url:            http://www.opsi.org
 License:        AGPL-3.0+
 Group:          Productivity/Networking/Opsi
 AutoReqProv:    on
-Version:        4.1.1.1
-Release:        6
+Version:        4.1.1.7
+Release:        1
 Summary:        opsi depotserver
-Source:         opsi-server_4.1.1.1-6.tar.gz
+Source:         opsi-server_4.1.1.7-1.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
 
-Requires:       python-opsi >= 4.1.1.58
+Requires:       python-opsi >= 4.1.1.71
 Requires:       opsiconfd >= 4.1.1
 Requires:       opsi-tftpd
 Requires:       opsipxeconfd >= 4.1
@@ -53,7 +53,7 @@ Group: Productivity/Networking/Opsi
 Summary: opsi depotserver in expert mode
 # Conflicts: opsi-server
 Provides: opsi-server = %{version}
-Requires: python-opsi >= 4.1.1.58 opsiconfd >= 4.1.1 opsi-tftpd opsipxeconfd >= 4.1 opsi-utils >= 4.1 opsi-linux-bootimage >= 20170620
+Requires: python-opsi >= 4.1.1.71 opsiconfd >= 4.1.1 opsi-tftpd opsipxeconfd >= 4.1 opsi-utils >= 4.1 opsi-linux-bootimage >= 20170620
 
 # ===[ description ]================================
 %description

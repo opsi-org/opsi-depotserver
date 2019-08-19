@@ -49,8 +49,7 @@ from OPSI.Logger import LOG_DEBUG, LOG_NONE, LOG_INFO, LOG_NOTICE, Logger
 from OPSI.Object import OpsiDepotserver
 from OPSI.System.Posix import (
 	execute, getLocalFqdn, getNetworkConfiguration, which, Distribution)
-from OPSI.Types import (
-	forceBool, forceFilename, forceInt, forceIpAddress, forceUnicodeList)
+from OPSI.Types import forceBool, forceFilename, forceInt, forceIpAddress
 from OPSI.UI import UIFactory
 from OPSI.Util import blowfishDecrypt, randomString
 from OPSI.Util.File.Opsi import BackendDispatchConfigFile
@@ -67,6 +66,7 @@ from OPSI.Util.Task.ConfigureBackend.MySQL import (
 	DatabaseConnectionFailedException,
 	configureMySQLBackend as configureMySQLBackendWithoutGUI
 )
+from OPSI.Util.Task.ConfigureBootimage import patchServiceUrlInDefaultConfigs
 from OPSI.Util.Task.InitializeBackend import (
 	_getServerConfig as getServerConfig, initializeBackends)
 from OPSI.Util.Task.Rights import setRights, setPasswdRights
@@ -1114,6 +1114,8 @@ def main():
 	elif (task == 'init-current-config'):
 		initializeBackends(ipAddress)
 		configureClientUser()
+		with BackendManager() as backend:
+			patchServiceUrlInDefaultConfigs(backend)
 
 	elif task == 'configure-mysql':
 		configureMySQLBackend(unattended)
@@ -1129,6 +1131,8 @@ def main():
 	elif (task == 'register-depot'):
 		registerDepot(unattended)
 		configureClientUser()
+		with BackendManager() as backend:
+			patchServiceUrlInDefaultConfigs(backend)
 
 	elif (task == 'edit-config-defaults'):
 		editConfigDefaults()
