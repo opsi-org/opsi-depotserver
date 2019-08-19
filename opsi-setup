@@ -49,8 +49,7 @@ from OPSI.Logger import LOG_DEBUG, LOG_NONE, LOG_INFO, LOG_NOTICE, Logger
 from OPSI.Object import OpsiDepotserver
 from OPSI.System.Posix import (
 	execute, getLocalFqdn, getNetworkConfiguration, which, Distribution)
-from OPSI.Types import (
-	forceBool, forceFilename, forceInt, forceIpAddress, forceUnicodeList)
+from OPSI.Types import forceBool, forceFilename, forceInt, forceIpAddress
 from OPSI.UI import UIFactory
 from OPSI.Util import blowfishDecrypt, randomString
 from OPSI.Util.File.Opsi import BackendDispatchConfigFile
